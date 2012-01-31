@@ -6,13 +6,13 @@ Requires at least: 3.0
 Tested up to:
 Stable tag: 1.0
 
-A CPT-onomy is a taxonomy built from a custom post type, using post titles to assign taxonomy relationships just as you would assign taxonomy terms. Use CPT-onomies to create your own custom post types or use post types created by themes or other plugins.
+A CPT-onomy is a taxonomy built from a custom post type, using post titles to assign taxonomy relationships just as you would assign taxonomy terms.
 
 == Description ==
 
 *CPT-onomies* is a WordPress plugin designed for anyone wishing to utilize the power of custom post types. Featuring a full-fledged interface, CPT-onomies allows you to create custom post types and register CPT-onomies **without touching one line of code!**
 
-= But What Is A CPT-onomy? =
+= What Is A CPT-onomy? =
 
 A CPT-onomy is a taxonomy built from a custom post type, using post titles to assign taxonomy relationships just as you would assign taxonomy terms.
 
@@ -22,7 +22,7 @@ A CPT-onomy is a taxonomy built from a custom post type, using post titles to a
 
 No. It's just a fun word I made up.
 
-= I need custom post types but not CPT-onomyies =
+= I need custom post types but not CPT-onomies =
 
 CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types without touching one line of code!
 
@@ -44,10 +44,12 @@ What's really great about CPT-onomies is that they work just like any other taxo
 1. Activate the plugin through the 'Plugins' menu in WordPress
 1. Go to *Settings > CPT-onomies*
 1. Create a new custom post type or edit an existing custom post type
-1. Register your custom post type as a CPT-onomy by "attaching" it to a post type, under "Register this Custom Post Type as a CPT-onomy" on the edit screen.
+1. Register your custom post type as a CPT-onomy by "attaching" it to a post type, under "Register this Custom Post Type as a CPT-onomy" on the edit screen
 1. Use your CPT-onomy just like any other taxonomy (refer to the [CPT-onomy documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomy documentation") for help)
 
 == Frequently Asked Questions ==
+
+CPT-onomies is hot off the presses so check in later for frequently asked questions.
 
 == Screenshots ==
 
