@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/us/cgi-bin/webscr?cmd=_flow&SESSION=LSa9VMv8
 Tags: custom post types, post, types, post type, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies
 Requires at least: 3.0
 Tested up to:
-Stable tag: 1.0
+Stable tag: 1.0.1
 
 A CPT-onomy is a taxonomy built from a custom post type, using post titles to assign taxonomy relationships just as you would assign taxonomy terms.
 
@@ -18,11 +18,11 @@ A CPT-onomy is a taxonomy built from a custom post type, using post titles to a
 
 *Wish to use a custom post type created by a theme or another plugin?* That's ok! Any registered custom post type can be used as a CPT-onomy.
 
-= Is CPT-onomy an official WordPress term? =
+= Is CPT-onomy An Official WordPress Term? =
 
 No. It's just a fun word I made up.
 
-= I need custom post types but not CPT-onomies =
+= I Need Custom Post Types But Not CPT-onomies =
 
 CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types without touching one line of code!
 
@@ -53,7 +53,20 @@ CPT-onomies is hot off the presses so check in later for frequently asked questi
 
 == Screenshots ==
 
+1. CPT-onomies offers an extensive custom post type manager, allowing you to create new custom post types or use custom post types created by themes and other plugins.
+2. CPT-onomies lets you manage and customize your custom post types without touching one line of code.
+3. "Actors" and "Directors" are CPT-onomies attached to the custom post type "Movies".
+4. Assign your CPT-onomy terms just like any other taxonomy.
+
 == Changelog ==
+
+= 1.0.1 =
+* Fixed bug that didn't delete relationships when CPT-onomy "term" is deleted
 
 = 1.0 =
 * Plugin launch!
+
+== Upgrade Notice ==
+
+= 1.0.1 =
+* Fixed bug that didn't delete relationships when CPT-onomy "term" is deleted
