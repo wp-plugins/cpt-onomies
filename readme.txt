@@ -61,7 +61,7 @@ CPT-onomies is hot off the presses so check in later for frequently asked questi
 == Changelog ==
 
 = 1.0.1 =
-* Fixed bug that didn't delete relationships when CPT-onomy "term" is deleted
+* Fixed bug that didn't delete relationships when CPT-onomy "term" is deleted.
 
 = 1.0 =
 * Plugin launch!
