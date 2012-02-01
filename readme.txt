@@ -3,7 +3,7 @@ Contributors: bamadesigner
 Donate link: https://www.paypal.com/us/cgi-bin/webscr?cmd=_flow&SESSION=LSa9VMv8-O9RLhb_Ns4y4Hdiw3DybZ9djrhM-NWy1Xpc4PmyJ9X_2zklJ5W&dispatch=5885d80a13c0db1f8e263663d3faee8db2b24f7b84f1819343fd6c338b1d9d60
 Tags: custom post types, post, types, post type, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies
 Requires at least: 3.0
-Tested up to: 3.0
+Tested up to: 3.3.1
 Stable tag: 1.0.1
 
 A CPT-onomy is a taxonomy built from a custom post type, using post titles to assign taxonomy relationships just as you would assign taxonomy terms.
