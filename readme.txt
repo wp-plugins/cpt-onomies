@@ -55,8 +55,9 @@ CPT-onomies is hot off the presses so check in later for frequently asked questi
 
 1. CPT-onomies offers an extensive custom post type manager, allowing you to create new custom post types or use custom post types created by themes and other plugins.
 2. CPT-onomies lets you manage and customize your custom post types without touching one line of code.
-3. "Actors" and "Directors" are CPT-onomies attached to the custom post type "Movies".
+3. Create your custom post types to power your CPT-onomy.
 4. Assign your CPT-onomy terms just like any other taxonomy.
+5. The admin shows which CPT-onomy terms have been assigned.
 
 == Changelog ==
 
