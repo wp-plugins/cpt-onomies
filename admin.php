@@ -501,8 +501,7 @@ class CPT_ONOMIES_ADMIN {
         
         <p><strong>Is CPT-onomy an official WordPress term?</strong> No. It's just a fun word I made up.</p>
         
-        <h4>Need a custom post type but not a CPT-onomy?</h4>
-        <p>CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types <strong>without touching one line of code!</strong></p>
+        <p><strong>Need custom post types but not (necessarily) CPT-onomies?</strong> CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types <strong>without touching one line of code!</strong></p>
         
         <h4>How to Get Started</h4>
         <p>You can't have a CPT-onomy without a custom post type! <a href="<?php echo esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => 'new' ), admin_url( 'options-general.php' ) ) ); ?>">Add a new custom post type</a> (or <a href="<?php echo esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE ), admin_url( 'options-general.php' ) ) ); ?>#cpt-onomies-other-custom-post-types">use custom post types created by themes or other plugins</a>), register the custom post type as a CPT-onomy (under "Register this Custom Post Type as a CPT-onomy" on the edit screen) and CPT-onomies will take care of the rest.</p>

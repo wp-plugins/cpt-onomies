@@ -22,7 +22,7 @@ A CPT-onomy is a taxonomy built from a custom post type, using post titles to a
 
 No. It's just a fun word I made up.
 
-= I Need Custom Post Types But Not CPT-onomies =
+= Need Custom Post Types But Not (Necessarily) CPT-onomies? =
 
 CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types without touching one line of code!
 
