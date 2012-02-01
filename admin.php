@@ -44,6 +44,8 @@ class CPT_ONOMIES_ADMIN {
 					
 			// runs when any post is saved
 			add_action( 'save_post', array( &$this, 'save_post' ), 10, 2 );
+			// runs when any post is deleted
+			add_action( 'delete_post', array( &$this, 'delete_post' ) );
 			
 			// tweak the query for filtering "edit posts" screens
 			add_filter( 'request', array( &$this, 'change_query_vars' ) );
@@ -1544,7 +1546,11 @@ class CPT_ONOMIES_ADMIN {
                   	<?php }
 					
 					// provide the original "name" for AJAX testing and back-end validation                    
-					?><input type="hidden" id="<?php echo CPT_ONOMIES_DASH . '-custom-post-type-original-name'; ?>" name="<?php echo CPT_ONOMIES_UNDERSCORE . '_custom_post_types[' . $edit . '][original_name]'; ?>" value="<?php if ( $edit && !$other && !empty( $CPT ) ) echo $edit; ?>" /><?php
+					?><input type="hidden" id="<?php echo CPT_ONOMIES_DASH . '-custom-post-type-original-name'; ?>" name="<?php
+						echo CPT_ONOMIES_UNDERSCORE . '_custom_post_types[';
+							if ( $edit && !$other && !empty( $CPT ) ) echo $edit;
+							else echo 'new_custom_post_type';
+					echo '][original_name]'; ?>" value="<?php if ( $edit && !$other && !empty( $CPT ) ) echo $edit; ?>" /><?php
 					
 					// this allows each user to have a preference on whether to show the "advanced" tables
 					$show_edit_tables = get_user_option( CPT_ONOMIES_UNDERSCORE . '_show_edit_tables', $user_ID );
@@ -1860,6 +1866,21 @@ class CPT_ONOMIES_ADMIN {
 			}
 						
 		}
+	}
+	
+	/**
+	 * This function is run when any post is deleted.
+	 *
+	 * This function is invoked by the action 'delete_post'.
+	 *
+	 * @since 1.0.1
+	 * @uses $wpdb
+	 * @param int $post_id - the ID of the post being deleted
+	 */
+	public function delete_post( $post_id ) {
+		global $wpdb;
+		// delete all relationships tied to this term
+		$wpdb->query( $wpdb->prepare( "DELETE FROM " . $wpdb->postmeta . " WHERE meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "' AND meta_value = " . $post_id ) );
 	}
 		
 	/**
