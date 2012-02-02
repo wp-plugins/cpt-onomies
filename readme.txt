@@ -16,7 +16,7 @@ A CPT-onomy is a taxonomy built from a custom post type, using post titles to as
 
 A CPT-onomy is a taxonomy built from a custom post type, using post titles to assign taxonomy relationships just as you would assign taxonomy terms.
 
-*Wish to use a custom post type created by a theme or another plugin?* That's ok! Any registered custom post type can be used as a CPT-onomy.
+*If you're already using a plugin, or theme, that creates custom post types, don't worry, CPT-onomies is all-inclusive. Any registered custom post type can be used as a CPT-onomy.*
 
 = Is CPT-onomy An Official WordPress Term? =
 
