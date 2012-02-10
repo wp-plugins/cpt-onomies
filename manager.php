@@ -32,14 +32,13 @@ class CPT_ONOMIES_MANAGER {
 		add_filter( 'query_vars', array( &$this, 'register_custom_query_vars' ) );
 		
 		// manage user capabilities
-		add_filter( 'user_has_cap', array( &$this, 'user_cannot_manage_edit_delete_terms' ), 10, 3 );
-		add_filter( 'map_meta_cap', array( &$this, 'user_can_assign_terms' ), 10, 4 );
+		add_filter( 'user_has_cap', array( &$this, 'user_has_term_capabilities' ), 10, 3 );
 		
 		// tweak the query for CPT-onomy archive pages
 		add_filter( 'request', array( &$this, 'change_query_vars' ) );		
 		add_filter( 'pre_get_posts', array( &$this, 'add_cpt_onomy_term_queried_object' ), 1 );
-		add_filter( 'posts_join', array( &$this, 'posts_join' ), 1 );
-		add_filter( 'posts_where', array( &$this, 'posts_where' ), 1 );
+		add_filter( 'posts_join', array( &$this, 'posts_join' ), 1, 2 );
+		add_filter( 'posts_where', array( &$this, 'posts_where' ), 1, 2 );
 		
 		// register custom post types and taxonomies
 		add_action( 'init', array( &$this, 'register_custom_post_types_and_taxonomies' ), 100 );
@@ -171,22 +170,26 @@ class CPT_ONOMIES_MANAGER {
 	 * 'cpt_onomy_archive' to the query vars so we can know when to filter the query.
 	 * If that variable is detected, we make sure the taxonomy AND term exists before filtering.
 	 *
+	 * This function also provides support for tax_query with query_posts() and 
+	 * new WP_Query() as of 1.0.2.
+	 *
 	 * This function is applied to the filter 'posts_join'.
 	 * 	 
 	 * @since 1.0
-	 * @uses $wpdb, $wp_query, $cpt_onomy
+	 * @uses $wpdb, $cpt_onomy
 	 * @param string $join - the $join query already created by WordPress
 	 * @return string - the filtered $join query
 	 */
-	public function posts_join( $join ) {
-		global $wpdb, $wp_query, $cpt_onomy;
-		if ( isset( $wp_query->query[ 'cpt_onomy_archive' ] ) && !empty( $wp_query->query[ 'cpt_onomy_archive' ] ) ) {
+	public function posts_join( $join, $query ) {
+		global $wpdb, $cpt_onomy;
+		// for CPT-onomy archive pages (on the front-end of the site)
+		if ( isset( $query->query[ 'cpt_onomy_archive' ] ) && !empty( $query->query[ 'cpt_onomy_archive' ] ) ) {
 			// make sure CPT-onomy AND term exists, otherwise, why bother
-			$taxonomy = $wp_query->query[ 'cpt_onomy_archive' ];
-			if ( $this->is_registered_cpt_onomy( $taxonomy ) && isset( $wp_query->query[ $taxonomy ] ) && !empty( $wp_query->query[ $taxonomy ] ) ) {
+			$taxonomy = $query->query[ 'cpt_onomy_archive' ];
+			if ( $this->is_registered_cpt_onomy( $taxonomy ) && isset( $query->query[ $taxonomy ] ) && !empty( $query->query[ $taxonomy ] ) ) {
 				
 				// make sure the term exists
-				$cpt_onomy_term = explode( "/", $wp_query->query[ $taxonomy ] );
+				$cpt_onomy_term = explode( "/", $query->query[ $taxonomy ] );
 				// get parent
 				$parent_term_id = 0;
 				if ( count( $cpt_onomy_term ) > 1 ) {
@@ -205,6 +208,71 @@ class CPT_ONOMIES_MANAGER {
 				
 			}
 		}
+		// for tax_queries
+		else if ( isset( $query->tax_query ) ) {
+			
+			$i = 0;
+			foreach ( $query->tax_query->queries as $this_query ) {
+				
+				// only gonna handle CPT-onomies right now
+				if ( !taxonomy_exists( $this_query['taxonomy'] ) || !$this->is_registered_cpt_onomy( $this_query['taxonomy'] ) )
+					continue;
+		
+				$this_query['terms'] = array_unique( (array) $this_query['terms'] );
+					
+				if ( empty( $this_query['terms'] ) )
+					continue;
+					
+				switch ( $this_query['field'] ) {
+					case 'slug':
+					case 'name':
+						$terms = "'" . implode( "','", array_map( 'sanitize_title_for_query', $this_query['terms'] ) ) . "'";
+						$terms = $wpdb->get_col( "SELECT ID FROM $wpdb->posts WHERE " . ( ( strtolower( $this_query['field'] ) == 'slug' ) ? 'post_name' : 'post_title' ) . " IN ($terms)" );
+						break;
+					
+					default:
+						$terms = array_map( 'intval', $this_query['terms'] );
+				}
+		
+				if ( 'AND' == $this_query['operator'] && count( $terms ) < count( $this_query['terms'] ) )
+					return;
+					
+				$this_query['terms'] = $terms;
+						
+				// for hierarchical CPT-onomies	
+				if ( is_post_type_hierarchical( $this_query['taxonomy'] ) && $this_query['include_children'] ) {
+		
+					$children = array();
+					foreach ( $this_query['terms'] as $term ) {
+						$children = array_merge( $children, $cpt_onomy->get_term_children( $term, $this_query['taxonomy'] ) );
+						$children[] = $term;
+					}
+					$this_query['terms'] = $children;
+					
+				}
+		
+				extract( $this_query );
+	
+				if ( 'IN' == $operator ) {
+					
+					if ( empty( $terms ) )
+						continue;
+	
+					$terms = implode( ',', $terms );
+	
+					$alias = $i ? 'pm' . $i : $wpdb->postmeta;
+	
+					$join .= " INNER JOIN $wpdb->postmeta";
+					$join .= $i ? " AS $alias" : '';
+					$join .= " ON ($wpdb->posts.ID = $alias.post_id AND $alias.meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "')";
+						
+				}
+				
+				$i++;
+				
+			}
+							
+		}
 		return $join;
 	}
 	
@@ -221,22 +289,26 @@ class CPT_ONOMIES_MANAGER {
 	 * 'cpt_onomy_archive' to the query vars so we can know when to filter the query.
 	 * If that variable is detected, we make sure the taxonomy AND term exists before filtering.
 	 *
+	 * This function also provides support for tax_query with query_posts() and 
+	 * new WP_Query() as of 1.0.2.
+	 *
 	 * This function is applied to the filter 'posts_where'.
 	 * 	 
 	 * @since 1.0
-	 * @uses $wpdb, $wp_query, $cpt_onomy
+	 * @uses $wpdb, $cpt_onomy
 	 * @param string $where - the $where query already created by WordPress
 	 * @return string - the filtered $where query
 	 */
-	public function posts_where( $where ) {
-		global $wpdb, $wp_query, $cpt_onomy;
-		if ( isset( $wp_query->query[ 'cpt_onomy_archive' ] ) && !empty( $wp_query->query[ 'cpt_onomy_archive' ] ) ) {
+	public function posts_where( $where, $query ) {
+		global $wpdb, $cpt_onomy;
+		// for CPT-onomy archive pages (on the front-end of the site)
+		if ( isset( $query->query[ 'cpt_onomy_archive' ] ) && !empty( $query->query[ 'cpt_onomy_archive' ] ) ) {
 			// make sure CPT-onomy AND term exists, otherwise, why bother
-			$taxonomy = $wp_query->query[ 'cpt_onomy_archive' ];
-			if ( $this->is_registered_cpt_onomy( $taxonomy ) && isset( $wp_query->query[ $taxonomy ] ) && !empty( $wp_query->query[ $taxonomy ] ) ) {
+			$taxonomy = $query->query[ 'cpt_onomy_archive' ];
+			if ( $this->is_registered_cpt_onomy( $taxonomy ) && isset( $query->query[ $taxonomy ] ) && !empty( $query->query[ $taxonomy ] ) ) {
 				
 				// make sure the term exists
-				$cpt_onomy_term = explode( "/", $wp_query->query[ $taxonomy ] );
+				$cpt_onomy_term = explode( "/", $query->query[ $taxonomy ] );
 				// get parent
 				$parent_term_id = 0;
 				if ( count( $cpt_onomy_term ) > 1 ) {
@@ -258,13 +330,129 @@ class CPT_ONOMIES_MANAGER {
 					
 			}
 		}
+		// for tax_queries
+		else if ( isset( $query->tax_query ) ) {
+			
+			$new_where = array();
+			$i = 0;
+				
+			foreach ( $query->tax_query->queries as $this_query ) {
+				
+				// only gonna handle CPT-onomies right now
+				if ( !taxonomy_exists( $this_query['taxonomy'] ) || !$this->is_registered_cpt_onomy( $this_query['taxonomy'] ) )
+					continue;
+		
+				$this_query['terms'] = array_unique( (array) $this_query['terms'] );
+					
+				if ( empty( $this_query['terms'] ) )
+					continue;
+					
+				switch ( $this_query['field'] ) {
+					case 'slug':
+					case 'name':
+						
+						$terms = "'" . implode( "','", array_map( 'sanitize_title_for_query', $this_query['terms'] ) ) . "'";
+						$terms = $wpdb->get_col( "SELECT ID FROM $wpdb->posts WHERE " . ( ( strtolower( $this_query['field'] ) == 'slug' ) ? 'post_name' : 'post_title' ) . " IN ($terms)" );
+					
+						break;
+		
+					default:
+						$terms = array_map( 'intval', $this_query['terms'] );
+						
+				}
+				
+				if ( 'AND' == $this_query['operator'] && count( $terms ) < count( $this_query['terms'] ) )
+					return;
+					
+				$this_query['terms'] = $terms;
+						
+				// for hierarchical CPT-onomies	
+				if ( is_post_type_hierarchical( $this_query['taxonomy'] ) && $this_query['include_children'] ) {
+		
+					$children = array();
+					foreach ( $this_query['terms'] as $term ) {
+						$children = array_merge( $children, $cpt_onomy->get_term_children( $term, $this_query['taxonomy'] ) );
+						$children[] = $term;
+					}
+					$this_query['terms'] = $children;
+					
+				}
+		
+				extract( $this_query );
+	
+				if ( 'IN' == $operator ) {
+					
+					if ( empty( $terms ) )
+						continue;
+	
+					$terms = implode( ',', $terms );
+	
+					$alias = $i ? 'pm' . $i : $wpdb->postmeta;
+		
+					$new_where[] = "$alias.meta_value $operator ($terms)";
+					
+				} elseif ( 'NOT IN' == $operator ) {
+	
+					if ( empty( $terms ) )
+						continue;
+	
+					$terms = implode( ',', $terms );
+	
+					$new_where[] = "$wpdb->posts.ID NOT IN (
+						SELECT post_id
+						FROM $wpdb->postmeta
+						WHERE meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "'
+						AND meta_value IN ($terms)
+					)";
+					
+				} elseif ( 'AND' == $operator ) {
+	
+					if ( empty( $terms ) )
+						continue;
+	
+					$num_terms = count( $terms );
+	
+					$terms = implode( ',', $terms );
+	
+					$new_where[] = "(
+						SELECT COUNT(1)
+						FROM $wpdb->postmeta
+						WHERE meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "'
+						AND meta_value IN ($terms)
+						AND post_id = $wpdb->posts.ID
+					) = $num_terms";
+					
+				}
+	
+				$i++;
+			}
+						
+			if ( !empty( $new_where ) )  {
+				
+				// remove 0 = 1
+				$where = preg_replace( '/0\s\=\s1\sAND\s/i', '', $where );
+											
+				$where .= " AND ( ";
+					foreach ( $new_where as $where_index => $add_where ) {
+						if ( $where_index > 0 )
+							$where .= " " . $query->tax_query->relation . " ";
+						$where .= $add_where;
+					}
+				$where .= " )";
+					
+			}
+							
+		}
 		return $where;
 	}
 	
 	/**
 	 * This function hooks into WordPress current_user_can() whenever WordPress
-	 * is checking that the user can 'manage_$taxonomy_terms', 'edit_$taxonomy_terms',
-	 * or 'delete_$taxonomy_terms' to tell WordPress NO!
+	 * is checking that the user can 'assign_$taxonomy_terms', 'manage_$taxonomy_terms', 
+	 * 'edit_$taxonomy_terms' or 'delete_$taxonomy_terms'.
+	 *
+	 * If assign, it checks user settings to see if user role has permission to assign.
+	 * If 'manage', 'edit' or 'delete, it tells WordPress NO!
 	 *
 	 * This function is applied to the filter 'user_has_cap'.
 	 *
@@ -274,88 +462,77 @@ class CPT_ONOMIES_MANAGER {
 	 * @param array $args - additional arguments passed to the function
 	 * @return array - the filtered $allcaps
 	 */
-	public function user_cannot_manage_edit_delete_terms( $allcaps, $caps, $args ) {
+	public function user_has_term_capabilities( $allcaps, $caps, $args ) {
 		// no one can manage, edit, or delete CPT-onomy terms
 		foreach( $caps as $this_cap ) {
-			if ( preg_match( '/(manage|edit|delete)\_([a-z\_]+)\_terms/i', $this_cap ) && isset( $allcaps[ $this_cap ] ) ) {
+			
+			// if user has capability manually assigned, then allow
+			// otherwise, check user settings
+			if ( preg_match( '/assign\_([a-z\_]+)\_terms/i', $this_cap ) && !isset( $allcaps[ $this_cap ] ) ) {
+				
+				// get taxonomy
+				$taxonomy = preg_replace( '/(assign_|_terms)/i', '', $this_cap );
+										
+				// if registered CPT-onomy
+				if ( taxonomy_exists( $taxonomy ) && $this->is_registered_cpt_onomy( $taxonomy ) ) {
+					
+					// default
+					$allow = false;
+					
+					// no capabilities are assigned so everyone has access if they can 'assign_terms' or the custom assigning capability
+					if ( array_key_exists( $taxonomy, $this->user_settings[ 'custom_post_types' ] ) && !isset( $this->user_settings[ 'custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) )
+						$allow = true;
+					// check the "other" custom post types
+					else if ( array_key_exists( $taxonomy, $this->user_settings[ 'other_custom_post_types' ] ) && !isset( $this->user_settings[ 'other_custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) )
+						$allow = true;
+					
+					// the capability is restricted to specific roles
+					else {
+																
+						// get user roles to see if user has capability to assign taxonomy
+						// $args contains the user id
+						$user = new WP_User( $args[1] );
+						foreach ( $user->roles as $role ) {
+														
+							// test to see if role is selected
+							if ( array_key_exists( $taxonomy, $this->user_settings[ 'custom_post_types' ] ) && in_array( $role, $this->user_settings[ 'custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) ) {
+								$allow = true;
+								break;
+							}
+							// test "other" custom post types
+							else if ( array_key_exists( $taxonomy, $this->user_settings[ 'other_custom_post_types' ] ) && in_array( $role, $this->user_settings[ 'other_custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) ) {
+								$allow = true;
+								break;
+							}
+								
+						}
+								
+					}
+					
+					// assign the required capability
+					if ( $allow )
+						$allcaps[ $this_cap ] = 1;
+					else
+						unset( $allcaps[ $this_cap ] );					
+					
+				}
+					
+			}
+			
+			// NO ONE is allowed to manage, edit or delete
+			else if ( preg_match( '/(manage|edit|delete)\_([a-z\_]+)\_terms/i', $this_cap ) ) {
 				
 				// get taxonomy
 				$taxonomy = preg_replace( '/(manage_|edit_|delete_|_terms)/i', '', $this_cap );
+								
 				// if registered CPT-onomy
 				if ( taxonomy_exists( $taxonomy ) && $this->is_registered_cpt_onomy( $taxonomy ) )
 					unset( $allcaps[ $this_cap ] );
 					
 			}
+			
 		}
 		return $allcaps;
-	}
-	
-	/**
-	 * This function hooks into WordPress current_user_can() whenever WordPress
-	 * is checking that the user can 'assign_{$taxonomy}_terms' to let WordPress know
-	 * if the user has the capability to assign terms for that particular taxonomy.
-	 *
-	 * This function is applied to the filter 'map_meta_cap'.
-	 *
-	 * @since 1.0
-	 * @param array $caps - capabilities the user must have. the user must have ALL of the capabilities for the function to return true
-	 * @param string $cap - the capability we're checking
-	 * @param int $user_id - the user's ID to check against
-	 * @param array $args - additional arguments passed to the function
-	 * @return array - the filtered $caps
-	 */
-	public function user_can_assign_terms( $caps, $cap, $user_id, $args ) {
-		if ( preg_match( '/assign\_([a-z\_]+)\_terms/i', $cap ) ) {
-			
-			// get taxonomy
-			$taxonomy = str_replace( array( 'assign_', '_terms' ), array( '' ), $cap );
-			
-			// if taxonomy exists and is registered CPT-onomy
-			if ( taxonomy_exists( $taxonomy ) && $this->is_registered_cpt_onomy( $taxonomy ) ) {
-				$tax = get_taxonomy( $taxonomy );
-					
-				// default required capability is 'assign_{$taxonomy}_terms'
-				$caps = array( $tax->cap->assign_terms );
-				
-				// default
-				$allow = false;
-				
-				// no capabilities are assigned so everyone has access if they can 'assign_terms' or the custom assigning capability
-				if ( array_key_exists( $taxonomy, $this->user_settings[ 'custom_post_types' ] ) && !isset( $this->user_settings[ 'custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) )
-					$allow = true;
-				// check the "other" custom post types
-				else if ( array_key_exists( $taxonomy, $this->user_settings[ 'other_custom_post_types' ] ) && !isset( $this->user_settings[ 'other_custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) )
-					$allow = true;
-				
-				// the capability is restricted to specific roles
-				else {
-					
-					// get user roles to see if user has capability to assign taxonomy
-					$user = new WP_User( $user_id );
-					foreach ( $user->roles as $role ) {
-						
-						// test to see if role is selected
-						if ( array_key_exists( $taxonomy, $this->user_settings[ 'custom_post_types' ] ) && in_array( $role, $this->user_settings[ 'custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) ) {
-							$allow = true;
-							break;
-						}
-						// test "other" custom post types
-						else if ( array_key_exists( $taxonomy, $this->user_settings[ 'other_custom_post_types' ] ) && in_array( $role, $this->user_settings[ 'other_custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) ) {
-							$allow = true;
-							break;
-						}
-							
-					}
-							
-				}
-				
-				// assign the required capability
-				if ( $allow )
-					$caps = array( 'edit_posts' );
-					
-			}
-		}
-		return $caps;
 	}
 	
 	/**

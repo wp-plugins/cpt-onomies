@@ -49,7 +49,7 @@ class CPT_ONOMIES_ADMIN {
 			
 			// tweak the query for filtering "edit posts" screens
 			add_filter( 'request', array( &$this, 'change_query_vars' ) );
-			add_filter( 'posts_join', array( &$this, 'posts_join' ), 1 );
+			add_filter( 'posts_join', array( &$this, 'posts_join' ), 1, 2 );
 			
 			// add custom admin columns
 			add_filter( 'manage_pages_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 10, 1 );
@@ -315,7 +315,7 @@ class CPT_ONOMIES_ADMIN {
 	
 	/**
 	 * The usual admin page for managing terms is edit-tags.php but we do not
-	 * want users to access this page. $this->user_cannot_manage_edit_delete_terms()
+	 * want users to access this page. $cpt_onomies_manager->user_has_term_capabilities()
 	 * removes the ability access this page and throws up a 'Cheatin' uh?' message
 	 * but this function replaces that message with some helpful text on where to go
 	 * to edit the terms.
@@ -690,7 +690,7 @@ class CPT_ONOMIES_ADMIN {
 						'restrict_user_capabilities' => (object) array(
 							'label' => 'Restrict User\'s Capability to Assign Term Relationships',
 							'type' => 'checkbox',
-							'description' => 'This setting allows you to grant specific user roles the capability, or permission, to assign term relationships for this CPT-onomy. <strong><span class="red">If no user roles are selected, then all user roles with the capability to \'assign_{ post type name }_terms\' will have permission.</span></strong>',
+							'description' => 'This setting allows you to grant specific user roles the capability, or permission, to assign term relationships for this CPT-onomy. <strong><span class="red">If no user roles are selected, then ALL user roles will have permission.</span></strong>',
 							'default' => array( 'administrator', 'editor', 'author' ),
 							'data' => $user_data					
 						)
@@ -1602,6 +1602,7 @@ class CPT_ONOMIES_ADMIN {
 	 * This function is invoked on the edit screen and prints the html for the form fields.
 	 *
 	 * @since 1.0
+	 * @uses $cpt_onomies_manager
 	 * @param $cpt_key - the name for the custom post type we're editing
 	 * @param $CPT - saved information for the custom post type we're editing
 	 * @param object $property - info pulled from $this->get_plugin_options_page_cpt_properties() about this specific field
@@ -1609,6 +1610,7 @@ class CPT_ONOMIES_ADMIN {
 	 * @param string $property_parent_key - allows for pulling property info from within an array.
 	 */
 	public function print_plugin_options_edit_custom_post_type_field( $cpt_key, $CPT, $property, $property_key, $property_parent_key=NULL ) {
+		global $cpt_onomies_manager;
 		if ( current_user_can( 'manage_options' ) ) {
 			
 			$new = empty( $CPT ) ? true : false;
@@ -1705,8 +1707,12 @@ class CPT_ONOMIES_ADMIN {
 										$is_set = true;
 									else if ( isset( $CPT->$property_key ) && $data_name == $CPT->$property_key )
 										$is_set = true;
-									else if ( isset( $CPT->other ) && !isset( $CPT->$property_key ) && $is_default )
-										$is_set = true;
+									// If "other", check to make sure this particular post type has NO settings in the database before using the defaults
+									// If "other" custom post type has no settings in the database, then its settings have not been "saved" and should therefore show the defaults
+									else if ( isset( $CPT->other ) && !isset( $CPT->$property_key ) && $is_default ) {
+										if ( empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) || empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $cpt_key ] ) )
+											$is_set = true;
+									}
 								}
 								// set the defaults
 								else if ( $is_default )
@@ -1920,7 +1926,7 @@ class CPT_ONOMIES_ADMIN {
 	 * @param string $join - the $join query already created by WordPress
 	 * @return string - the filtered $join query
 	 */
-	public function posts_join( $join ) {
+	public function posts_join( $join, $query ) {
 		global $wpdb, $cpt_onomies_manager, $cpt_onomy, $pagenow, $post_type;
 		// for filtering by CPT-onomy on admin edit posts screen
 		if ( $pagenow == 'edit.php' && isset( $post_type ) ) {
@@ -2022,11 +2028,13 @@ class CPT_ONOMIES_ADMIN {
 	 */
 	public function edit_cpt_onomy_admin_column( $column_name, $post_id ) {
 		global $post;
-		$post_type = strtolower( str_replace( CPT_ONOMIES_UNDERSCORE . '_', '', $column_name ) );
-		$terms = wp_get_object_terms( $post_id, $post_type );
-		foreach( $terms as $index => $term ) {
-			if ( $index > 0 ) echo ', ';
-			echo '<a href="' . esc_url( add_query_arg( array( 'post_type' => $post->post_type, $post_type => $term->slug ), 'edit.php' ) ) . '">' . $term->name . '</a>';	
+		if ( strpos( $column_name, CPT_ONOMIES_UNDERSCORE ) !== false ) {
+			$post_type = strtolower( str_replace( CPT_ONOMIES_UNDERSCORE . '_', '', $column_name ) );
+			$terms = wp_get_object_terms( $post_id, $post_type );
+			foreach( $terms as $index => $term ) {
+				if ( $index > 0 ) echo ', ';
+				echo '<a href="' . esc_url( add_query_arg( array( 'post_type' => $post->post_type, $post_type => $term->slug ), 'edit.php' ) ) . '">' . $term->name . '</a>';	
+			}
 		}
 	}
 	
