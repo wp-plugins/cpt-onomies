@@ -54,6 +54,7 @@ As of version 1.0.2, you can use CPT-onomies with tax queries for query_posts() 
 CPT-onomies is hot off the presses so check in later for frequently asked questions.
 
 In the meantime, refer to the following resources:
+
 * [CPT-onomies Support Forums](http://wordpress.org/tags/cpt-onomies?forum_id=10 "CPT-onomies Support Forums")
 * [CPT-onomies Documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomies Documentation")
 
