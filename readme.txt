@@ -73,7 +73,7 @@ In the meantime, refer to the following resources:
 * The WordPress function, wp_count_terms(), now works with CPT-onomies and doesn't require the CPT-onomy class.
 * Added get_objects_in_term() to the CPT-onomy class.
 * Added previous_post_link(), next_post_link(), adjacent_post_link(), prev_post_rel_link(), next_post_rel_link(), get_adjacent_post_rel_link() and get_adjacent_post() to the CPT-onomy class with the ability to designate "in the same CPT-onomy".
-* Added support for tax queries with query_posts() and WP_Query().
+* Added support for tax queries when using the Loop, i.e. query_posts() and WP_Query.
 
 = 1.0.1 =
 * Fixed bug that didn't delete relationships when CPT-onomy "term" is deleted.
