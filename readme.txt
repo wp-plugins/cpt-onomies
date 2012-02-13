@@ -1,7 +1,7 @@
 === CPT-onomies: Using Custom Post Types as Taxonomies ===
 Contributors: bamadesigner
 Donate link: https://www.paypal.com/us/cgi-bin/webscr?cmd=_flow&SESSION=LSa9VMv8-O9RLhb_Ns4y4Hdiw3DybZ9djrhM-NWy1Xpc4PmyJ9X_2zklJ5W&dispatch=5885d80a13c0db1f8e263663d3faee8db2b24f7b84f1819343fd6c338b1d9d60
-Tags: custom post types, post, types, post type, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies
+Tags: custom post type, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, custom post type taxonomies
 Requires at least: 3.0
 Tested up to: 3.3.1
 Stable tag: 1.0.2
@@ -24,7 +24,7 @@ No. It's just a fun word I made up.
 
 = Need Custom Post Types But Not (Necessarily) CPT-onomies? =
 
-CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types without touching one line of code!
+CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types within the admin.
 
 = Why CPT-onomies? =
 
@@ -36,7 +36,7 @@ It doesn't take long to figure out that custom post types can be a pretty powerf
 
 What's really great about CPT-onomies is that they work just like any other taxonomy, allowing you to use WordPress taxonomy functions, like [get_terms()](http://codex.wordpress.org/Function_Reference/get_terms "get_terms()"), [get_the_terms()](http://codex.wordpress.org/Function_Reference/get_the_terms "get_the_terms()") and [wp_get_object_terms()](http://codex.wordpress.org/Function_Reference/wp_get_object_terms "wp_get_object_terms()"), to access the CPT-onomy information you need. CPT-onomies even includes a tag cloud widget for your sidebar.
 
-As of version 1.0.2, you can use CPT-onomies with tax queries for query_posts() and WP_Query().
+As of version 1.0.2, CPT-onomies work with tax queries when using [The Loop](http://rachelcarden.com/cpt-onomies/documentation/The_Loop/ "The WordPress Loop").
 
 *Note: Unfortunately, not every taxonomy function can be used at this time. [Check out the CPT-onomy documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomy documentation") to see which WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy functions.*
 
@@ -73,7 +73,7 @@ In the meantime, refer to the following resources:
 * The WordPress function, wp_count_terms(), now works with CPT-onomies and doesn't require the CPT-onomy class.
 * Added get_objects_in_term() to the CPT-onomy class.
 * Added previous_post_link(), next_post_link(), adjacent_post_link(), prev_post_rel_link(), next_post_rel_link(), get_adjacent_post_rel_link() and get_adjacent_post() to the CPT-onomy class with the ability to designate "in the same CPT-onomy".
-* Added support for tax queries when using the Loop, i.e. query_posts() and WP_Query.
+* Added support for tax queries when using The Loop.
 
 = 1.0.1 =
 * Fixed bug that didn't delete relationships when CPT-onomy "term" is deleted.
