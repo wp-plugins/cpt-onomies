@@ -1,6 +1,6 @@
 === CPT-onomies: Using Custom Post Types as Taxonomies ===
 Contributors: bamadesigner
-Donate link: https://www.paypal.com/us/cgi-bin/webscr?cmd=_flow&SESSION=ezC-pWv8E9kBberiBuLujPpmeqrD_FTy2BE0JYP5jQBrQ6_kAmJz5xMPNDO&dispatch=5885d80a13c0db1f8e263663d3faee8d43b1bb6ca6ed6d454adc375ba2d28b99
+Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
 Tags: custom post type, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, custom post type taxonomies
 Requires at least: 3.0
 Tested up to: 3.3.1
