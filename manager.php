@@ -765,7 +765,7 @@ class CPT_ONOMIES_MANAGER {
 									
 								// make sure post types exist
 								foreach( $cpt[ 'attach_to_post_type' ] as $attached_key => $attached_post_type ) { 
-									if ( !post_type_exists( $attached_post_type ) )
+									if ( !post_type_exists( $attached_post_type ) && !array_key_exists( $attached_post_type, $this->user_settings[ 'custom_post_types' ] ) )
 										unset( $cpt[ 'attach_to_post_type' ][ $attached_key ] );
 								}
 								
