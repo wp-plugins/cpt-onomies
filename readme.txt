@@ -1,7 +1,7 @@
 === CPT-onomies: Using Custom Post Types as Taxonomies ===
 Contributors: bamadesigner
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
-Tags: custom post type, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, custom post type taxonomies, use custom post type as taxonomy
+Tags: custom post type, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, custom post type taxonomies, use custom post type as taxonomy, use custom post types as taxonomies
 Requires at least: 3.1
 Tested up to: 3.3.1
 Stable tag: 1.0.3
@@ -10,7 +10,7 @@ A CPT-onomy is a taxonomy built from a custom post type, using the post titles a
 
 == Description ==
 
-**WordPress 3.1 is required as of CPT-onomies version 1.0.3.**
+**WordPress 3.1 is required as of CPT-onomies version 1.0.3!!**
 
 *CPT-onomies* is a WordPress plugin that allows you to use your custom post types as taxonomies without having to manage your "terms" in two places. CPT-onomies does all of the work, allowing you to create custom post types and register CPT-onomies **without touching one line of code!**
 
@@ -71,7 +71,7 @@ In the meantime, refer to the following resources:
 == Changelog ==
 
 = 1.0.3 =
-* DO NOT UPDATE IF YOU ARE NOT USING WORDPRESS 3.1 OR NEWER!! If you're using a version older than 3.1., and having issues, download CPT-onomies 1.0.2. for bug fixes.
+* **DO NOT UPDATE IF YOU ARE NOT USING WORDPRESS 3.1 OR NEWER!!** If you're using a version older than 3.1., and having issues, download CPT-onomies 1.0.2. for bug fixes.
 * Added support for Bulk Edit and Quick Edit.
 * Added the ability to sort and filter by CPT-onomy on the admin "Edit Posts" screen.
 * Fixed a bug where tax queries wouldn't work with CPT-onomies AND taxonomies.
