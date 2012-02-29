@@ -46,18 +46,32 @@ class CPT_ONOMIES_ADMIN {
 			add_action( 'save_post', array( &$this, 'save_post' ), 10, 2 );
 			// runs when any post is deleted
 			add_action( 'delete_post', array( &$this, 'delete_post' ) );
+						
+			// add script for "edit posts" screens
+			add_action( 'admin_print_scripts-edit.php', array( &$this, 'add_edit_php_scripts' ) );
 			
-			// tweak the query for filtering "edit posts" screens
-			add_filter( 'request', array( &$this, 'change_query_vars' ) );
-			add_filter( 'posts_join', array( &$this, 'posts_join' ), 1, 2 );
+			// bulk/quick edit
+			add_action( 'bulk_edit_custom_box', array( &$this, 'bulk_quick_edit_custom_box' ), 100, 2 );
+			add_action( 'quick_edit_custom_box', array( &$this, 'bulk_quick_edit_custom_box' ), 100, 2 );
+			add_action( 'wp_ajax_custom_post_type_onomy_populate_bulk_quick_edit', array( &$this, 'populate_bulk_quick_edit' ) );
+			add_action( 'wp_ajax_custom_post_type_onomy_save_bulk_edit', array( &$this, 'save_bulk_edit' ) );
+			add_action( 'wp_ajax_custom_post_type_onomy_quick_edit_populate_custom_columns', array( &$this, 'quick_edit_populate_custom_columns' ) );
+			
+			// add column filters
+			add_action( 'restrict_manage_posts', array( &$this, 'restrict_manage_posts' ) );
 			
 			// add custom admin columns
-			add_filter( 'manage_pages_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 10, 1 );
-			add_filter( 'manage_posts_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 10, 2 );
+			add_filter( 'manage_pages_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 100, 1 );
+			add_filter( 'manage_posts_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 100, 2 );		
+				
+			// sortable columns
+			add_action( 'load-edit.php', array( &$this, 'manage_cpt_onomy_admin_sortable_columns' ) );
+			add_filter( 'posts_clauses', array( &$this, 'order_cpt_onomy_admin_by_sortable_column' ), 100, 2 );
+				
 			// edit custom admin columns
 			add_action( 'manage_pages_custom_column', array( &$this, 'edit_cpt_onomy_admin_column' ), 10, 2 );
 			add_action( 'manage_posts_custom_column', array( &$this, 'edit_cpt_onomy_admin_column' ), 10, 2 );
-			
+				
 		}	
 	}
 	
@@ -162,24 +176,6 @@ class CPT_ONOMIES_ADMIN {
 						$cpt[ $key ] = strip_tags( $data );
 				}
 				
-				// these settings are potential arrays
-				if ( isset( $cpt[ 'capability_type' ] ) && !empty( $cpt[ 'capability_type' ] ) ) {
-					// can be separated by space or comma
-					$cpt[ 'capability_type' ] = str_replace( ', ', ',', trim( $cpt[ 'capability_type' ] ) );
-					$cpt[ 'capability_type' ] = str_replace( ' ', ',', trim( $cpt[ 'capability_type' ] ) );
-					$cpt[ 'capability_type' ] = explode( ',', $cpt[ 'capability_type' ] );
-				}
-				// validating
-				if ( isset( $cpt[ 'register_meta_box_cb' ] ) && !empty( $cpt[ 'register_meta_box_cb' ] ) ) {
-					$cpt[ 'register_meta_box_cb' ] = preg_replace( '/([^a-z0-9\_])/i', '', $cpt[ 'register_meta_box_cb' ] );
-				}
-				// must be numeric
-				if ( isset( $cpt[ 'menu_position' ] ) && !empty( $cpt[ 'menu_position' ] ) && is_numeric( $cpt[ 'menu_position' ] ) )
-					$cpt[ 'menu_position' ] = intval( $cpt[ 'menu_position' ] );
-				else if ( isset( $cpt[ 'menu_position' ] ) && !empty( $cpt[ 'menu_position' ] ) )
-					unset( $cpt[ 'menu_position' ] );
-					
-					
 				// Maximum is 20 characters. Can only contain lowercase, alphanumeric characters and underscores
 				$valid_name_preg_test = '/([^a-z0-9\_])/i';
 				
@@ -189,10 +185,12 @@ class CPT_ONOMIES_ADMIN {
 				
 				// if no valid name or label, why bother so remove the data
 				if ( empty( $original_name ) && empty( $new_name ) && empty( $label ) ) {
+					
 					unset( $custom_post_types[ $cpt_key ] );
 					$redirect_cpt = 'new';
 					// add a settings error to let the user know we made a name up
 					add_settings_error( CPT_ONOMIES_OPTIONS_PAGE . '-custom-post-types', CPT_ONOMIES_DASH . '-custom-post-types-error', 'You must provide a valid "Label" or "Name" for the custom post type to be saved.', 'error' );
+				
 				}
 				
 				else {
@@ -248,6 +246,23 @@ class CPT_ONOMIES_ADMIN {
 						
 					}
 					
+					// these settings are potential arrays
+					if ( isset( $cpt[ 'capability_type' ] ) && !empty( $cpt[ 'capability_type' ] ) ) {
+						// can be separated by space or comma
+						$cpt[ 'capability_type' ] = str_replace( ', ', ',', trim( $cpt[ 'capability_type' ] ) );
+						$cpt[ 'capability_type' ] = str_replace( ' ', ',', trim( $cpt[ 'capability_type' ] ) );
+						$cpt[ 'capability_type' ] = explode( ',', $cpt[ 'capability_type' ] );
+					}
+					// validating
+					if ( isset( $cpt[ 'register_meta_box_cb' ] ) && !empty( $cpt[ 'register_meta_box_cb' ] ) ) {
+						$cpt[ 'register_meta_box_cb' ] = preg_replace( '/([^a-z0-9\_])/i', '', $cpt[ 'register_meta_box_cb' ] );
+					}
+					// must be numeric
+					if ( isset( $cpt[ 'menu_position' ] ) && !empty( $cpt[ 'menu_position' ] ) && is_numeric( $cpt[ 'menu_position' ] ) )
+						$cpt[ 'menu_position' ] = intval( $cpt[ 'menu_position' ] );
+					else if ( isset( $cpt[ 'menu_position' ] ) && !empty( $cpt[ 'menu_position' ] ) )
+						unset( $cpt[ 'menu_position' ] );
+					
 					// store data
 					$cpt[ 'name' ] = $store_name;
 					$saved_post_types[ $store_name ] = $cpt;
@@ -266,6 +281,18 @@ class CPT_ONOMIES_ADMIN {
 			if ( isset( $redirect_cpt ) )
 				$_REQUEST['_wp_http_referer'] = preg_replace( '/(\&edit\=([^\&]*))/i', '&edit='.$redirect_cpt, $_REQUEST['_wp_http_referer'] );
 				
+			// check to make sure "attached" post types exist
+			foreach( $saved_post_types as $cpt_key => $cpt ) {
+				if ( !empty( $cpt[ 'attach_to_post_type' ] ) ) {
+					foreach( $cpt[ 'attach_to_post_type' ] as $attached_index => $attached ) {
+						if ( !post_type_exists( $attached ) )
+							unset( $saved_post_types[ $cpt_key ][ 'attach_to_post_type' ][ $attached_index ] );
+					}
+					if ( empty( $saved_post_types[ $cpt_key ][ 'attach_to_post_type' ] ) )
+						unset( $saved_post_types[ $cpt_key ][ 'attach_to_post_type' ] );
+				}
+			}
+			
 			return $saved_post_types;
 			
 		}
@@ -306,6 +333,18 @@ class CPT_ONOMIES_ADMIN {
 				
 			// sort custom post types (alphabetically) by post type
 			ksort( $saved_other_post_types );
+			
+			// check to make sure "attached" post types exist
+			foreach( $saved_other_post_types as $cpt_key => $cpt ) {
+				if ( !empty( $cpt[ 'attach_to_post_type' ] ) ) {
+					foreach( $cpt[ 'attach_to_post_type' ] as $attached_index => $attached ) {
+						if ( !post_type_exists( $attached ) )
+							unset( $saved_other_post_types[ $cpt_key ][ 'attach_to_post_type' ][ $attached_index ] );
+					}
+					if ( empty( $saved_other_post_types[ $cpt_key ][ 'attach_to_post_type' ] ) )
+						unset( $saved_other_post_types[ $cpt_key ][ 'attach_to_post_type' ] );
+				}
+			}
 			
 			return $saved_other_post_types;
 			
@@ -465,67 +504,92 @@ class CPT_ONOMIES_ADMIN {
 	
 	/**
 	 * This functions adds the help tab to the top of the options page.
+	 *
+	 * Added support for help tab backwards compatability in version 1.0.3.
 	 * 
 	 * @since 1.0
 	 */
 	public function add_plugin_options_help_tab() {
-	    $screen = get_current_screen();
-		 // only add help tab on my options page
-	    if ( $screen->id != $this->options_page )
-	        return;
-		$screen->add_help_tab( array( 
-	        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_getting_started',
-	        'title'	=> 'Getting Started',
-	        'callback'	=> array( &$this, 'get_plugin_options_help_tab_getting_started' )
-	    ));
-		$screen->add_help_tab( array( 
-	        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_managing_editing_your_cpts',
-	        'title'	=> 'Managing/Editing Your Custom Post Types',
-	        'callback'	=> array( &$this, 'get_plugin_options_help_tab_managing_editing_your_cpts' )
-	    ));
-		$screen->add_help_tab( array( 
-	        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_troubleshooting',
-	        'title'	=> 'Troubleshooting',
-	        'callback'	=> array( &$this, 'get_plugin_options_help_tab_troubleshooting' )
-	    ));
+		
+		// backwards compatability
+		if ( get_bloginfo( 'version' ) < 3.3 ) {
+	
+			$text = $this->get_plugin_options_help_tab_getting_started();
+			$text .= $this->get_plugin_options_help_tab_managing_editing_your_cpts();
+			$text .= $this->get_plugin_options_help_tab_troubleshooting();
+    		add_contextual_help( $this->options_page, $text );
+			
+		}
+		
+		else {
+		
+		    $screen = get_current_screen();
+			 // only add help tab on my options page
+		    if ( $screen->id != $this->options_page )
+		        return;
+			$screen->add_help_tab( array( 
+		        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_getting_started',
+		        'title'	=> 'Getting Started',
+		        'callback'	=> array( &$this, 'get_plugin_options_help_tab_getting_started' )
+		    ));
+			$screen->add_help_tab( array( 
+		        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_managing_editing_your_cpts',
+		        'title'	=> 'Managing/Editing Your Custom Post Types',
+		        'callback'	=> array( &$this, 'get_plugin_options_help_tab_managing_editing_your_cpts' )
+		    ));
+			$screen->add_help_tab( array( 
+		        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_troubleshooting',
+		        'title'	=> 'Troubleshooting',
+		        'callback'	=> array( &$this, 'get_plugin_options_help_tab_troubleshooting' )
+		    ));
+			
+		}
+		
 	}
 	
 	/**
 	 * This function returns the content for the What Is A CPT-onomy "Help" tab on the options page.
 	 *
+	 * Added support for help tab backwards compatability in version 1.0.3.
+	 *
 	 * @since 1.0
 	 */
-	public function get_plugin_options_help_tab_getting_started() { ?>
-		<h3>What Is A CPT-onomy?</h3>
+	public function get_plugin_options_help_tab_getting_started() {
+		
+		$text = '<h3>What Is A CPT-onomy?</h3>
         <p>A CPT-onomy is a taxonomy built from a custom post type, using post titles to assign taxonomy relationships just as you would assign taxonomy terms. You can use the CPT-onomies admin to create your own custom post types or use post types created by themes or other plugins.</p>
-        
-        <p><strong>Is CPT-onomy an official WordPress term?</strong> No. It's just a fun word I made up.</p>
-        
+        <p><strong>Is CPT-onomy an official WordPress term?</strong> No. It\'s just a fun word I made up.</p>
         <p><strong>Need custom post types but not (necessarily) CPT-onomies?</strong> CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types <strong>without touching one line of code!</strong></p>
-        
         <h4>How to Get Started</h4>
-        <p>You can't have a CPT-onomy without a custom post type! <a href="<?php echo esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => 'new' ), admin_url( 'options-general.php' ) ) ); ?>">Add a new custom post type</a> (or <a href="<?php echo esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE ), admin_url( 'options-general.php' ) ) ); ?>#cpt-onomies-other-custom-post-types">use custom post types created by themes or other plugins</a>), register the custom post type as a CPT-onomy (under "Register this Custom Post Type as a CPT-onomy" on the edit screen) and CPT-onomies will take care of the rest.</p>
-        
+        <p>You can\'t have a CPT-onomy without a custom post type! <a href="' . esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => 'new' ), admin_url( 'options-general.php' ) ) ) . '">Add a new custom post type</a> (or <a href="' . esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE ), admin_url( 'options-general.php' ) ) ) . '#cpt-onomies-other-custom-post-types">use custom post types created by themes or other plugins</a>), register the custom post type as a CPT-onomy (under "Register this Custom Post Type as a CPT-onomy" on the edit screen) and CPT-onomies will take care of the rest.</p>
         <h4>Why CPT-onomies?</h4>
-        <p>It doesn't take long to figure out that custom post types can be a pretty powerful tool for creating and managing numerous types of content. For example, you might use the custom post types "Movies" and "Actors" to build a movie database but what if you wanted to group your "movies" by its "actors"? You could create a custom "actors" taxonomy but then you would have to manage your list of actors in two places: your "actors" custom post type and your "actors" taxonomy. This can be a pretty big hassle, especially if you have an extensive custom post type.</p>
-        <p><strong>This is where CPT-onomies steps in.</strong> Register your custom post type as a CPT-onomy and CPT-onomies will build your taxonomy for you, using your post type's post titles as the terms. Pretty cool, huh?
-        
+        <p>It doesn\'t take long to figure out that custom post types can be a pretty powerful tool for creating and managing numerous types of content. For example, you might use the custom post types "Movies" and "Actors" to build a movie database but what if you wanted to group your "movies" by its "actors"? You could create a custom "actors" taxonomy but then you would have to manage your list of actors in two places: your "actors" custom post type and your "actors" taxonomy. This can be a pretty big hassle, especially if you have an extensive custom post type.</p>
+        <p><strong>This is where CPT-onomies steps in.</strong> Register your custom post type as a CPT-onomy and CPT-onomies will build your taxonomy for you, using your post type\'s post titles as the terms. Pretty cool, huh?</p>        
         <h4>Using CPT-onomies</h4>
-        <p>What's really great about CPT-onomies is that they work just like any other taxonomy, allowing you to use WordPress taxonomy functions, like <a href="http://codex.wordpress.org/Function_Reference/get_terms" target="_blank">get_terms()</a> and <a href="http://codex.wordpress.org/Function_Reference/wp_get_object_terms" target="_blank">wp_get_object_terms()</a>, to access the information you need. CPT-onomies even includes a tag cloud widget for your sidebar.</p>
-        
-        <p><span class="description"><strong>Note:</strong> Unfortunately, not every taxonomy function can be used at this time. <a href="http://rachelcarden.com/cpt-onomies/documentation/" title="CPT-onomy documentation" target="_blank">Check out the CPT-onomy documentation</a> to see which WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy class.</span></p>
-    <?php }
+        <p>What\'s really great about CPT-onomies is that they work just like any other taxonomy, allowing you to use WordPress taxonomy functions, like <a href="http://codex.wordpress.org/Function_Reference/get_terms" target="_blank">get_terms()</a> and <a href="http://codex.wordpress.org/Function_Reference/wp_get_object_terms" target="_blank">wp_get_object_terms()</a>, to access the information you need. CPT-onomies even includes a tag cloud widget for your sidebar.</p>
+        <p><span class="description"><strong>Note:</strong> Unfortunately, not every taxonomy function can be used at this time. <a href="http://rachelcarden.com/cpt-onomies/documentation/" title="CPT-onomy documentation" target="_blank">Check out the CPT-onomy documentation</a> to see which WordPress taxonomy functions work and when you\'ll need to access the plugin\'s CPT-onomy class.</span></p>';
+		
+		// backwards compatability
+		if ( get_bloginfo( 'version' ) < 3.3 )
+			return $text;
+		else
+			echo $text;
+			
+   	}
 	
 	/**
 	 * This function returns the content for the Managing Your Custom Post Type "Help" tab on the options page.
 	 *
+	 * Added support for help tab backwards compatability in version 1.0.3.
+	 *
 	 * @since 1.0
 	 */
-	public function get_plugin_options_help_tab_managing_editing_your_cpts() { ?>
-    	<h3>Managing/Editing Your Custom Post Types</h3>
-        <p>For the most part, managing your custom post types is fairly easy. However, there are a few settings that can either be confusing or complicated. If you can't find the answer below, refer to <a href="http://codex.wordpress.org/Function_Reference/register_post_type" title="WordPress Codex page for register_post_type()" target="_blank">the WordPress Codex</a>, <a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>?forum_id=10" title="CPT-onomies support forums" target="_blank">the plugin's support forums</a>, or <a href="http://www.rachelcarden.com/cpt-onomies/" target="_blank">my web site</a> for help.</p>
+	public function get_plugin_options_help_tab_managing_editing_your_cpts() {
+		
+		$text = '<h3>Managing/Editing Your Custom Post Types</h3>
+        <p>For the most part, managing your custom post types is fairly easy. However, there are a few settings that can either be confusing or complicated. If you can\'t find the answer below, refer to <a href="http://codex.wordpress.org/Function_Reference/register_post_type" title="WordPress Codex page for register_post_type()" target="_blank">the WordPress Codex</a>, <a href="' . CPT_ONOMIES_PLUGIN_DIRECTORY_URL . '?forum_id=10" title="CPT-onomies support forums" target="_blank">the plugin\'s support forums</a>, or <a href="http://www.rachelcarden.com/cpt-onomies/" target="_blank">my web site</a> for help.</p>
         <h4>Admin Menu Position (under Advanced Options)</h4>
-        <p>If you would like to customize your custom post type's postion in the administration menu, all you have to do is enter a custom menu position. Use the table below as a quide.</p>
+        <p>If you would like to customize your custom post type\'s postion in the administration menu, all you have to do is enter a custom menu position. Use the table below as a quide.</p>
         <table class="menu_position" cellpadding="0" cellspacing="0" border="0">
         	<tr>
             	<td><strong>5</strong> - below Posts</td>
@@ -550,27 +614,63 @@ class CPT_ONOMIES_ADMIN {
             <tr>
             	<td colspan="2"><strong>60</strong> - below first separator</td>
           	</tr>
-      	</table>
- 	<?php }
+      	</table>';
+		
+		// backwards compatability
+		if ( get_bloginfo( 'version' ) < 3.3 )
+			return $text;
+		else
+			echo $text;
+			
+ 	}
 	
 	/**
 	 * This function returns the content for the Troubleshooting "Help" tab on the options page.
 	 *
+	 * Added support for help tab backwards compatability in version 1.0.3.
+	 *
 	 * @since 1.0
 	 */
-	public function get_plugin_options_help_tab_troubleshooting() { ?>
-    	<h3>Troubleshooting</h3>
-        <p>If you're having trouble, and can't find the answer below, <a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>?forum_id=10" title="CPT-onomies support forums" target="_blank">check the support forums</a> or <a href="http://www.rachelcarden.com/cpt-onomies/" target="_blank">visit my web site</a>. If your problem involves a custom post type setting, <a href="http://codex.wordpress.org/Function_Reference/register_post_type" title="WordPress Codex page for register_post_type()" target="_blank">the WordPress Codex</a> might be able to help.</p>
+	public function get_plugin_options_help_tab_troubleshooting() {
+		
+		$text = '<h3>Troubleshooting</h3>
+        <p>If you\'re having trouble, and can\'t find the answer below, <a href="' . CPT_ONOMIES_PLUGIN_DIRECTORY_URL . '?forum_id=10" title="CPT-onomies support forums" target="_blank">check the support forums</a> or <a href="http://www.rachelcarden.com/cpt-onomies/" target="_blank">visit my web site</a>. If your problem involves a custom post type setting, <a href="http://codex.wordpress.org/Function_Reference/register_post_type" title="WordPress Codex page for register_post_type()" target="_blank">the WordPress Codex</a> might be able to help.</p>
         <h4>My custom post type and/or CPT-onomy is not showing up</h4>
         <p>Make sure your custom post type has not been deactivated <strong>AND</strong> that your custom post type is "Public" (under "Advanced Options").</p>
         <h4>My custom post type and/or CPT-onomy archive page is not working</h4>
-        <p>If archive pages are enabled but are not working correctly, or are receiving a 404 error, it's probably the result of a rewrite or permalink error. Here are a few suggestions to get things working:</p>
+        <p>If archive pages are enabled but are not working correctly, or are receiving a 404 error, it\'s probably the result of a rewrite or permalink error. Here are a few suggestions to get things working:</p>
         <ul>
         	<li><strong>Double check "Has Archive Page"</strong> Make sure the archive pages are enabled.</li>
         	<li><strong>Are pretty permalinks enabled?</strong> Archive pages will not work without pretty permalinks. Visit Settings->Permalinks and make sure anything but "Default" is selected.</li>
         	<li><strong>Changing rewrite rules:</strong> Whenever rewrite settings are changed, the rules need to be "flushed" to make sure everything is in working order. Flush your rewrite rules by visiting Settings->Permalinks and clicking "Save Changes".</li>
       	</ul>
-    <?php }
+		<h4>When I filter or query posts, the results are incorrect</h4>
+		<p>CPT-onomies bear the same name as their custom post type counterparts, i.e. if you have an "actors" custom post type, it\'s CPT-onomy is also named "actors". With that said, pre-CPT-onomies, you may have had a custom taxonomy named "actors" and, although that taxonomy is no longer registered, your old taxonomy\'s term information may still exist in your database. This is where WordPress gets a little confused because CPT-onomy information is stored differently than regular taxonomies. To fix the problem, all you have to do is remove the old taxonomy information (by following the steps below). If that doesn\'t solve your problem, please <a href="http://rachelcarden.com/contact/" target="_blank">let me know</a>.</p>
+		<ul>
+			<li><strong>If you do not have access to your database or wish to only deal with the WP admin:</strong>
+				<ol>
+					<li>"Unregister" your CPT-onomy. You do not have to remove your custom post type, just the CPT-onomy. Just make sure everything is unchecked under "Attach to Post Types".</li>
+					<li>Open your functions.php and <a href="http://codex.wordpress.org/Function_Reference/register_taxonomy" target="_blank">register your old taxonomy</a>. It doesn\'t matter which post type you attach it to, you just need access to the taxonomy\'s "edit" page. For the sake of this tutorial, we\'ll pretend you\'ve attached it to "Posts".</li>
+					<li>Open the "Posts" submenu, and click your taxonomy. Select the checkbox at the top left of the terms table and do a "bulk action" to delete all of the terms.</li>
+					<li>Once you\'ve removed all of the terms, you can "unregister" your taxonomy by removing the register_taxonomy() code from your functions.php file and then re-register your CPT-onomy. This should clear up any WordPress confusion.</li>
+				</ol>
+			</li>
+			<li><strong>If you have access to your database:</strong>
+				<ol>
+					<li>Find the "term_taxonomy" table and take note of the "term_taxonomy_id" and "term_id" of all of the rows with your taxonomy, then delete these rows.</li>
+					<li>Find the "terms" table and delete any of the rows that contain one of your noted "term_id"s.</li>
+					<li>Find the "term_relationships" table and delete any of the rows that contain one of your noted "term_taxonomy_id"s.</li>
+				</ol>
+			</li>
+		</ul>';
+		
+		// backwards compatability
+		if ( get_bloginfo( 'version' ) < 3.3 )
+			return $text;
+		else
+			echo $text;
+			
+   	}
 	
 	/**
 	 * Queues style sheet for plugin's option page.
@@ -580,7 +680,7 @@ class CPT_ONOMIES_ADMIN {
 	 * @since 1.0
 	 */	
 	public function add_plugin_options_styles() {
-		wp_enqueue_style( CPT_ONOMIES_DASH, CPT_ONOMIES_URL . '/css/admin.css' );
+		wp_enqueue_style( CPT_ONOMIES_DASH . '-admin', CPT_ONOMIES_URL . 'css/admin.css' );
 	}
 	
 	/**
@@ -591,8 +691,8 @@ class CPT_ONOMIES_ADMIN {
 	 * @since 1.0
 	 */	
 	public function add_plugin_options_scripts() {
-		wp_enqueue_script( 'jquery-form-validation', CPT_ONOMIES_URL . '/js/jquery.validate.min.js', array( 'jquery' ), '', true );
-		wp_enqueue_script( CPT_ONOMIES_DASH, CPT_ONOMIES_URL . '/js/admin.js', array( 'jquery', 'jquery-form-validation' ), '', true );
+		wp_enqueue_script( 'jquery-form-validation', CPT_ONOMIES_URL . 'js/jquery.validate.min.js', array( 'jquery' ), '', true );
+		wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-options', CPT_ONOMIES_URL . 'js/admin-options.js', array( 'jquery', 'jquery-form-validation' ), '', true );
 		// need this script for the metaboxes to work correctly
 		wp_enqueue_script( 'post' );
 		wp_enqueue_script( 'postbox' );
@@ -1127,6 +1227,8 @@ class CPT_ONOMIES_ADMIN {
 	/**
 	 * This function is invoked when the plugin's option page is added to output the content.
 	 *
+	 * Added support for submit button backwards compatability in version 1.0.3.
+	 *
 	 * This function is invoked by the action 'admin_menu'.
 	 *
 	 * @since 1.0
@@ -1260,19 +1362,18 @@ class CPT_ONOMIES_ADMIN {
 					
 				case 'promote':
 					?>
-	                <ul>
-	                	<li><a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>" title="Give the plugin a good rating" target="_blank">Give the plugin a good rating</a></li>
-	                    <li><a href="https://twitter.com/#!/bamadesigner" title="bamadesigner on Twitter" target="_blank">Follow me on Twitter</a></li>
-	                    <li class="donate">
-                        	<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-                            	<input type="hidden" name="cmd" value="_s-xclick">
-                                <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----">
-                                <input class="donatebutton" type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!"><div style="float:left; padding:6px 0 0 2px;"><a href="https://www.paypal.com/us/cgi-bin/webscr?cmd=_flow&SESSION=LSa9VMv8-O9RLhb_Ns4y4Hdiw3DybZ9djrhM-NWy1Xpc4PmyJ9X_2zklJ5W&dispatch=5885d80a13c0db1f8e263663d3faee8db2b24f7b84f1819343fd6c338b1d9d60" target="_blank">a few bucks</a></div>
-                                <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
-                         	</form>
-                       	</li>
-	               	</ul>
-	                <?php
+	                <p class="rating"><img src="<?php echo CPT_ONOMIES_URL; ?>images/rating_star.png" /><span><a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>" title="Give the plugin a good rating" target="_blank">Give the plugin a good rating</a></span></p>
+	                <p class="twitter"><img src="<?php echo CPT_ONOMIES_URL; ?>images/twitter_bird.png" /><span><a href="https://twitter.com/#!/bamadesigner" title="bamadesigner on Twitter" target="_blank">Follow me on Twitter</a></span></p>
+                    <form class="donate" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+                    	<input type="hidden" name="cmd" value="_s-xclick" />
+                        <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----" />
+                        <input class="donatebutton" type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!" />
+                        <div class="donatetext">
+                        	<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank">a few bucks</a>
+                       	</div>
+                        <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1" />
+                 	</form>
+                  	<?php
 					break;
 					
 				case 'support':
@@ -1306,11 +1407,11 @@ class CPT_ONOMIES_ADMIN {
 								unset( $post_type_objects[ $post_type ] );
 							// gather the plugin settings
 							else if ( is_array( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( $post_type, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) {
-								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'attach_to_post_type' ] ) )
+								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'attach_to_post_type' ] ) && !empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'attach_to_post_type' ] ) )
 									$post_type_objects[ $post_type ]->attach_to_post_type = $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'attach_to_post_type' ];
-								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'has_cpt_onomy_archive' ] ) )
+								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'has_cpt_onomy_archive' ] ) && !empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'has_cpt_onomy_archive' ] ) )
 									$post_type_objects[ $post_type ]->has_cpt_onomy_archive = $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'has_cpt_onomy_archive' ];
-								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'restrict_user_capabilities' ] ) )
+								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'restrict_user_capabilities' ] ) && !empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'restrict_user_capabilities' ] ) )
 									$post_type_objects[ $post_type ]->restrict_user_capabilities = $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $post_type ][ 'restrict_user_capabilities' ];
 							}
 						}
@@ -1343,12 +1444,23 @@ class CPT_ONOMIES_ADMIN {
                             <?php }
 							else {
 								foreach( $post_type_objects as $post_type => $CPT ) {
+									
 	                                if ( !is_object( $CPT ) ) $CPT = (object) $CPT;
 									if ( !empty( $post_type ) && ( !isset( $CPT->name ) || empty( $CPT->name ) ) ) $CPT->name = $post_type;
 									else if ( empty( $post_type ) && isset( $CPT->name ) && !empty( $CPT->name ) ) $post_type = $CPT->name;
 									
 									// make sure post type and label exist
 									if ( !empty( $post_type ) && !( !isset( $CPT->label ) || empty( $CPT->label ) ) ) {
+										
+										// make sure attached post types exist
+										if ( !empty( $CPT->attach_to_post_type ) ) {
+											foreach( $CPT->attach_to_post_type as $attached_index => $attached ) {
+												if ( !post_type_exists( $attached ) )
+													unset( $CPT->attach_to_post_type[ $attached_index ] );											
+											}
+											if ( empty( $CPT->attach_to_post_type ) )
+												unset( $CPT->attach_to_post_type );
+										}
 										
 										$inactive_cpt = isset( $CPT->deactivate ) ? true : false;
 										
@@ -1357,7 +1469,6 @@ class CPT_ONOMIES_ADMIN {
 										
 										$attention_cpt = ( !$inactive_cpt && ( ( !$other && !$is_registered_cpt ) || ( $other && $is_registered_cpt ) ) ) ? true : false;
 										$attention_cpt_onomy = ( !$inactive_cpt && ( ( $attention_cpt ) || ( isset( $CPT->attach_to_post_type ) && !$is_registered_cpt_onomy ) ) ) ? true : false;
-										
 										$message = NULL;
 										if ( $attention_cpt ) {
 											$builtin = get_post_types( array( '_builtin' => true ), 'objects' );
@@ -1484,11 +1595,11 @@ class CPT_ONOMIES_ADMIN {
 							$CPT = get_post_type_object( $edit );
 							$CPT->other = true;
 							if ( is_array( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( $edit, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) {
-								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'attach_to_post_type' ] ) )
+								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'attach_to_post_type' ] ) && !empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'attach_to_post_type' ] ) )
 									$CPT->attach_to_post_type = $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'attach_to_post_type' ];
-								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'has_cpt_onomy_archive' ] ) )
+								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'has_cpt_onomy_archive' ] ) && !empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'has_cpt_onomy_archive' ] ) )
 									$CPT->has_cpt_onomy_archive = $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'has_cpt_onomy_archive' ];
-								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'restrict_user_capabilities' ] ) )
+								if ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'restrict_user_capabilities' ] ) && !empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'restrict_user_capabilities' ] ) )
 									$CPT->restrict_user_capabilities = $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $edit ][ 'restrict_user_capabilities' ];
 							}
 						}
@@ -1497,6 +1608,16 @@ class CPT_ONOMIES_ADMIN {
 						else if ( is_array( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( $edit, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) )
 							$CPT = (object) $cpt_onomies_manager->user_settings[ 'custom_post_types' ][ $edit ];
 						
+					}
+					
+					// make sure attached post types exist
+					if ( !empty( $CPT->attach_to_post_type ) ) {
+						foreach( $CPT->attach_to_post_type as $attached_index => $attached ) {
+							if ( !post_type_exists( $attached ) )
+								unset( $CPT->attach_to_post_type[ $attached_index ] );											
+						}
+						if ( empty( $CPT->attach_to_post_type ) )
+							unset( $CPT->attach_to_post_type );
 					}
 					
 					if ( $other ) { ?>
@@ -1791,7 +1912,7 @@ class CPT_ONOMIES_ADMIN {
 	public function print_cpt_onomy_meta_box( $post, $metabox ) {	
 		
 		// add nonce
-		wp_nonce_field( 'assigning_custom_post_type_onomy_taxonomy_relationships', CPT_ONOMIES_UNDERSCORE . '_nonce' );
+		wp_nonce_field( 'assigning_' . CPT_ONOMIES_UNDERSCORE . '_taxonomy_relationships', CPT_ONOMIES_UNDERSCORE . '_nonce' );
 		
 		$defaults = array( 'taxonomy' => NULL );
 		if ( !isset( $metabox[ 'args' ] ) || !is_array( $metabox[ 'args' ] ) )
@@ -1802,7 +1923,7 @@ class CPT_ONOMIES_ADMIN {
 		$tax = get_taxonomy( $taxonomy );
 
 		// add field for testing "editability" when we save the information ?>
-        <input type="hidden" name="assigning_<?php echo CPT_ONOMIES_UNDERSCORE; ?>_<?php echo $taxonomy; ?>_relationships" value="1" />
+       	<input type="hidden" name="assigning_<?php echo CPT_ONOMIES_UNDERSCORE; ?>_<?php echo $taxonomy; ?>_relationships" value="1" />
 		
 		<div id="taxonomy-<?php echo $taxonomy; ?>" class="categorydiv">
 			<ul id="<?php echo $taxonomy; ?>-tabs" class="category-tabs">
@@ -1836,14 +1957,18 @@ class CPT_ONOMIES_ADMIN {
 	 * @param object $post - the current post's information
 	 */
 	public function save_post( $post_id, $post ) {
-		global $cpt_onomies_manager, $cpt_onomy;
+		global $cpt_onomies_manager, $cpt_onomy, $wpdb;
+
+		// pointless if $_POST is empty (this happens on bulk edit)
+		if ( empty( $_POST ) )
+			return $post_id;
 		
 		// verify nonce
-		if ( !( isset( $_POST[ CPT_ONOMIES_UNDERSCORE . '_nonce' ] ) && wp_verify_nonce( $_POST[ CPT_ONOMIES_UNDERSCORE . '_nonce' ], 'assigning_custom_post_type_onomy_taxonomy_relationships' ) ) )
+		if ( !( isset( $_POST[ 'is_bulk_quick_edit' ] ) || ( isset( $_POST[ CPT_ONOMIES_UNDERSCORE . '_nonce' ] ) && wp_verify_nonce( $_POST[ CPT_ONOMIES_UNDERSCORE . '_nonce' ], 'assigning_' . CPT_ONOMIES_UNDERSCORE . '_taxonomy_relationships' ) ) ) )
 			return $post_id;
 		
 		// check autosave
-		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE )
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
 			return $post_id;
 			
 		// dont save for revisions
@@ -1887,71 +2012,265 @@ class CPT_ONOMIES_ADMIN {
 		// delete all relationships tied to this term
 		$wpdb->query( $wpdb->prepare( "DELETE FROM " . $wpdb->postmeta . " WHERE meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "' AND meta_value = " . $post_id ) );
 	}
-		
+	
 	/**
-	 * This function is run on the edit posts screen so you can filter posts by a CPT-onomy.
+	 * Adds scripts to the admin "Edit Posts" page.
 	 *
-	 * This function is applied to the filter 'request'.
-	 * 	 
-	 * @since 1.0
-	 * @uses $cpt_onomies_manager, $cpt_onomy, $pagenow, $post_type
-	 * @param array $query - the query variables already created by WordPress
-	 * @return array - the filtered query variables
+	 * This function is invoked by the action 'admin_print_scripts-edit.php'.
+	 * 
+	 * @since 1.0.3
 	 */
-	public function change_query_vars( $query ) {
-		global $cpt_onomies_manager, $cpt_onomy, $pagenow, $post_type;
-		// for filtering by CPT-onomy on admin edit posts screen
-		if ( $pagenow == 'edit.php' && isset( $post_type ) ) {
-			foreach( get_taxonomies( array( '_builtin' => false, 'public' => true ), 'objects' ) as $taxonomy => $tax ) {
-				if ( isset( $_REQUEST[ $taxonomy ] ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) )  {
-					// make sure the term exists
-					$cpt_onomy_term = $cpt_onomy->get_term_by( 'slug', $_REQUEST[ $taxonomy ], $taxonomy );
-					if ( !empty( $cpt_onomy_term ) ) {
-						unset( $query[ $taxonomy ] );
-						unset( $query[ 'name' ] );
-					}
-				}
-			}
-		}
-		return $query;
+	public function add_edit_php_scripts() {
+		wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-edit', CPT_ONOMIES_URL . 'js/admin-edit.js', array( 'jquery', 'inline-edit-post' ), '', true );
 	}
 	
 	/**
-	 * This function is run on the edit posts screen so you can filter posts by a CPT-onomy.
+	 * Adds CPT-onomies to the "Bulk Edit" and "Quick Edit" screens. The function is called
+	 * for each custom column who's name tells us which CPT-onomy checklist to print.
+	 *
+	 * This function is invoked by the actions 'bulk_edit_custom_box' and 'quick_edit_custom_box'.
 	 * 
-	 * This function is applied to the filter 'posts_join'.
-	 * 	 
-	 * @since 1.0
-	 * @uses $wpdb, $cpt_onomies_manager, $cpt_onomy, $pagenow, $post_type
-	 * @param string $join - the $join query already created by WordPress
-	 * @return string - the filtered $join query
+	 * @since 1.0.3
+	 * @uses $cpt_onomies_manager, $post
+	 * @param string $column_name - the name of the column (which tells us which taxonomy to show)
+	 * @param string $post_type - the current post's post type 
 	 */
-	public function posts_join( $join, $query ) {
-		global $wpdb, $cpt_onomies_manager, $cpt_onomy, $pagenow, $post_type;
-		// for filtering by CPT-onomy on admin edit posts screen
-		if ( $pagenow == 'edit.php' && isset( $post_type ) ) {
-			foreach( get_taxonomies( array( '_builtin' => false, 'public' => true ), 'objects' ) as $taxonomy => $tax ) {
-				if ( isset( $_REQUEST[ $taxonomy ] ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) )  {
-					
-					// get IDs for ALL posts with this slug
-					// this allows us to show multiple slugs with same post_name where hierarchical allows multiples
-					$slug = $_REQUEST[ $taxonomy ]; 
-					$term_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM " . $wpdb->posts . " WHERE post_name = '" . $slug . "'" ) );
-					
-					// if term ids exists
-					if ( !empty( $term_ids ) ) {
-						$join .= " INNER JOIN " . $wpdb->postmeta . " ON " .
-							$wpdb->postmeta . ".post_id = " . $wpdb->posts . ".ID AND " .
-							$wpdb->postmeta . ".meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "' AND " . 
-							$wpdb->postmeta . ".meta_value IN ( " . implode( ',', $term_ids ) . ") ";
-					}
-					
-				}
-			}
-		}
-		return $join;
+	public function bulk_quick_edit_custom_box( $column_name, $post_type ) {
+		global $cpt_onomies_manager, $post;
+		if ( strpos( $column_name, CPT_ONOMIES_UNDERSCORE ) !== false ) {
+			$taxonomy = strtolower( str_replace( CPT_ONOMIES_UNDERSCORE . '_', '', $column_name ) );
+			if ( taxonomy_exists( $taxonomy ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
+				$tax = get_taxonomy( $taxonomy );
+				?>
+				
+				<fieldset class="inline-edit-col-center inline-edit-<?php echo $taxonomy; ?>"><div class="inline-edit-col">
+				
+                    <span class="title inline-edit-<?php echo $taxonomy; ?>-label"><?php echo esc_html( $tax->labels->name ) ?>
+                        <span class="catshow"><?php _e( '[more]' ); ?></span>
+                        <span class="cathide" style="display:none;"><?php _e( '[less]' ); ?></span>
+                    </span>
+                    <ul class="cat-checklist cpt-onomy-checklist cpt-onomy-<?php echo esc_attr( $taxonomy )?>">
+                        <?php wp_terms_checklist( NULL, array( 'taxonomy' => $taxonomy, 'walker' => new CPTonomy_Walker_Terms_Checklist() ) ); ?>
+                    </ul>
+                    
+                    <?php // these variables help with processing/saving the info ?>
+                    <input type="hidden" name="is_bulk_quick_edit" value="true" />
+                  	<input type="hidden" name="<?php echo 'assigning_' . CPT_ONOMIES_UNDERSCORE . '_' . $taxonomy . '_relationships'; ?>" value="true" />
+				
+				</div></fieldset>
+                              
+			<?php }
+		}				
 	}
 	
+	/**
+	 * This ajax function is run on the "Edit Posts" screen when a post is being "quick edited" 
+	 * and is used to identify which terms should be checked in the CPT-onomy checklists.
+	 *  
+	 * @since 1.0.3
+	 */	
+	public function populate_bulk_quick_edit() {
+		$post_ids = ( isset( $_POST[ 'custom_post_type_onomies_post_ids' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_ids' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_ids' ] : array();
+		$taxonomies = ( isset( $_POST[ 'custom_post_type_onomies_taxonomies' ] ) && !empty( $_POST[ 'custom_post_type_onomies_taxonomies' ] ) ) ? $_POST[ 'custom_post_type_onomies_taxonomies' ] : array();
+		if ( !empty( $post_ids ) && !empty( $taxonomies ) ) {
+			if ( !is_array( $post_ids ) ) $post_ids = array( $post_ids );
+			if ( !is_array( $taxonomies ) ) $taxonomies = array( $taxonomies );
+			echo json_encode( wp_get_object_terms( $post_ids, $taxonomies, array( 'fields' => 'ids' ) ) );
+		}
+		die();
+	}
+	
+	/**
+	 * This ajax function is run on the "Edit Posts" screen when a "Bulk Edit" is saved. It retrieves the 
+	 * "checked" CPT-onomy information and saves the object/term relationships.
+	 *
+	 * Bulk edits do not delete relationships if they are not checked. It only "appends" term relationships,
+	 * i.e. assigning checked relationships if they do not already exist.
+	 *  
+	 * @since 1.0.3
+	 * @uses $cpt_onomy
+	 */	
+	public function save_bulk_edit() {
+		global $cpt_onomy;
+		$post_ids = ( isset( $_POST[ 'custom_post_type_onomies_post_ids' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_ids' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_ids' ] : array();
+		$taxonomy = ( isset( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) && !empty( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) ) ? $_POST[ 'custom_post_type_onomies_taxonomy' ] : NULL;
+		$checked_ids = ( isset( $_POST[ 'custom_post_type_onomies_checked_ids' ] ) && !empty( $_POST[ 'custom_post_type_onomies_checked_ids' ] ) ) ? $_POST[ 'custom_post_type_onomies_checked_ids' ] : array();
+		if ( !empty( $post_ids ) && !empty( $taxonomy ) ) {			
+			$tax = get_taxonomy( $taxonomy );
+			// check permissions
+			if ( current_user_can( $tax->cap->assign_terms ) ) {
+				foreach( $post_ids as $post_id ) {
+					
+					// set object terms 
+					// "append" is set to true so it doesn't delete relationships, only creates)
+					if ( !empty( $checked_ids ) )
+						$cpt_onomy->wp_set_object_terms( $post_id, $checked_ids, $taxonomy, true );
+						
+				}					
+			}				
+		}
+		die();		
+	}
+	
+	/**
+	 * This ajax function is run on the "Edit Posts" screen when a "Quick Edit" is saved.
+	 *
+	 * If the post type is not 'post' or 'page', the custom columns are NOT added back to
+	 * the row so CPT-onomies takes care of this for you. After CPT-onomies adds the column,
+	 * this function is run to populate the column.
+	 *  
+	 * @since 1.0.3
+	 */	
+	public function quick_edit_populate_custom_columns() {		
+		$post_id = ( isset( $_POST[ 'custom_post_type_onomies_post_id' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_id' ] ) && is_numeric( $_POST[ 'custom_post_type_onomies_post_id' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_id' ] : 0;
+		$post_type = ( isset( $_POST[ 'custom_post_type_onomies_post_type' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_type' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_type' ] : NULL;
+		$column_name = ( isset( $_POST[ 'custom_post_type_onomies_column_name' ] ) && !empty( $_POST[ 'custom_post_type_onomies_column_name' ] ) ) ? $_POST[ 'custom_post_type_onomies_column_name' ] : NULL;		
+		if ( $post_id && !empty( $post_type ) && !empty( $column_name ) ) {
+			
+			// since the ajax will not retrieve comment info
+			if ( $column_name == 'comments' ) {
+				?><div class="post-com-count-wrapper"><?php
+					// we have to set $post so the comment count will pick up the post ID
+					global $post;
+					$post->ID = $post_id;
+					$wp_list_table = _get_list_table( 'WP_Posts_List_Table' );
+					$pending_comments = isset( $wp_list_table->comment_pending_count[ $post_id ] ) ? $wp_list_table->comment_pending_count[ $post_id ] : 0;
+					$wp_list_table->comments_bubble( $post_id, $pending_comments );
+				?></div><?php			
+			}
+			// the ajax will retrieve column info for posts and pages only
+			else {
+				if ( is_post_type_hierarchical( $post_type ) )
+					do_action( 'manage_pages_custom_column', $column_name, $post_id );
+				else
+					do_action( 'manage_posts_custom_column', $column_name, $post_id );
+				do_action( "manage_{$post_type}_posts_custom_column", $column_name, $post_id );
+			}
+			
+		}		
+		die();		
+	}
+	
+	/**
+	 * Adds dropdowns to the "Edit Posts" screen which allow you to filter your posts by
+	 * your CPT-onomies. CPT-onomies "hides" the dropdown if it's matching column is hidden.
+	 *
+	 * This function is invoked by the action 'restrict_manage_posts'.
+	 *  
+	 * @since 1.0.3
+	 * @uses $cpt_onomy, $cpt_onomies_manager, $wp_list_table
+	 */
+	public function restrict_manage_posts() {
+		global $cpt_onomy, $cpt_onomies_manager, $wp_list_table;
+		
+		list( $columns, $hidden ) = $wp_list_table->get_column_info();		
+		foreach ( $columns as $column_name => $column_display_name ) {
+			
+			if ( strpos( $column_name, CPT_ONOMIES_UNDERSCORE ) !== false ) {
+				$taxonomy = strtolower( str_replace( CPT_ONOMIES_UNDERSCORE . '_', '', $column_name ) );
+				if ( post_type_exists( $taxonomy ) && taxonomy_exists( $taxonomy ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
+					
+					// get post type info
+					$post_type_object = get_post_type_object( $taxonomy );
+					
+					// get selected term
+					$selected = ( isset( $_REQUEST[ $taxonomy ] ) ) ? $_REQUEST[ $taxonomy ] : NULL;
+					
+					// if slug, then get term id					
+					if ( !is_numeric( $selected ) ) {
+						$term = $cpt_onomy->get_term_by( 'slug', $selected, $taxonomy );
+						if ( $term ) $selected = $term->term_id;
+					}
+					
+					$dropdown_options = array(
+						'show_option_all' => __( 'View all ' . $post_type_object->labels->all_items ),
+						'hierarchical' => true,
+						'show_count' => false,
+						'orderby' => 'name',
+						'selected' => $selected,
+						'name' => $taxonomy,
+						'id' => 'dropdown_' .  CPT_ONOMIES_UNDERSCORE . '_' . $taxonomy,
+						'class' => 'postform ' . ( ( in_array( $column_name, $hidden ) ) ? ' hide-all' : '' ),
+						'taxonomy' => $taxonomy
+					);
+					wp_dropdown_categories( $dropdown_options );
+					
+				}			
+			}
+		}
+	}
+	
+	/**
+	 * Adds the filter for managing sortable columns.
+	 *
+	 * This function is invoked by the action 'load-edit.php'.
+	 * 
+	 * @since 1.0.3
+	 * @uses $current_screen
+	 */
+	public function manage_cpt_onomy_admin_sortable_columns() {
+		global $current_screen;
+		add_filter( 'manage_' . $current_screen->id . '_sortable_columns', array( &$this, 'add_cpt_onomy_admin_sortable_column' ) );
+	}
+	
+	/**
+	 * Tells Wordpress to make our CPT-onomy columns sortable.
+	 *
+	 * This function is invoked by the filter 'manage_'.$current_screen->id.'_sortable_columns'.
+	 * 
+	 * @since 1.0.3
+	 * @uses $cpt_onomies_manager, $current_screen
+	 * @param array $columns - the column info already created by WordPress
+	 * @return array - the columns info after it has been filtered
+	 */
+	public function add_cpt_onomy_admin_sortable_column( $columns ) {
+		global $cpt_onomies_manager, $current_screen;
+		foreach( get_object_taxonomies( $current_screen->post_type, 'objects' ) as $taxonomy => $tax ) {
+			// make sure its public and a registered CPT-onomy
+			if ( $tax->public == true && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
+					
+				// add sortable column
+				$columns[ CPT_ONOMIES_UNDERSCORE . '_' . $taxonomy ] = $tax->label;
+									
+			}
+		}
+		return $columns;
+	}
+	
+	/**
+	 * Adjusts the query on the "Edit Posts" screen when "sorting" by a column.
+	 *
+	 * This function is invoked by the filter 'posts_clauses'.
+	 * 
+	 * @since 1.0.3
+	 * @uses $cpt_onomies_manager, $wpdb
+	 * @param array $clauses - the clauses info already created by WordPress
+	 * @param WP_Query object $wp_query - the query information already created by WordPress
+	 * @return array - the clauses info after it has been filtered
+	 */
+	public function order_cpt_onomy_admin_by_sortable_column( $clauses, $wp_query ) {
+		global $cpt_onomies_manager, $wpdb;
+		if ( isset( $wp_query->query[ 'post_type' ] ) && isset( $wp_query->query[ 'orderby' ] ) ) {
+			foreach( get_object_taxonomies( $wp_query->query[ 'post_type' ], 'objects' ) as $taxonomy => $tax ) {
+				if ( $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
+					if ( isset( $wp_query->query[ 'orderby' ] ) && $wp_query->query[ 'orderby' ] == $tax->label ) {
+																	
+						$clauses[ 'join' ] .= " LEFT OUTER JOIN " . $wpdb->postmeta . " cpt_onomy_order_pm ON cpt_onomy_order_pm.post_id = " . $wpdb->posts . ".ID
+								AND cpt_onomy_order_pm.meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "'
+							LEFT OUTER JOIN " . $wpdb->posts . " cpt_onomy_order_posts ON cpt_onomy_order_posts.ID = cpt_onomy_order_pm.meta_value
+								AND cpt_onomy_order_posts.post_type = '" . $taxonomy . "'";
+						
+						$clauses[ 'groupby' ] = 'ID';
+						$clauses[ 'orderby' ] = ' GROUP_CONCAT( cpt_onomy_order_posts.post_title ORDER BY cpt_onomy_order_posts.post_title ASC )' . ( ( strtoupper( $wp_query->query[ 'order' ] ) == 'DESC' ) ? ' DESC' : ' ASC' ) . ( !empty( $clauses[ 'orderby' ] ) ? ', ' : ' ' ) . $clauses[ 'orderby' ];
+						
+						
+					}					
+				}	
+			}
+		} 
+		return $clauses;
+	}
+		
 	/**
 	 * If a CPT-onomy is attached to a post type, the plugin adds a column
 	 * to the post type's edit screen which lists each post's assigned terms.
@@ -2029,11 +2348,11 @@ class CPT_ONOMIES_ADMIN {
 	public function edit_cpt_onomy_admin_column( $column_name, $post_id ) {
 		global $post;
 		if ( strpos( $column_name, CPT_ONOMIES_UNDERSCORE ) !== false ) {
-			$post_type = strtolower( str_replace( CPT_ONOMIES_UNDERSCORE . '_', '', $column_name ) );
-			$terms = wp_get_object_terms( $post_id, $post_type );
+			$taxonomy = strtolower( str_replace( CPT_ONOMIES_UNDERSCORE . '_', '', $column_name ) );
+			$terms = wp_get_object_terms( $post_id, $taxonomy );
 			foreach( $terms as $index => $term ) {
 				if ( $index > 0 ) echo ', ';
-				echo '<a href="' . esc_url( add_query_arg( array( 'post_type' => $post->post_type, $post_type => $term->slug ), 'edit.php' ) ) . '">' . $term->name . '</a>';	
+				echo '<a href="' . esc_url( add_query_arg( array( 'post_type' => $post->post_type, $taxonomy => $term->term_id ), 'edit.php' ) ) . '">' . $term->name . '</a>';	
 			}
 		}
 	}

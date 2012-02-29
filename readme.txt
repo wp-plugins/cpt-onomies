@@ -1,14 +1,16 @@
 === CPT-onomies: Using Custom Post Types as Taxonomies ===
 Contributors: bamadesigner
-Donate link: https://www.paypal.com/us/cgi-bin/webscr?cmd=_flow&SESSION=LSa9VMv8-O9RLhb_Ns4y4Hdiw3DybZ9djrhM-NWy1Xpc4PmyJ9X_2zklJ5W&dispatch=5885d80a13c0db1f8e263663d3faee8db2b24f7b84f1819343fd6c338b1d9d60
-Tags: custom post types, post, types, post type, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies
-Requires at least: 3.0
+Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
+Tags: custom post type, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, custom post type taxonomies, use custom post type as taxonomy
+Requires at least: 3.1
 Tested up to: 3.3.1
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 
 A CPT-onomy is a taxonomy built from a custom post type, using the post titles as the taxonomy terms.
 
 == Description ==
+
+**WordPress 3.1 is required as of CPT-onomies version 1.0.3.**
 
 *CPT-onomies* is a WordPress plugin that allows you to use your custom post types as taxonomies without having to manage your "terms" in two places. CPT-onomies does all of the work, allowing you to create custom post types and register CPT-onomies **without touching one line of code!**
 
@@ -24,7 +26,7 @@ No. It's just a fun word I made up.
 
 = Need Custom Post Types But Not (Necessarily) CPT-onomies? =
 
-CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types without touching one line of code!
+CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types within the admin.
 
 = Why CPT-onomies? =
 
@@ -36,7 +38,7 @@ It doesn't take long to figure out that custom post types can be a pretty powerf
 
 What's really great about CPT-onomies is that they work just like any other taxonomy, allowing you to use WordPress taxonomy functions, like [get_terms()](http://codex.wordpress.org/Function_Reference/get_terms "get_terms()"), [get_the_terms()](http://codex.wordpress.org/Function_Reference/get_the_terms "get_the_terms()") and [wp_get_object_terms()](http://codex.wordpress.org/Function_Reference/wp_get_object_terms "wp_get_object_terms()"), to access the CPT-onomy information you need. CPT-onomies even includes a tag cloud widget for your sidebar.
 
-As of version 1.0.2, you can use CPT-onomies with tax queries for query_posts() and WP_Query().
+As of version 1.0.2, CPT-onomies work with tax queries when using [The Loop](http://rachelcarden.com/cpt-onomies/documentation/The_Loop/ "The WordPress Loop").
 
 *Note: Unfortunately, not every taxonomy function can be used at this time. [Check out the CPT-onomy documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomy documentation") to see which WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy functions.*
 
@@ -54,6 +56,7 @@ As of version 1.0.2, you can use CPT-onomies with tax queries for query_posts() 
 CPT-onomies is hot off the presses so check in later for frequently asked questions.
 
 In the meantime, refer to the following resources:
+
 * [CPT-onomies Support Forums](http://wordpress.org/tags/cpt-onomies?forum_id=10 "CPT-onomies Support Forums")
 * [CPT-onomies Documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomies Documentation")
 
@@ -67,12 +70,21 @@ In the meantime, refer to the following resources:
 
 == Changelog ==
 
+= 1.0.3 =
+* DO NOT UPDATE IF YOU ARE NOT USING WORDPRESS 3.1 OR NEWER!! If you're using a version older than 3.1., and having issues, download CPT-onomies 1.0.2. for bug fixes.
+* Added support for Bulk Edit and Quick Edit.
+* Added the ability to sort and filter by CPT-onomy on the admin "Edit Posts" screen.
+* Fixed a bug where tax queries wouldn't work with CPT-onomies AND taxonomies.
+* Fixed a bug with wp_get_object_terms() not working for multiple object IDs.
+* Fixed a bug with custom 'Has Archive' slugs not registering correctly.
+* Added backwards compatability/fixed bug for adding the help tab prior to WordPress version 3.3.
+
 = 1.0.2 =
 * Fixed a few bugs with the "Restrict User's Capability to Assign Term Relationships" feature.
 * The WordPress function, wp_count_terms(), now works with CPT-onomies and doesn't require the CPT-onomy class.
 * Added get_objects_in_term() to the CPT-onomy class.
 * Added previous_post_link(), next_post_link(), adjacent_post_link(), prev_post_rel_link(), next_post_rel_link(), get_adjacent_post_rel_link() and get_adjacent_post() to the CPT-onomy class with the ability to designate "in the same CPT-onomy".
-* Added support for tax queries with query_posts() and WP_Query().
+* Added support for tax queries when using The Loop.
 
 = 1.0.1 =
 * Fixed bug that didn't delete relationships when CPT-onomy "term" is deleted.

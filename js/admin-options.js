@@ -1,44 +1,47 @@
-jQuery(document).ready( function($) {
+jQuery.noConflict()(function(){
 		
 	// validate form
-	$( '#custom-post-type-onomies-edit-cpt-form' ).validate({
+	jQuery( '#custom-post-type-onomies-edit-cpt-form' ).validate({
 		onkeyup: false
 	});
 	
 	// validate custom post type name to make sure it contains valid characters
-	$.validator.addMethod( 'custom_post_type_onomies_validate_name_characters', function( value, element ) {
+	jQuery.validator.addMethod( 'custom_post_type_onomies_validate_name_characters', function( value, element ) {
 		return this.optional( element ) || ( value.length <= 20 && !value.match( /([^a-z0-9\_])/ ) );
 	}, 'Your post type name is invalid.' );
 	
 	// validate custom post type name to make sure post type doesnt already exist
-	$.validator.addMethod( 'custom_post_type_onomies_validate_name', function( value, element ) {
+	jQuery.validator.addMethod( 'custom_post_type_onomies_validate_name', function( value, element ) {
 		var validator = this, response;
-		$.ajax({
+		jQuery.ajax({
 			url: ajaxurl,
 			type: 'POST',
 			async: false,
 			cache: false,
 			data: {
 				action: 'custom_post_type_onomy_validate_if_post_type_exists',
-				original_custom_post_type_onomies_cpt_name: $( "#custom-post-type-onomies-custom-post-type-original-name" ).val(),
+				original_custom_post_type_onomies_cpt_name: jQuery( "#custom-post-type-onomies-custom-post-type-original-name" ).val(),
 				custom_post_type_onomies_cpt_name: value
 			},
 			success: function( data ) {
 				response = ( data == 'true' ) ? true : false;
+			},
+			complete: function() {
+				response = ( response == null ) ? true : response;
 			}
 		});
-		$.validator.messages.custom_post_type_onomies_validate_name = 'The post type name, "' + value + '", already exists. Please choose another name.';
+		jQuery.validator.messages.custom_post_type_onomies_validate_name = 'The post type name, "' + value + '", already exists. Please choose another name.';
 		return response;
 	}, 'That post type name already exists. Please choose another name.' );
 	
 	// show message
-	$( '.show_cpt_message' ).click( function( event ) {
+	jQuery( '.show_cpt_message' ).live( 'click', function( event ) {
 		event.preventDefault();
-		alert( $( this ).attr( 'alt' ) );		
+		alert( jQuery( this ).attr( 'alt' ) );		
 	});
 	
 	// show delete confirmation
-	$( '.delete_cpt_onomy_custom_post_type' ).click( function( event ) {
+	jQuery( '.delete_cpt_onomy_custom_post_type' ).live( 'click', function( event ) {
 		var $message = 'Are you sure you want to delete this custom post type?\n\nThere is NO undo and once you click "OK", all of your settings will be gone.\n\n';
 		$message += 'FYI: Deleting your custom post type DOES NOT delete the actual posts.\nThey\'ll be waiting for you if you decide to register this post type again.\nJust make sure you use the same name.';
 		var $confirm = confirm( $message );
@@ -47,22 +50,22 @@ jQuery(document).ready( function($) {
 	});
 	
 	// dim post type name if already set
-	$( 'input#custom-post-type-onomies-custom-post-type-name' ).addClass( 'inactive' );
-	$( 'input#custom-post-type-onomies-custom-post-type-name' ).focus( function() {
-		$( this ).removeClass( 'inactive' );
+	jQuery( 'input#custom-post-type-onomies-custom-post-type-name' ).addClass( 'inactive' );
+	jQuery( 'input#custom-post-type-onomies-custom-post-type-name' ).focus( function() {
+		jQuery( this ).removeClass( 'inactive' );
 	});
-	$( 'input#custom-post-type-onomies-custom-post-type-name' ).blur( function() {
-		$( this ).addClass( 'inactive' );
+	jQuery( 'input#custom-post-type-onomies-custom-post-type-name' ).blur( function() {
+		jQuery( this ).addClass( 'inactive' );
 	});
 	
 	// reset properties
-	$( 'table.edit_custom_post_type .reset_property' ).click( function() {
-		$( this ).closest( 'table' ).find( 'input[type="radio"]:checked' ).removeAttr( 'checked' );
+	jQuery( 'table.edit_custom_post_type .reset_property' ).live( 'click', function() {
+		jQuery( this ).closest( 'table' ).find( 'input[type="radio"]:checked' ).removeAttr( 'checked' );
 	});
 	
 	// take care of the advanced open-close and messages
-	$( 'table.edit_custom_post_type td.advanced' ).each( function() {
-		$( this ).children( 'table' ).custom_post_type_onomies_setup_advanced_table();		
+	jQuery( 'table.edit_custom_post_type td.advanced' ).each( function() {
+		jQuery( this ).children( 'table' ).custom_post_type_onomies_setup_advanced_table();		
 	});
 	
 });
@@ -110,6 +113,7 @@ jQuery.fn.custom_post_type_onomies_show_advanced_table = function() {
 		jQuery.ajax({
 			url: ajaxurl,
 			type: 'POST',
+			async: false,
 			cache: false,
 			data: {
 				action: 'custom_post_type_onomy_update_edit_custom_post_type_closed_edit_tables',
@@ -157,6 +161,7 @@ jQuery.fn.custom_post_type_onomies_hide_advanced_table = function() {
 		jQuery.ajax({
 			url: ajaxurl,
 			type: 'POST',
+			async: false,
 			cache: false,
 			data: {
 				action: 'custom_post_type_onomy_update_edit_custom_post_type_closed_edit_tables',
