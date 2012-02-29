@@ -52,6 +52,11 @@
 #tab-panel-custom_post_type_onomies_help_troubleshooting li {
 	margin:0 0 0 26px;
 	}
+#tab-panel-custom_post_type_onomies_help_getting_started li li,
+#tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts li li,
+#tab-panel-custom_post_type_onomies_help_troubleshooting li li {
+	margin-left:0;
+	}
 #tab-panel-custom_post_type_onomies_help_getting_started table,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts table,
 #tab-panel-custom_post_type_onomies_help_troubleshooting table {
@@ -86,37 +91,40 @@
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a90329', endColorstr='#6d0019',GradientType=0 ); /* IE6-9 */
 }
 
-#custom-post-type-onomies-key .inside {
-	padding-right:15px;
-}
+#custom-post-type-onomies-key .inside, #custom-post-type-onomies-promote .inside { padding-right:15px; }
 
-#custom-post-type-onomies-key img {
+#custom-post-type-onomies-key p, #custom-post-type-onomies-promote p { margin:10px 0; }
+
+#custom-post-type-onomies-key img, #custom-post-type-onomies-promote img {
 	margin:0 6px 2px 0;
 	vertical-align:middle;
 }
+#custom-post-type-onomies-promote .rating img { margin-right:8px; }
 
 #custom-post-type-onomies-key .inactive { color:#333; margin-top:9px; }
 #custom-post-type-onomies-key .attention { color:#d54e21; }
 #custom-post-type-onomies-key .working { color:#457800; }
 
+#custom-post-type-onomies-promote p.twitter { margin-bottom:8px; }
 
-#custom-post-type-onomies-promote li {
+#custom-post-type-onomies-promote form.donate {
 	overflow:hidden;
-}
+	margin-bottom:10px;
+	}
 
-#custom-post-type-onomies-promote .donate .donatebutton {
+#custom-post-type-onomies-promote form.donate .donatebutton {
 	display:block;
 	float:left;
 	width:74px;
 	height:21px;
 }
 
-#custom-post-type-onomies-promote .donate .text {
+#custom-post-type-onomies-promote form.donate .donatetext {
 	display:block;
 	float:left;
-	background:#900;
-	border:1px solid #900;
+	padding:6px 0 0 4px;
 }
+
 
 
 
