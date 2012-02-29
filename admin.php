@@ -469,25 +469,41 @@ class CPT_ONOMIES_ADMIN {
 	 * @since 1.0
 	 */
 	public function add_plugin_options_help_tab() {
-	    $screen = get_current_screen();
-		 // only add help tab on my options page
-	    if ( $screen->id != $this->options_page )
-	        return;
-		$screen->add_help_tab( array( 
-	        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_getting_started',
-	        'title'	=> 'Getting Started',
-	        'callback'	=> array( &$this, 'get_plugin_options_help_tab_getting_started' )
-	    ));
-		$screen->add_help_tab( array( 
-	        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_managing_editing_your_cpts',
-	        'title'	=> 'Managing/Editing Your Custom Post Types',
-	        'callback'	=> array( &$this, 'get_plugin_options_help_tab_managing_editing_your_cpts' )
-	    ));
-		$screen->add_help_tab( array( 
-	        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_troubleshooting',
-	        'title'	=> 'Troubleshooting',
-	        'callback'	=> array( &$this, 'get_plugin_options_help_tab_troubleshooting' )
-	    ));
+	    
+		// backwards compatability
+		if ( get_bloginfo( 'version' ) < 3.3 ) {
+	
+			$text = $this->get_plugin_options_help_tab_getting_started();
+			$text .= $this->get_plugin_options_help_tab_managing_editing_your_cpts();
+			$text .= $this->get_plugin_options_help_tab_troubleshooting();
+    		add_contextual_help( $this->options_page, $text );
+			
+		}
+		
+		else {
+		
+		    $screen = get_current_screen();
+			 // only add help tab on my options page
+		    if ( $screen->id != $this->options_page )
+		        return;
+			$screen->add_help_tab( array( 
+		        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_getting_started',
+		        'title'	=> 'Getting Started',
+		        'callback'	=> array( &$this, 'get_plugin_options_help_tab_getting_started' )
+		    ));
+			$screen->add_help_tab( array( 
+		        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_managing_editing_your_cpts',
+		        'title'	=> 'Managing/Editing Your Custom Post Types',
+		        'callback'	=> array( &$this, 'get_plugin_options_help_tab_managing_editing_your_cpts' )
+		    ));
+			$screen->add_help_tab( array( 
+		        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_troubleshooting',
+		        'title'	=> 'Troubleshooting',
+		        'callback'	=> array( &$this, 'get_plugin_options_help_tab_troubleshooting' )
+		    ));
+			
+		}
+		
 	}
 	
 	/**
@@ -495,37 +511,40 @@ class CPT_ONOMIES_ADMIN {
 	 *
 	 * @since 1.0
 	 */
-	public function get_plugin_options_help_tab_getting_started() { ?>
-		<h3>What Is A CPT-onomy?</h3>
+	public function get_plugin_options_help_tab_getting_started() {
+		
+		$text = '<h3>What Is A CPT-onomy?</h3>
         <p>A CPT-onomy is a taxonomy built from a custom post type, using post titles to assign taxonomy relationships just as you would assign taxonomy terms. You can use the CPT-onomies admin to create your own custom post types or use post types created by themes or other plugins.</p>
-        
-        <p><strong>Is CPT-onomy an official WordPress term?</strong> No. It's just a fun word I made up.</p>
-        
+        <p><strong>Is CPT-onomy an official WordPress term?</strong> No. It\'s just a fun word I made up.</p>
         <p><strong>Need custom post types but not (necessarily) CPT-onomies?</strong> CPT-onomies offers an extensive custom post type manager, allowing you to create and completely customize your custom post types <strong>without touching one line of code!</strong></p>
-        
         <h4>How to Get Started</h4>
-        <p>You can't have a CPT-onomy without a custom post type! <a href="<?php echo esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => 'new' ), admin_url( 'options-general.php' ) ) ); ?>">Add a new custom post type</a> (or <a href="<?php echo esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE ), admin_url( 'options-general.php' ) ) ); ?>#cpt-onomies-other-custom-post-types">use custom post types created by themes or other plugins</a>), register the custom post type as a CPT-onomy (under "Register this Custom Post Type as a CPT-onomy" on the edit screen) and CPT-onomies will take care of the rest.</p>
-        
+        <p>You can\'t have a CPT-onomy without a custom post type! <a href="' . esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => 'new' ), admin_url( 'options-general.php' ) ) ) . '">Add a new custom post type</a> (or <a href="' . esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE ), admin_url( 'options-general.php' ) ) ) . '#cpt-onomies-other-custom-post-types">use custom post types created by themes or other plugins</a>), register the custom post type as a CPT-onomy (under "Register this Custom Post Type as a CPT-onomy" on the edit screen) and CPT-onomies will take care of the rest.</p>
         <h4>Why CPT-onomies?</h4>
-        <p>It doesn't take long to figure out that custom post types can be a pretty powerful tool for creating and managing numerous types of content. For example, you might use the custom post types "Movies" and "Actors" to build a movie database but what if you wanted to group your "movies" by its "actors"? You could create a custom "actors" taxonomy but then you would have to manage your list of actors in two places: your "actors" custom post type and your "actors" taxonomy. This can be a pretty big hassle, especially if you have an extensive custom post type.</p>
-        <p><strong>This is where CPT-onomies steps in.</strong> Register your custom post type as a CPT-onomy and CPT-onomies will build your taxonomy for you, using your post type's post titles as the terms. Pretty cool, huh?
-        
+        <p>It doesn\'t take long to figure out that custom post types can be a pretty powerful tool for creating and managing numerous types of content. For example, you might use the custom post types "Movies" and "Actors" to build a movie database but what if you wanted to group your "movies" by its "actors"? You could create a custom "actors" taxonomy but then you would have to manage your list of actors in two places: your "actors" custom post type and your "actors" taxonomy. This can be a pretty big hassle, especially if you have an extensive custom post type.</p>
+        <p><strong>This is where CPT-onomies steps in.</strong> Register your custom post type as a CPT-onomy and CPT-onomies will build your taxonomy for you, using your post type\'s post titles as the terms. Pretty cool, huh?</p>        
         <h4>Using CPT-onomies</h4>
-        <p>What's really great about CPT-onomies is that they work just like any other taxonomy, allowing you to use WordPress taxonomy functions, like <a href="http://codex.wordpress.org/Function_Reference/get_terms" target="_blank">get_terms()</a> and <a href="http://codex.wordpress.org/Function_Reference/wp_get_object_terms" target="_blank">wp_get_object_terms()</a>, to access the information you need. CPT-onomies even includes a tag cloud widget for your sidebar.</p>
-        
-        <p><span class="description"><strong>Note:</strong> Unfortunately, not every taxonomy function can be used at this time. <a href="http://rachelcarden.com/cpt-onomies/documentation/" title="CPT-onomy documentation" target="_blank">Check out the CPT-onomy documentation</a> to see which WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy class.</span></p>
-    <?php }
+        <p>What\'s really great about CPT-onomies is that they work just like any other taxonomy, allowing you to use WordPress taxonomy functions, like <a href="http://codex.wordpress.org/Function_Reference/get_terms" target="_blank">get_terms()</a> and <a href="http://codex.wordpress.org/Function_Reference/wp_get_object_terms" target="_blank">wp_get_object_terms()</a>, to access the information you need. CPT-onomies even includes a tag cloud widget for your sidebar.</p>
+        <p><span class="description"><strong>Note:</strong> Unfortunately, not every taxonomy function can be used at this time. <a href="http://rachelcarden.com/cpt-onomies/documentation/" title="CPT-onomy documentation" target="_blank">Check out the CPT-onomy documentation</a> to see which WordPress taxonomy functions work and when you\'ll need to access the plugin\'s CPT-onomy class.</span></p>';
+		
+		// backwards compatability
+		if ( get_bloginfo( 'version' ) < 3.3 )
+			return $text;
+		else
+			echo $text;
+			
+   	}
 	
 	/**
 	 * This function returns the content for the Managing Your Custom Post Type "Help" tab on the options page.
 	 *
 	 * @since 1.0
 	 */
-	public function get_plugin_options_help_tab_managing_editing_your_cpts() { ?>
-    	<h3>Managing/Editing Your Custom Post Types</h3>
-        <p>For the most part, managing your custom post types is fairly easy. However, there are a few settings that can either be confusing or complicated. If you can't find the answer below, refer to <a href="http://codex.wordpress.org/Function_Reference/register_post_type" title="WordPress Codex page for register_post_type()" target="_blank">the WordPress Codex</a>, <a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>?forum_id=10" title="CPT-onomies support forums" target="_blank">the plugin's support forums</a>, or <a href="http://www.rachelcarden.com/cpt-onomies/" target="_blank">my web site</a> for help.</p>
+	public function get_plugin_options_help_tab_managing_editing_your_cpts() {
+		
+		$text = '<h3>Managing/Editing Your Custom Post Types</h3>
+        <p>For the most part, managing your custom post types is fairly easy. However, there are a few settings that can either be confusing or complicated. If you can\'t find the answer below, refer to <a href="http://codex.wordpress.org/Function_Reference/register_post_type" title="WordPress Codex page for register_post_type()" target="_blank">the WordPress Codex</a>, <a href="' . CPT_ONOMIES_PLUGIN_DIRECTORY_URL . '?forum_id=10" title="CPT-onomies support forums" target="_blank">the plugin\'s support forums</a>, or <a href="http://www.rachelcarden.com/cpt-onomies/" target="_blank">my web site</a> for help.</p>
         <h4>Admin Menu Position (under Advanced Options)</h4>
-        <p>If you would like to customize your custom post type's postion in the administration menu, all you have to do is enter a custom menu position. Use the table below as a quide.</p>
+        <p>If you would like to customize your custom post type\'s postion in the administration menu, all you have to do is enter a custom menu position. Use the table below as a quide.</p>
         <table class="menu_position" cellpadding="0" cellspacing="0" border="0">
         	<tr>
             	<td><strong>5</strong> - below Posts</td>
@@ -550,27 +569,61 @@ class CPT_ONOMIES_ADMIN {
             <tr>
             	<td colspan="2"><strong>60</strong> - below first separator</td>
           	</tr>
-      	</table>
- 	<?php }
+      	</table>';
+		
+		// backwards compatability
+		if ( get_bloginfo( 'version' ) < 3.3 )
+			return $text;
+		else
+			echo $text;
+			
+ 	}
 	
 	/**
 	 * This function returns the content for the Troubleshooting "Help" tab on the options page.
 	 *
 	 * @since 1.0
 	 */
-	public function get_plugin_options_help_tab_troubleshooting() { ?>
-    	<h3>Troubleshooting</h3>
-        <p>If you're having trouble, and can't find the answer below, <a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>?forum_id=10" title="CPT-onomies support forums" target="_blank">check the support forums</a> or <a href="http://www.rachelcarden.com/cpt-onomies/" target="_blank">visit my web site</a>. If your problem involves a custom post type setting, <a href="http://codex.wordpress.org/Function_Reference/register_post_type" title="WordPress Codex page for register_post_type()" target="_blank">the WordPress Codex</a> might be able to help.</p>
+	public function get_plugin_options_help_tab_troubleshooting() {
+		
+		$text = '<h3>Troubleshooting</h3>
+        <p>If you\'re having trouble, and can\'t find the answer below, <a href="' . CPT_ONOMIES_PLUGIN_DIRECTORY_URL . '?forum_id=10" title="CPT-onomies support forums" target="_blank">check the support forums</a> or <a href="http://www.rachelcarden.com/cpt-onomies/" target="_blank">visit my web site</a>. If your problem involves a custom post type setting, <a href="http://codex.wordpress.org/Function_Reference/register_post_type" title="WordPress Codex page for register_post_type()" target="_blank">the WordPress Codex</a> might be able to help.</p>
         <h4>My custom post type and/or CPT-onomy is not showing up</h4>
         <p>Make sure your custom post type has not been deactivated <strong>AND</strong> that your custom post type is "Public" (under "Advanced Options").</p>
         <h4>My custom post type and/or CPT-onomy archive page is not working</h4>
-        <p>If archive pages are enabled but are not working correctly, or are receiving a 404 error, it's probably the result of a rewrite or permalink error. Here are a few suggestions to get things working:</p>
+        <p>If archive pages are enabled but are not working correctly, or are receiving a 404 error, it\'s probably the result of a rewrite or permalink error. Here are a few suggestions to get things working:</p>
         <ul>
         	<li><strong>Double check "Has Archive Page"</strong> Make sure the archive pages are enabled.</li>
         	<li><strong>Are pretty permalinks enabled?</strong> Archive pages will not work without pretty permalinks. Visit Settings->Permalinks and make sure anything but "Default" is selected.</li>
         	<li><strong>Changing rewrite rules:</strong> Whenever rewrite settings are changed, the rules need to be "flushed" to make sure everything is in working order. Flush your rewrite rules by visiting Settings->Permalinks and clicking "Save Changes".</li>
       	</ul>
-    <?php }
+		<h4>When I filter or query posts, the results are incorrect</h4>
+		<p>CPT-onomies bear the same name as their custom post type counterparts, i.e. if you have an "actors" custom post type, it\'s CPT-onomy is also named "actors". With that said, pre-CPT-onomies, you may have had a custom taxonomy named "actors" and, although that taxonomy is no longer registered, your old taxonomy\'s term information may still exist in your database. This is where WordPress gets a little confused because CPT-onomy information is stored differently than regular taxonomies. To fix the problem, all you have to do is remove the old taxonomy information (by following the steps below). If that doesn\'t solve your problem, please <a href="http://rachelcarden.com/contact/" target="_blank">let me know</a>.</p>
+		<ul>
+			<li><strong>If you do not have access to your database or wish to only deal with the WP admin:</strong>
+				<ol>
+					<li>"Unregister" your CPT-onomy. You do not have to remove your custom post type, just the CPT-onomy. Just make sure everything is unchecked under "Attach to Post Types".</li>
+					<li>Open your functions.php and <a href="http://codex.wordpress.org/Function_Reference/register_taxonomy" target="_blank">register your old taxonomy</a>. It doesn\'t matter which post type you attach it to, you just need access to the taxonomy\'s "edit" page. For the sake of this tutorial, we\'ll pretend you\'ve attached it to "Posts".</li>
+					<li>Open the "Posts" submenu, and click your taxonomy. Select the checkbox at the top left of the terms table and do a "bulk action" to delete all of the terms.</li>
+					<li>Once you\'ve removed all of the terms, you can "unregister" your taxonomy by removing the register_taxonomy() code from your functions.php file and then re-register your CPT-onomy. This should clear up any WordPress confusion.</li>
+				</ol>
+			</li>
+			<li><strong>If you have access to your database:</strong>
+				<ol>
+					<li>Find the "term_taxonomy" table and take note of the "term_taxonomy_id" and "term_id" of all of the rows with your taxonomy, then delete these rows.</li>
+					<li>Find the "terms" table and delete any of the rows that contain one of your noted "term_id"s.</li>
+					<li>Find the "term_relationships" table and delete any of the rows that contain one of your noted "term_taxonomy_id"s.</li>
+				</ol>
+			</li>
+		</ul>';
+		
+		// backwards compatability
+		if ( get_bloginfo( 'version' ) < 3.3 )
+			return $text;
+		else
+			echo $text;
+			
+   	}
 	
 	/**
 	 * Queues style sheet for plugin's option page.
@@ -580,7 +633,7 @@ class CPT_ONOMIES_ADMIN {
 	 * @since 1.0
 	 */	
 	public function add_plugin_options_styles() {
-		wp_enqueue_style( CPT_ONOMIES_DASH, CPT_ONOMIES_URL . '/css/admin.css' );
+		wp_enqueue_style( CPT_ONOMIES_DASH, CPT_ONOMIES_URL . 'css/admin.css' );
 	}
 	
 	/**
@@ -591,8 +644,8 @@ class CPT_ONOMIES_ADMIN {
 	 * @since 1.0
 	 */	
 	public function add_plugin_options_scripts() {
-		wp_enqueue_script( 'jquery-form-validation', CPT_ONOMIES_URL . '/js/jquery.validate.min.js', array( 'jquery' ), '', true );
-		wp_enqueue_script( CPT_ONOMIES_DASH, CPT_ONOMIES_URL . '/js/admin.js', array( 'jquery', 'jquery-form-validation' ), '', true );
+		wp_enqueue_script( 'jquery-form-validation', CPT_ONOMIES_URL . 'js/jquery.validate.min.js', array( 'jquery' ), '', true );
+		wp_enqueue_script( CPT_ONOMIES_DASH, CPT_ONOMIES_URL . 'js/admin.js', array( 'jquery', 'jquery-form-validation' ), '', true );
 		// need this script for the metaboxes to work correctly
 		wp_enqueue_script( 'post' );
 		wp_enqueue_script( 'postbox' );
@@ -1209,8 +1262,15 @@ class CPT_ONOMIES_ADMIN {
 								do_meta_boxes( $this->options_page, 'normal', array() );
 								do_meta_boxes( $this->options_page, 'advanced', array() );
 								
-								if ( $new || $edit )
-									submit_button( 'Save Changes', 'primary', 'save_changes', false );
+								if ( $new || $edit ) {
+									
+									// backwards compatability
+									if ( get_bloginfo( 'version' ) < 3.1 )
+										echo '<input type="submit" name="save_changes" id="save_changes" class="button-primary" value="Save Changes"  />';
+									else
+										submit_button( 'Save Changes', 'primary', 'save_changes', false );
+										
+								}
 								
 								?>
                                 
@@ -1260,19 +1320,17 @@ class CPT_ONOMIES_ADMIN {
 					
 				case 'promote':
 					?>
-	                <ul>
-	                	<li><a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>" title="Give the plugin a good rating" target="_blank">Give the plugin a good rating</a></li>
-	                    <li><a href="https://twitter.com/#!/bamadesigner" title="bamadesigner on Twitter" target="_blank">Follow me on Twitter</a></li>
-	                    <li class="donate">
-                        	<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-                            	<input type="hidden" name="cmd" value="_s-xclick">
-                                <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----">
-                                <input class="donatebutton" type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-                                <div style="float:left; padding:6px 0 0 2px;"><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank">a few bucks</a></div>
-                                <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
-                        	</form>
-                       	</li>
-	               	</ul>
+	                <p class="rating"><img src="<?php echo CPT_ONOMIES_URL; ?>images/rating_star.png" /><span><a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>" title="Give the plugin a good rating" target="_blank">Give the plugin a good rating</a></span></p>
+	                <p class="twitter"><img src="<?php echo CPT_ONOMIES_URL; ?>images/twitter_bird.png" /><span><a href="https://twitter.com/#!/bamadesigner" title="bamadesigner on Twitter" target="_blank">Follow me on Twitter</a></span></p>
+                    <form class="donate" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+                    	<input type="hidden" name="cmd" value="_s-xclick" />
+                        <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----" />
+                        <input class="donatebutton" type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!" />
+                        <div class="donatetext">
+                        	<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank">a few bucks</a>
+                       	</div>
+                        <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1" />
+                 	</form>
 	                <?php
 					break;
 					

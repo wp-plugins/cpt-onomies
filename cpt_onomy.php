@@ -231,6 +231,8 @@ class CPT_TAXONOMY {
 	 * wp_count_terms() was not added until version 3.1 so if pre-3.1, 
 	 * we have to take care of business ourselves.
 	 * 
+	 * @since 1.0
+	 * @uses $wpdb, $cpt_onomies_manager
 	 * @param string $taxonomy Taxonomy name
 	 * @param array|string $args Overwrite defaults. See get_terms()
 	 * @return int How many terms are in $taxonomy
@@ -240,8 +242,8 @@ class CPT_TAXONOMY {
 		
 		// this function only processes registered CPT taxonomies
 		// if this is a normal taxonomy, then use the WordPress function
-		// if this is post 3.1, then use the WordPress function
-		if ( get_bloginfo( 'version' ) > 3.1 || !$cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) )
+		// if this is 3.1 or later, then use the WordPress function
+		if ( get_bloginfo( 'version' ) >= 3.1 || !$cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) )
 			return wp_count_terms( $taxonomy, $args );
 			
 		$defaults = array('hide_empty' => false);
