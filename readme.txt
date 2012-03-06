@@ -40,7 +40,7 @@ What's really great about CPT-onomies is that they work just like any other taxo
 
 As of version 1.0.2, CPT-onomies work with tax queries when using [The Loop](http://rachelcarden.com/cpt-onomies/documentation/The_Loop/ "The WordPress Loop").
 
-*Note: Unfortunately, not every taxonomy function can be used at this time. [Check out the CPT-onomy documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomy documentation") to see which WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy functions.*
+***Note:** Unfortunately, not every taxonomy function can be used at this time. [Check out the CPT-onomy documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomy documentation") to see which WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy functions.*
 
 == Installation ==
 
@@ -93,6 +93,9 @@ In the meantime, refer to the following resources:
 * Plugin launch!
 
 == Upgrade Notice ==
+
+= 1.0.3 =
+**DO NOT UPDATE IF YOU ARE NOT USING WORDPRESS 3.1 OR NEWER!!** If you're using a version older than 3.1., and having issues, download CPT-onomies 1.0.2. for bug fixes. Added support for Bulk/Quick Edit and Admin Sort/Filter. Fixed a few bugs.
 
 = 1.0.1 =
 Fixed bug that didn't delete relationships when CPT-onomy "term" is deleted.
