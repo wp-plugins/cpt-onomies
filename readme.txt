@@ -53,11 +53,11 @@ As of version 1.0.2, CPT-onomies work with tax queries when using [The Loop](htt
 
 == Frequently Asked Questions ==
 
-= I added support for "Thumbnail" to my custom post type, but the "Featured Image" box is not showing up =
+= I added support for "Thumbnail" to my custom post type, but the "Featured Image" box does not show up =
 
-You also have to add theme support for post thumbnails:
+You also have to add theme support for post thumbnails to your functions.php file:
 
-`add_theme_support( 'post-thumbnails' );`
+`<?php add_theme_support( 'post-thumbnails' ); ?>`
 
 If FAQ didn't cover your problem, refer to the following resources:
 
