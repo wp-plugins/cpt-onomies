@@ -53,9 +53,13 @@ As of version 1.0.2, CPT-onomies work with tax queries when using [The Loop](htt
 
 == Frequently Asked Questions ==
 
-CPT-onomies is hot off the presses so check in later for frequently asked questions.
+= I added support for "Thumbnail" to my custom post type, but the "Featured Image" box is not showing up =
 
-In the meantime, refer to the following resources:
+You also have to add theme support for post thumbnails:
+
+`add_theme_support( 'post-thumbnails' );`
+
+If FAQ didn't cover your problem, refer to the following resources:
 
 * [CPT-onomies Support Forums](http://wordpress.org/tags/cpt-onomies?forum_id=10 "CPT-onomies Support Forums")
 * [CPT-onomies Documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomies Documentation")
@@ -69,6 +73,9 @@ In the meantime, refer to the following resources:
 5. The admin shows which CPT-onomy terms have been assigned.
 
 == Changelog ==
+
+= 1.0.4 =
+* Added filter to CPT-onomy meta box which allows user to change format.
 
 = 1.0.3 =
 * **DO NOT UPDATE IF YOU ARE NOT USING WORDPRESS 3.1 OR NEWER!!** If you're using a version older than 3.1., and having issues, download CPT-onomies 1.0.2. for bug fixes.
