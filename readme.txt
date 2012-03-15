@@ -70,7 +70,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 2. CPT-onomies lets you manage and customize your custom post types without touching one line of code.
 3. Create your custom post types to power your CPT-onomy.
 4. Assign your CPT-onomy terms just like any other taxonomy.
-5. The admin shows which CPT-onomy terms have been assigned.
+5. The admin allows you to sort and filter your posts by CPT-onomy terms.
 
 == Changelog ==
 
