@@ -6,7 +6,7 @@ Requires at least: 3.1
 Tested up to: 3.3.1
 Stable tag: 1.0.3
 
-A CPT-onomy is a taxonomy built of custom post type post titles, allowing you to create relationships between your posts just as you would create taxonomy relationships.
+A CPT-onomy is a taxonomy built of post titles, allowing you to create relationships between your posts just as you would create taxonomy relationships.
 
 == Description ==
 
