@@ -10,7 +10,7 @@ Use your custom post types as taxonomies and create relationships between your p
 
 == Description ==
 
-*CPT-onomies* is a WordPress plugin that allows you to create relationships between your posts by using your custom post type post titles as taxonomy terms. CPT-onomies even work like regular WordPress taxonomies and share the same taxonomy functions, like [get_terms()](http://codex.wordpress.org/Function_Reference/get_terms "get_terms()") and [wp_get_object_terms()](http://codex.wordpress.org/Function_Reference/wp_get_object_terms "wp_get_object_terms()").
+*CPT-onomies* is a WordPress plugin that allows you to create relationships between your posts by using your custom post type post titles as taxonomy terms. CPT-onomies work like regular WordPress taxonomies and share the same taxonomy functions, like [get_terms()](http://codex.wordpress.org/Function_Reference/get_terms "get_terms()") and [wp_get_object_terms()](http://codex.wordpress.org/Function_Reference/wp_get_object_terms "wp_get_object_terms()").
 
 CPT-onomies includes a custom post type manager, allowing you to create custom post types and register CPT-onomies **without touching one line of code!**
 
