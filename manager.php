@@ -22,12 +22,13 @@ class CPT_ONOMIES_MANAGER {
 	 */
 	public function CPT_ONOMIES_MANAGER() { $this->__construct(); }
 	public function __construct() {
+		
 		// get user settings
 		$custom_post_types = get_option( CPT_ONOMIES_UNDERSCORE . '_custom_post_types' );
 		$other_custom_post_types = get_option( CPT_ONOMIES_UNDERSCORE . '_other_custom_post_types' );
 		if ( $custom_post_types ) $this->user_settings[ 'custom_post_types' ] = $custom_post_types;
 		if ( $other_custom_post_types ) $this->user_settings[ 'other_custom_post_types' ] = $other_custom_post_types;
-		
+				
 		// register custom query vars
 		add_filter( 'query_vars', array( &$this, 'register_custom_query_vars' ) );
 		
@@ -44,6 +45,7 @@ class CPT_ONOMIES_MANAGER {
 		
 		// register custom post types and taxonomies
 		add_action( 'init', array( &$this, 'register_custom_post_types_and_taxonomies' ), 100 );
+		
 	}
 	
 	/**
@@ -83,22 +85,30 @@ class CPT_ONOMIES_MANAGER {
 		if ( isset( $query[ 'cpt_onomy_archive' ] ) && !empty( $query[ 'cpt_onomy_archive' ] ) ) {
 			// make sure CPT-onomy AND term exists, otherwise, why bother
 			$taxonomy = $query[ 'cpt_onomy_archive' ];
-			if ( $this->is_registered_cpt_onomy( $taxonomy ) && isset( $query[ $taxonomy ] ) && !empty( $query[ $taxonomy ] ) ) { 
-				
+			if ( $this->is_registered_cpt_onomy( $taxonomy ) && isset( $query[ $taxonomy ] ) && !empty( $query[ $taxonomy ] ) ) {
+			
 				// make sure the term exists
 				$cpt_onomy_term = explode( "/", $query[ $taxonomy ] );
+				
 				// get parent
 				$parent_term_id = 0;
-				if ( count( $cpt_onomy_term ) > 1 ) {
+				if ( count( $cpt_onomy_term ) > 1 ) {					
 					$parent_term = $cpt_onomy->get_term_by( 'slug', $cpt_onomy_term[ count( $cpt_onomy_term ) - 2 ], $taxonomy );
 					if ( isset( $parent_term->term_id ) ) $parent_term_id = $parent_term->term_id;
 				}		
-										
-				$cpt_onomy_term = $cpt_onomy->get_term_by( 'slug', $cpt_onomy_term[ count( $cpt_onomy_term ) - 1 ], $taxonomy, NULL, NULL, $parent_term_id );
-				if ( !empty( $cpt_onomy_term ) ) {															
+				
+				// if term id, then we need to get the term by id
+				$get_term_by = 'slug';
+				if ( is_numeric( $cpt_onomy_term[ count( $cpt_onomy_term ) - 1 ] ) )
+					$get_term_by = 'id';
 					
-					// is supposed to be a child so redirect to correct URL
-					if ( $cpt_onomy_term->parent != $parent_term_id ) {
+				// get the term
+				$cpt_onomy_term = $cpt_onomy->get_term_by( $get_term_by, $cpt_onomy_term[ count( $cpt_onomy_term ) - 1 ], $taxonomy, NULL, NULL, $parent_term_id );
+									
+				if ( !empty( $cpt_onomy_term ) ) {													
+					
+					// is supposed to be a child of $parent_term_id so redirect to correct URL
+					if ( $parent_term_id && $cpt_onomy_term->parent != $parent_term_id ) {
 						wp_redirect( $cpt_onomy->get_term_link( $cpt_onomy_term->term_id, $taxonomy ) );
 						exit;
 					}
@@ -134,8 +144,7 @@ class CPT_ONOMIES_MANAGER {
 
 				}
 			}
-		}
-		
+		}		
 		return $query;
 	}
 	
@@ -158,9 +167,9 @@ class CPT_ONOMIES_MANAGER {
 	 * @param array $query - the query variables already created by WordPress
 	 */
 	public function add_cpt_onomy_term_queried_object( $query ) {
-		global $cpt_onomy;
+		global $cpt_onomy;		
 		// for CPT-onomy archive page on front-end
-		if ( isset( $query->query[ 'cpt_onomy_archive' ] ) && !empty( $query->query[ 'cpt_onomy_archive' ] ) ) {
+		if ( isset( $query->query[ 'cpt_onomy_archive' ] ) && !empty( $query->query[ 'cpt_onomy_archive' ] ) ) {		
 			// make sure CPT-onomy AND term exists, otherwise, why bother
 			$taxonomy = $query->query[ 'cpt_onomy_archive' ];
 			if ( $this->is_registered_cpt_onomy( $taxonomy ) && isset( $query->query[ $taxonomy ] ) && !empty( $query->query[ $taxonomy ] ) ) {
@@ -199,7 +208,7 @@ class CPT_ONOMIES_MANAGER {
 			$is_registered_cpt_onomy = false;
 			$taxonomies = array( 'join' => '', 'where' => array() );
 			$new_where = array();
-			$c = $t = 1;
+			$c = $t = 1;			
 			foreach ( $query->tax_query->queries as $this_query ) {
 				
 				if ( !taxonomy_exists( $this_query[ 'taxonomy' ] )  )
@@ -410,6 +419,9 @@ class CPT_ONOMIES_MANAGER {
 			
 			if ( !empty( $new_where ) )  {
 				
+				// remove the post_name (WP adds this if the post type is hierarhical. I'm not sure why)
+				$clauses[ 'where' ] = preg_replace( '/wp\_posts\.post\_name\s=\s\'([^\']*)\'\sAND\s/i', '', $clauses[ 'where' ] );
+				
 				// remove 0 = 1
 				$clauses[ 'where' ] = preg_replace( '/0\s\=\s1\sAND\s/i', '', $clauses[ 'where' ] );
 											
@@ -491,18 +503,18 @@ class CPT_ONOMIES_MANAGER {
 				
 				// get taxonomy
 				$taxonomy = preg_replace( '/(assign_|_terms)/i', '', $this_cap );
-										
+				
 				// if registered CPT-onomy
 				if ( taxonomy_exists( $taxonomy ) && $this->is_registered_cpt_onomy( $taxonomy ) ) {
+				
+					// get taxonomy info
+					$tax = get_taxonomy( $taxonomy );
 					
 					// default
 					$allow = false;
 					
-					// no capabilities are assigned so everyone has access if they can 'assign_terms' or the custom assigning capability
-					if ( array_key_exists( $taxonomy, $this->user_settings[ 'custom_post_types' ] ) && !isset( $this->user_settings[ 'custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) )
-						$allow = true;
-					// check the "other" custom post types
-					else if ( array_key_exists( $taxonomy, $this->user_settings[ 'other_custom_post_types' ] ) && !isset( $this->user_settings[ 'other_custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) )
+					// no capabilities are assigned so everyone has permission
+					if ( !isset( $tax->restrict_user_capabilities ) || empty( $tax->restrict_user_capabilities ) )
 						$allow = true;
 					
 					// the capability is restricted to specific roles
@@ -514,12 +526,7 @@ class CPT_ONOMIES_MANAGER {
 						foreach ( $user->roles as $role ) {
 														
 							// test to see if role is selected
-							if ( array_key_exists( $taxonomy, $this->user_settings[ 'custom_post_types' ] ) && in_array( $role, $this->user_settings[ 'custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) ) {
-								$allow = true;
-								break;
-							}
-							// test "other" custom post types
-							else if ( array_key_exists( $taxonomy, $this->user_settings[ 'other_custom_post_types' ] ) && in_array( $role, $this->user_settings[ 'other_custom_post_types' ][ $taxonomy ][ 'restrict_user_capabilities' ] ) ) {
+							if ( in_array( $role, $tax->restrict_user_capabilities ) ) {
 								$allow = true;
 								break;
 							}
@@ -589,12 +596,137 @@ class CPT_ONOMIES_MANAGER {
 		}
 		return false;
 	}
+		 
+	/**
+	 *
+	 * Registers the user's custom post type as a CPT-onomy.
+	 * The custom post type must already be registered in order 
+	 * to register the CPT-onomy.
+	 *
+	 * Because custom post types and taxonomies with the same name share
+	 * the same $wp_rewrite permastruct, we cannot define the taxonomy's
+	 * rewrite property (custom post types must win the rewrite battle).
+	 * Instead, we add our own rewrite rule to display the CPT-onomy archive page.
+	 *
+	 * As of 1.1, users can define their own CPT-onomy archive page slug.
+	 * 
+	 * @since 1.1
+	 * @author Rachel Carden (@bamadesigner)
+	 * @author Travis Smith (@wp_smith) - Thanks for your help Travis!!
+	 * @param string $taxonomy - Name of taxonomy object
+	 * @param array|string $object_type - Name of the object type for the taxonomy object
+	 * @param array|string $args - arguments used to customize the CPT-onomy
+	 		'label' (string)						Name of the CPT-onomy shown in the menu. Usually plural.
+	 												If not set, the custom post type's label will be used.
+	 		'labels' (array)						An array of labels for this CPT-onomy. You can see accepted values
+	 												in the function get_taxonomy_labels() in 'wp-includes/taxonomy.php'.
+	 												By default, tag labels are used for non-hierarchical types and category
+	 												labels for hierarchical ones. If not set, will use WordPress defaults.
+	 		'public' (boolean)						If the CPT-onomy should be publicly queryable.
+	 												If not set, defaults to custom post type's public definition.
+	 		'has_cpt_onomy_archive' (boolean)		Sets whether the CPT-onomy will have an archive page. Defaults to true.
+	 												'cpt_onomy_archive_slug' must be defined.
+	 		'cpt_onomy_archive_slug' (string)		The slug for the CPT-onomy archive page. 'has_cpt_onomy_archive' must be true.
+	 												Accepts variables $post_type and $term in string format as placeholders.
+	 												Default is '$post_type/tax/$term'.
+	 		'restrict_user_capabilities' (array)	User roles who have capability to assign CPT-onomy terms.
+	 												If empty, ALL user roles will have the capability.
+	 												Default is array( 'administrator', 'editor', 'author' ).
+	 * @return null - Returns early if taxonomy already exists or if post type does not exist
+	 */
+	public function register_cpt_onomy( $taxonomy, $object_type, $args = array() ) {
+
+		// if taxonomy already exists (and is not a CPT-onomy) OR matching post type doesn't exist
+		// this allows you to overwrite your CPT-onomy registered by the plugin, if desired
+		if ( ( taxonomy_exists( $taxonomy ) && !$this->is_registered_cpt_onomy( $taxonomy ) ) || !post_type_exists( $taxonomy ) )
+			return;
+			
+		// make sure $object_type is an array
+		if ( !is_array( $object_type ) )
+			$object_type = array_unique( array( $object_type ) );
+					
+		// if we have object types, move forward to register the CPT-onomy
+		if ( !empty( $object_type ) ) {
+		
+			// get the matching custom post type info
+			$custom_post_type = get_post_type_object( $taxonomy );
+							
+			// Define the CPT-onomy defaults
+		 	$cpt_onomy_defaults = array(
+		 		'label' => $label = strip_tags( $custom_post_type->label ),
+		 		'labels' => '', // if no labels are provided, WordPress uses their own
+		 		'public' => $custom_post_type->public,
+		 		'has_cpt_onomy_archive' => true,
+		 		'cpt_onomy_archive_slug' => '$post_type/tax/$term',
+		 		'restrict_user_capabilities' => array( 'administrator', 'editor', 'author' )
+		 	);
+		 	
+		 	// Merge defaults with incoming $args then extract
+		 	extract( wp_parse_args( $args, $cpt_onomy_defaults ) );
+		 			 		 			 	
+		 	// clean up the arguments for registering
+		 	// Some CPT-onomy arguments MUST have a set value, no room for customization right now
+		 	// we have to clear out the args 'rewrite' because post types and taxonomies with the same name
+		 	// share the same $wp_rewrite permastruct and custom post types MUST win the rewrite war.
+			// we will add our own rewrite rule for the CPT-onomy archive page
+		 	$cpt_onomy_args = array(
+				'cpt_onomy' => true,
+				'label' => $label,
+				'labels' => $labels,
+				'public' => $public,
+				'hierarchical' => $custom_post_type->hierarchical,
+				'show_in_nav_menus' => false,
+				'show_ui' => false,
+				'show_tagcloud' => false,
+				'rewrite' => false,
+				'restrict_user_capabilities' => $restrict_user_capabilities,
+				'capabilities' => array(
+					'manage_terms' => 'manage_' . $taxonomy . '_terms',
+					'edit_terms' => 'edit_' . $taxonomy . '_terms',
+					'delete_terms' => 'delete_' . $taxonomy . '_terms',
+					'assign_terms' => 'assign_' . $taxonomy . '_terms'
+				)
+			);
+									
+			// add rewrite rule (default is true) to display CPT-onomy archive page - default is '{post type}/tax/{term}'
+			// we must add our own rewrite rule instead of defining the 'rewrite' property because
+			// post types and taxonomies with the same name share the same $wp_rewrite permastruct
+			// and post types must win the rewrite war.
+			if ( !( isset( $has_cpt_onomy_archive ) && !$has_cpt_onomy_archive ) ) {
+			
+				// make sure we have a slug
+				if ( !isset( $cpt_onomy_archive_slug ) || empty( $cpt_onomy_archive_slug ) )
+					$cpt_onomy_archive_slug = $cpt_onomy_defaults[ 'cpt_onomy_archive_slug' ];
+													
+				// add the slug to the CPT-onomy arguments so it will be added to $wp_taxonomies
+				// throughout website, if this parameter is set, then "show CPT-onomy archive page" is also set
+				$cpt_onomy_args[ 'cpt_onomy_archive_slug' ] = $cpt_onomy_archive_slug;
+									
+				// replace the variables ($post_type and $term)
+				$cpt_onomy_archive_slug = str_replace( array( '$post_type', '$term_slug', '$term_id' ), array( $taxonomy, '([^\s]*)', '([^\s]*)' ), $cpt_onomy_archive_slug );
+									
+				// get rid of any slashes at the beginning AND end
+				$cpt_onomy_archive_slug = preg_replace( '/^([\/]+)/', '', $cpt_onomy_archive_slug );
+				$cpt_onomy_archive_slug = preg_replace( '/([\/]+)$/', '', $cpt_onomy_archive_slug );
+				
+				// add rewrite rule
+				add_rewrite_rule( '^' . $cpt_onomy_archive_slug . '/?', 'index.php?'.$taxonomy . '=$matches[1]&cpt_onomy_archive=' . $taxonomy, 'top' );
+						
+			}
+								 				
+			// Go for launch!
+			register_taxonomy( $taxonomy, $object_type, $cpt_onomy_args );
+					
+		}
 	
+	}
+	 	
 	/**
 	 * Registers the user's custom post types.
 	 *
 	 * If 'Use Custom Post Type as Taxonomy' is set, registers a CPT-onomy
-	 * and adds a rewrite rule to display CPT-onomy archive page at {cpt name}/tax/{term}.
+	 * and adds a rewrite rule to display the CPT-onomy archive page. As of 1.1,
+	 * the user can customize the archive page slug. The default is {cpt name}/tax/{term}.
 	 *
 	 * This function is invoked by the action 'init'.
 	 *
@@ -606,7 +738,7 @@ class CPT_ONOMIES_MANAGER {
 		if ( !empty( $this->user_settings[ 'custom_post_types' ] ) ) {
 			foreach( $this->user_settings[ 'custom_post_types' ] as $cpt_key => $cpt ) {
 				if ( !isset( $cpt[ 'deactivate' ] ) ) {
-					
+															
 					// create label
 					// if no label, set to 'Posts'
 					if ( !isset( $cpt[ 'label' ] ) || empty( $cpt[ 'label' ] ) )
@@ -616,31 +748,31 @@ class CPT_ONOMIES_MANAGER {
 					if ( !empty( $label ) && !empty( $cpt_key ) ) {
 						
 						// create labels
-						$labels = array( 'name' => __( $label ) );
+						$labels = array( 'name' => $label );
 						if ( isset( $cpt[ 'singular_name' ] ) && !empty( $cpt[ 'singular_name' ] ) )
-							$labels[ 'singular_name' ] = __( strip_tags( $cpt[ 'singular_name' ] ) );
+							$labels[ 'singular_name' ] = strip_tags( $cpt[ 'singular_name' ] );
 						if ( isset( $cpt[ 'add_new' ] ) && !empty( $cpt[ 'add_new' ] ) ) 
-							$labels[ 'add_new' ] = __( strip_tags( $cpt[ 'add_new' ] ) );
+							$labels[ 'add_new' ] = ( $cpt[ 'add_new' ] );
 						if ( isset( $cpt[ 'add_new_item' ] ) && !empty( $cpt[ 'add_new_item' ] ) )
-							$labels[ 'add_new_item' ] = __( strip_tags( $cpt[ 'add_new_item' ] ) );
+							$labels[ 'add_new_item' ] = strip_tags( $cpt[ 'add_new_item' ] );
 						if ( isset( $cpt[ 'edit_item' ] ) && !empty( $cpt[ 'edit_item' ] ) )
-							$labels[ 'edit_item' ] = __( strip_tags( $cpt[ 'edit_item' ] ) );
+							$labels[ 'edit_item' ] = strip_tags( $cpt[ 'edit_item' ] );
 						if ( isset( $cpt[ 'new_item' ] ) && !empty( $cpt[ 'new_item' ] ) )
-							$labels[ 'new_item' ] = __( strip_tags( $cpt[ 'new_item' ] ) );
+							$labels[ 'new_item' ] = strip_tags( $cpt[ 'new_item' ] );
 						if ( isset( $cpt[ 'all_items' ] ) && !empty( $cpt[ 'all_items' ] ) )
-							$labels[ 'all_items' ] = __( strip_tags( $cpt[ 'all_items' ] ) );
+							$labels[ 'all_items' ] = strip_tags( $cpt[ 'all_items' ] );
 						if ( isset( $cpt[ 'view_item' ] ) && !empty( $cpt[ 'view_item' ] ) )
-							$labels[ 'view_item' ] = __( strip_tags( $cpt[ 'view_item' ] ) );
+							$labels[ 'view_item' ] = strip_tags( $cpt[ 'view_item' ] );
 						if ( isset( $cpt[ 'search_items' ] ) && !empty( $cpt[ 'search_items' ] ) )
-							$labels[ 'search_items' ] = __( strip_tags( $cpt[ 'search_items' ] ) );					
+							$labels[ 'search_items' ] = strip_tags( $cpt[ 'search_items' ] );
 						if ( isset( $cpt[ 'not_found' ] ) && !empty( $cpt[ 'not_found' ] ) )
-							$labels[ 'not_found' ] = __( strip_tags( $cpt[ 'not_found' ] ) );
+							$labels[ 'not_found' ] = strip_tags( $cpt[ 'not_found' ] );
 						if ( isset( $cpt[ 'not_found_in_trash' ] ) && !empty( $cpt[ 'not_found_in_trash' ] ) )
-							$labels[ 'not_found_in_trash' ] = __( strip_tags( $cpt[ 'not_found_in_trash' ] ) );
+							$labels[ 'not_found_in_trash' ] = strip_tags( $cpt[ 'not_found_in_trash' ] );
 						if ( isset( $cpt[ 'parent_item_colon' ] ) && !empty( $cpt[ 'parent_item_colon' ] ) )
-							$labels[ 'parent_item_colon' ] = __( strip_tags( $cpt[ 'parent_item_colon' ] ) );
+							$labels[ 'parent_item_colon' ] = strip_tags( $cpt[ 'parent_item_colon' ] );
 						if ( isset( $cpt[ 'menu_name' ] ) && !empty( $cpt[ 'menu_name' ] ) )
-							$labels[ 'menu_name' ] = __( strip_tags( $cpt[ 'menu_name' ] ) );
+							$labels[ 'menu_name' ] = strip_tags( $cpt[ 'menu_name' ] );
 						
 						// WP default = false, plugin default = true
 						$public = ( !$cpt[ 'public' ] ) ? false : true;
@@ -655,7 +787,7 @@ class CPT_ONOMIES_MANAGER {
 						// boolean (optional) default = false
 						// this must be defined for use with register_taxonomy()
 						$args[ 'hierarchical' ] = ( isset( $cpt[ 'hierarchical' ] ) && $cpt[ 'hierarchical' ] ) ? true : false;
-							
+													
 						// array (optional) default = array( 'title', 'editor' )
 						if ( isset( $cpt[ 'supports' ] ) && !empty( $cpt[ 'supports' ] ) )
 							$args[ 'supports' ] = $cpt[ 'supports' ];
@@ -681,7 +813,7 @@ class CPT_ONOMIES_MANAGER {
 						// boolean (optional) default = true
 						if ( isset( $cpt[ 'can_export' ] ) )
 							$args[ 'can_export' ] = ( !$cpt[ 'can_export' ] ) ? false : true;
-							
+														
 						// integer (optional) default = NULL
 						if ( isset( $cpt[ 'menu_position' ] ) && !empty( $cpt[ 'menu_position' ] ) && is_numeric( $cpt[ 'menu_position' ] ) )
 							$args[ 'menu_position' ] = intval( $cpt[ 'menu_position' ] );
@@ -754,54 +886,27 @@ class CPT_ONOMIES_MANAGER {
 											
 						// make sure post type does not already exist
 						if ( !post_type_exists( $cpt_key ) ) {
+									
+							// In previous versions, we had to register the post type last in order for it to win the rewrite war
+							// As of 1.1, the post type must be registered first in order to register the CPT-onomy and the
+							// post type will still win the rewrite war
+							register_post_type( $cpt_key, $args );
+													
+							// If designated, register CPT-onomy
+							if ( isset( $cpt[ 'attach_to_post_type' ] ) && !empty( $cpt[ 'attach_to_post_type' ] ) ) {
 							
-							// if designated, register custom taxonomy
-							if ( !taxonomy_exists( $cpt_key ) && isset( $cpt[ 'attach_to_post_type' ] ) && !empty( $cpt[ 'attach_to_post_type' ] ) ) {
-								
-								//setup rewrite slug
-								$taxonomy_slug = $cpt_key;
-								if ( !empty( $args[ 'rewrite' ][ 'slug' ] ) )
-									$taxonomy_slug = $args[ 'rewrite' ][ 'slug' ];
-									
-								// make sure post types exist
-								foreach( $cpt[ 'attach_to_post_type' ] as $attached_key => $attached_post_type ) { 
-									if ( !post_type_exists( $attached_post_type ) && !array_key_exists( $attached_post_type, $this->user_settings[ 'custom_post_types' ] ) )
-										unset( $cpt[ 'attach_to_post_type' ][ $attached_key ] );
-								}
-								
-								if ( !empty( $cpt[ 'attach_to_post_type' ] ) ) {
-								
-									register_taxonomy( $cpt_key, $cpt[ 'attach_to_post_type' ], array(
-										'cpt_onomy' => true,
-										'label' => $label,
-										'public' => $public,
-										'show_in_nav_menus' => false,
-										'show_ui' => false,
-										'show_tagcloud' => false,
-										'hierarchical' => $args[ 'hierarchical' ],
-										'rewrite' => array( 'slug' => $taxonomy_slug . '/tax', 'with_front' => $args[ 'rewrite' ][ 'with_front' ], 'hierarchical' => $args[ 'hierarchical' ] ),
-										'capabilities' => array(
-											'manage_terms' => 'manage_'.$cpt_key.'_terms',
-											'edit_terms' => 'edit_'.$cpt_key.'_terms',
-											'delete_terms' => 'delete_'.$cpt_key.'_terms',
-											'assign_terms' => 'assign_'.$cpt_key.'_terms'
-										)
-									));
-									
-									// add rewrite rule to display CPT-onomy archive page - '{cpt name}/tax/{term}
-									// default is true
-									if ( !( isset( $cpt[ 'has_cpt_onomy_archive' ] ) && !$cpt[ 'has_cpt_onomy_archive' ] ) ) {
-										$permastruct = str_replace( '%'.$cpt_key.'%', '([^\s]*)', $wp_rewrite->get_extra_permastruct( $cpt_key ) );
-										if ( substr( $permastruct, 0, 1 ) == '/' ) $permastruct = substr( $permastruct, 1 );
-										add_rewrite_rule( '^'.$permastruct.'/?', 'index.php?'.$cpt_key.'=$matches[1]&cpt_onomy_archive='.$cpt_key, 'top' );
-									}
-									
-								}
+								$cpt_onomy_args = array(
+									'label' => $label,
+									'public' => $public,
+									'has_cpt_onomy_archive' => ( isset( $cpt[ 'has_cpt_onomy_archive' ] ) && !$cpt[ 'has_cpt_onomy_archive' ] ) ? false : true,
+									'cpt_onomy_archive_slug' => ( isset( $cpt[ 'cpt_onomy_archive_slug' ] ) && !empty( $cpt[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt[ 'cpt_onomy_archive_slug' ] : NULL,
+									'restrict_user_capabilities' => ( isset( $cpt[ 'restrict_user_capabilities' ] ) && !empty( $cpt[ 'restrict_user_capabilities' ] ) ) ? $cpt[ 'restrict_user_capabilities' ] : array()
+								);
+																								
+								// let's get this sucker registered!							
+								$this->register_cpt_onomy( $cpt_key, $cpt[ 'attach_to_post_type' ], $cpt_onomy_args );
 								
 							}
-									
-							// must register post type last so the post type will win the rewrite war
-							register_post_type( $cpt_key, $args );
 														
 						}
 		
@@ -811,62 +916,32 @@ class CPT_ONOMIES_MANAGER {
 			}
 		}		
 		// register OTHER custom post types as taxonomies
-		if ( !empty( $this->user_settings[ 'other_custom_post_types' ] ) ) {
+		if ( !empty( $this->user_settings[ 'other_custom_post_types' ] ) ) {	
 			foreach( $this->user_settings[ 'other_custom_post_types' ] as $cpt_key => $cpt_settings ) {
+			
+				// If designated, register CPT-onomy
+				if ( !$this->is_registered_cpt( $cpt_key ) && isset( $cpt_settings[ 'attach_to_post_type' ] ) && !empty( $cpt_settings[ 'attach_to_post_type' ] ) ) {
+														
+					// get post type object
+					$custom_post_type = get_post_type_object( $cpt_key );
 				
-				// make sure post type exists and, if designated, register custom taxonomy
-				if ( post_type_exists( $cpt_key ) && !$this->is_registered_cpt( $cpt_key ) && isset( $cpt_settings[ 'attach_to_post_type' ] ) && !empty( $cpt_settings[ 'attach_to_post_type' ] ) ) {
-									
-					// make sure post types exist
-					foreach( $cpt_settings[ 'attach_to_post_type' ] as $attached_key => $attached_post_type ) { 
-						if ( !post_type_exists( $attached_post_type ) && !array_key_exists( $attached_post_type, $this->user_settings[ 'other_custom_post_types' ] ) )
-							unset( $cpt_settings[ 'attach_to_post_type' ][ $attached_key ] );
-					}
-					
-					if ( !empty( $cpt_settings[ 'attach_to_post_type' ] ) ) {
-					
-						// get post type
-						$custom_post_type = get_post_type_object( $cpt_key );
-						
-						// create label
-						$label = strip_tags( $custom_post_type->label );
-											
-						if ( !taxonomy_exists( $cpt_key ) ) {
-							
-							// Because these are "other" custom post types and they are already registered,
-							// we cannot declare a taxonomy rewrite because the post type MUST win the rewrite war.
-							
-							register_taxonomy( $cpt_key, $cpt_settings[ 'attach_to_post_type' ], array(
-								'cpt_onomy' => true,
-								'label' => $label,
-								'public' => $custom_post_type->public,
-								'show_in_nav_menus' => false,
-								'show_ui' => false,
-								'show_tagcloud' => false,
-								'hierarchical' => false,
-								'capabilities' => array(
-									'manage_terms' => 'manage_'.$cpt_key.'_terms',
-									'edit_terms' => 'edit_'.$cpt_key.'_terms',
-									'delete_terms' => 'delete_'.$cpt_key.'_terms',
-									'assign_terms' => 'assign_'.$cpt_key.'_terms'
-								)
-							));
-							
-							// add rewrite rule to display CPT-onomy archive page - '{cpt name}/tax/{term}
-							// default is true
-							// unlike CPT-onomies attached to custom post types registered by this plugin,
-							// we have to add "tax" to the permastruct ourselves because we cannot add tax to the taxonomy rewrite
-							if ( !( isset( $cpt_settings[ 'has_cpt_onomy_archive' ] ) && !$cpt_settings[ 'has_cpt_onomy_archive' ] ) )  {
-								$permastruct = str_replace( '%'.$cpt_key.'%', 'tax/([^\s]*)', $wp_rewrite->get_extra_permastruct( $cpt_key ) );
-								if ( substr( $permastruct, 0, 1 ) == '/' ) $permastruct = substr( $permastruct, 1 );
-								add_rewrite_rule( '^'.$permastruct.'/?', 'index.php?'.$cpt_key.'=$matches[1]&cpt_onomy_archive='.$cpt_key, 'top' );
-							}
-							
-						}
-						
-					}
+					$cpt_onomy_args = array(
+						'label' => strip_tags( $custom_post_type->label ),
+						'public' => $custom_post_type->public,
+						'has_cpt_onomy_archive' => ( isset( $cpt_settings[ 'has_cpt_onomy_archive' ] ) && !$cpt_settings[ 'has_cpt_onomy_archive' ] ) ? false : true,
+						'cpt_onomy_archive_slug' => ( isset( $cpt_settings[ 'cpt_onomy_archive_slug' ] ) && !empty( $cpt_settings[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt[ 'cpt_onomy_archive_slug' ] : NULL
+					);
+										
+					// we only want to define the user capabilities if they are set,
+					// because empty means ALL user roles have permission
+					if ( isset( $cpt_settings[ 'restrict_user_capabilities' ] ) )
+						$cpt_onomy_args[ 'restrict_user_capabilities' ] = $cpt_settings[ 'restrict_user_capabilities' ];
+										
+					// let's get this sucker registered!							
+					$this->register_cpt_onomy( $cpt_key, $cpt_settings[ 'attach_to_post_type' ], $cpt_onomy_args );
 					
 				}
+				
 			}
 		}
 	}	

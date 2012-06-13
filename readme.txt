@@ -1,10 +1,10 @@
 === CPT-onomies: Using Custom Post Types as Taxonomies ===
 Contributors: bamadesigner
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
-Tags: custom post type, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, custom post type taxonomies, custom post type as taxonomy, custom post types as taxonomies, relationships
+Tags: custom post type, custom, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, cptonomies, custom post type taxonomies, custom post type as taxonomy, custom post types as taxonomies, relationships
 Requires at least: 3.1
-Tested up to: 3.3.1
-Stable tag: 1.0.3
+Tested up to: 3.3.2
+Stable tag: 1.1
 
 Use your custom post types as taxonomies and create relationships between your posts, just as you would create taxonomy relationships.
 
@@ -32,13 +32,13 @@ CPT-onomies offers an extensive custom post type manager, allowing you to create
 
 It doesn't take long to figure out that custom post types can be a pretty powerful tool for creating and managing numerous types of content. For example, you might use the custom post types "Movies" and "Actors" to build a movie database but what if you wanted to group your "movies" by its "actors"? You could create a custom "actors" taxonomy but then you would have to manage your list of actors in two places: your "actors" custom post type and your "actors" taxonomy. This can be a pretty big hassle, especially if you have an extensive custom post type.
 
-**This is where CPT-onomies steps in.** Register your custom post type as a CPT-onomy and CPT-onomies will build your taxonomy for you, using your post type's post titles as the terms. Pretty cool, huh?
+**This is where CPT-onomies steps in.** Register your custom post type, 'Actors', as a CPT-onomy and CPT-onomies will build your 'actors' taxonomy for you, using your actors' post titles as the terms. Pretty cool, huh?
 
 = Using CPT-onomies =
 
 What's really great about CPT-onomies is that they work just like any other taxonomy, allowing you to use WordPress taxonomy functions, like [get_terms()](http://codex.wordpress.org/Function_Reference/get_terms "get_terms()"), [get_the_terms()](http://codex.wordpress.org/Function_Reference/get_the_terms "get_the_terms()") and [wp_get_object_terms()](http://codex.wordpress.org/Function_Reference/wp_get_object_terms "wp_get_object_terms()"), to access the CPT-onomy information you need. CPT-onomies even includes a tag cloud widget for your sidebar.
 
-CPT-onomies even work with tax queries when using [The Loop](http://rachelcarden.com/cpt-onomies/documentation/The_Loop/ "The WordPress Loop").
+CPT-onomies also work with tax queries when using [The Loop](http://rachelcarden.com/cpt-onomies/documentation/The_Loop/ "The WordPress Loop").
 
 ***Note:** Unfortunately, not every taxonomy function can be used at this time. [Check out the CPT-onomy documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomy documentation") to see which WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy functions.*
 
@@ -53,6 +53,15 @@ CPT-onomies even work with tax queries when using [The Loop](http://rachelcarden
 
 == Frequently Asked Questions ==
 
+= I'm not able to save my custom post type because the page keeps telling me "That post type name already exists." =
+
+I hope that version 1.1 fixed this bug but, if you're still having the problem, you can dequeue the validation script with the following code:
+
+`add_action( 'admin_head', 'my_website_admin_head' );
+function my_website_admin_head() {
+	wp_dequeue_script( 'custom-post-type-onomies-admin-options-validate' );
+}`
+
 = I added support for "Thumbnail" to my custom post type, but the "Featured Image" box does not show up =
 
 You also have to add theme support for post thumbnails to your functions.php file:
@@ -61,7 +70,7 @@ You also have to add theme support for post thumbnails to your functions.php fil
 
 If FAQ didn't cover your problem, refer to the following resources:
 
-* [CPT-onomies Support Forums](http://wordpress.org/tags/cpt-onomies?forum_id=10 "CPT-onomies Support Forums")
+* [CPT-onomies Support Forums](http://wordpress.org/support/plugin/cpt-onomies "CPT-onomies Support Forums")
 * [CPT-onomies Documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomies Documentation")
 
 == Screenshots ==
@@ -73,6 +82,17 @@ If FAQ didn't cover your problem, refer to the following resources:
 5. The admin allows you to sort and filter your posts by CPT-onomy terms.
 
 == Changelog ==
+
+= 1.1 =
+* Added support to programmatically register CPT-onomies.
+* Added support for autocomplete and dropdown CPT-onomy term selection.
+* Added support to customize the CPT-onomy archive page slug.
+* Added support to change term link in tag cloud widget.
+* Added support to exclude term ids from wp_get_object_terms().
+* Added get_term_ancestors() to the CPT-onomy class.
+* Added support for Internationalization.
+* Tweaked the UI.
+* Fixed a few bugs.
 
 = 1.0.3 =
 * **DO NOT UPDATE IF YOU ARE NOT USING WORDPRESS 3.1 OR NEWER!!** If you're using a version older than 3.1., and having issues, download CPT-onomies 1.0.2. for bug fixes.
@@ -97,6 +117,17 @@ If FAQ didn't cover your problem, refer to the following resources:
 * Plugin launch!
 
 == Upgrade Notice ==
+
+= 1.1 =
+* Added support to programmatically register CPT-onomies.
+* Added support for autocomplete and dropdown CPT-onomy term selection.
+* Added support to customize the CPT-onomy archive page slug.
+* Added support to change term link in tag cloud widget.
+* Added support to exclude term ids from wp_get_object_terms().
+* Added get_term_ancestors() to the CPT-onomy class.
+* Added support for Internationalization.
+* Tweaked the UI.
+* Fixed a few bugs.
 
 = 1.0.3 =
 **DO NOT UPDATE IF YOU ARE NOT USING WORDPRESS 3.1 OR NEWER!!** If you're using a version older than 3.1., and having issues, download CPT-onomies 1.0.2. for bug fixes. Added support for Bulk/Quick Edit and Admin Sort/Filter. Fixed a few bugs.

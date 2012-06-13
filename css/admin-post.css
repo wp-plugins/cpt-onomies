@@ -1,0 +1,114 @@
+select.category.cpt_onomies {
+	width: 100%;
+	}
+
+.tagsdiv.cpt_onomies .cpt_onomies_add_tag_error_message {
+	display: block;
+	background: #FFFFE0;
+	margin: 5px 0 0 0;
+	padding: 7px 8px 5px 8px;
+	border: 1px solid #E6DB55;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	cursor: pointer;
+	color: #333;
+	line-height: 1.3em;
+	}
+	
+.tagsdiv.cpt_onomies .cpt_onomies_add_tag_error_message .close {
+	color: #888;
+	text-decoration: underline;
+	}
+
+.tagsdiv.cpt_onomies .tagchecklist {
+	margin: 0!important;
+	padding: 0!important;
+	margin-left: 8px!important;
+	border: 0!important;
+	}
+	
+.tagsdiv.cpt_onomies .tagchecklist.alone {
+	margin-top: 10px!important;
+	margin-left: 2px!important;
+	}
+	
+.tagsdiv.cpt_onomies .tagchecklist.loading {
+	min-height: 18px;
+	background: url('../../../../wp-admin/images/loading.gif') left top no-repeat !important;
+	}
+
+.tagsdiv.cpt_onomies .tagchecklist .tag {
+	display: inline-block!important;
+	width: 50%!important;
+	margin: 0!important;
+	padding: 3px 0!important;
+	border: 0!important;
+	}
+
+.tagsdiv.cpt_onomies .tagchecklist .ntdelbutton {
+	display: inline-block!important;
+	margin: 0 5px 0 0!important;
+	padding: 0!important;
+	border: 0!important;
+	position: static!important;
+	line-height: normal!important;
+	
+}
+.tagsdiv.cpt_onomies .tagchecklist .term {
+	display: inline-block!important;
+	margin: 0!important;
+	padding: 0 5px 0 0!important;
+	border: 0!important;
+	line-height: normal!important;
+	white-space: normal!important;
+	}
+	
+.tagsdiv.cpt_onomies .tagchecklist .term .parent {
+	color: #888!important;
+	font-style: italic!important;
+	line-height: normal!important;
+	padding: 0 3px 0 0!important;
+	margin: 0!important;
+	border: 0!important;
+	white-space: normal!important;
+	}
+
+.ui-autocomplete.cpt_onomies {
+	max-width: 255px!important;
+	padding: 2px 0 0 0!important;
+	}
+
+.ui-autocomplete.cpt_onomies .ui-menu-item {
+	padding: 0!important;
+	margin: 3px 0 0 0!important;
+	color: #fff!important;
+	line-height: 1.1em;
+	}
+	
+.ui-autocomplete.cpt_onomies .ui-menu-item .parent {
+	font-size: 90%!important;
+	color: #ccc!important;
+	font-style: italic!important;
+	margin: 0!important;
+	padding: 0 3px 0 0!important;
+	border: 0!important;
+	}
+	
+.ui-autocomplete.cpt_onomies .ui-menu-item a {
+	display: block;
+	background: #21759b!important;
+	padding: 7px 5px!important;
+	margin: 0!important;
+	border: 0!important;
+	-webkit-border-radius: 5px!important;
+	-moz-border-radius: 5px!important;
+	border-radius: 5px!important;
+	color: #fff!important;
+	cursor: pointer!important;
+	}
+	
+.ui-autocomplete.cpt_onomies .ui-menu-item a.ui-state-hover,
+.ui-autocomplete.cpt_onomies .ui-menu-item a:hover {
+	background: #d54e21!important;
+	}

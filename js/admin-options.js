@@ -1,52 +1,82 @@
+var $cpt_onomies_changed_form = 0;
 jQuery.noConflict()(function(){
-		
-	// validate form
-	jQuery( '#custom-post-type-onomies-edit-cpt-form' ).validate({
-		onkeyup: false
+	
+	// count how many times the form is changed
+	jQuery( 'form#custom-post-type-onomies-edit-cpt' ).change( function() {
+		$cpt_onomies_changed_form++;
 	});
 	
-	// validate custom post type name to make sure it contains valid characters
-	jQuery.validator.addMethod( 'custom_post_type_onomies_validate_name_characters', function( value, element ) {
-		return this.optional( element ) || ( value.length <= 20 && !value.match( /([^a-z0-9\_])/ ) );
-	}, 'Your post type name is invalid.' );
-	
-	// validate custom post type name to make sure post type doesnt already exist
-	jQuery.validator.addMethod( 'custom_post_type_onomies_validate_name', function( value, element ) {
-		var validator = this, response;
-		jQuery.ajax({
-			url: ajaxurl,
-			type: 'POST',
-			async: false,
-			cache: false,
-			data: {
-				action: 'custom_post_type_onomy_validate_if_post_type_exists',
-				original_custom_post_type_onomies_cpt_name: jQuery( "#custom-post-type-onomies-custom-post-type-original-name" ).val(),
-				custom_post_type_onomies_cpt_name: value
-			},
-			success: function( data ) {
-				response = ( data == 'true' ) ? true : false;
-			},
-			complete: function() {
-				response = ( response == null ) ? true : response;
-			}
-		});
-		jQuery.validator.messages.custom_post_type_onomies_validate_name = 'The post type name, "' + value + '", already exists. Please choose another name.';
-		return response;
-	}, 'That post type name already exists. Please choose another name.' );
+	// check to make sure info is saved before continuing
+	jQuery( 'a:not(.delete_cpt_onomy_custom_post_type):not([target="_blank"])' ).live( 'click', function( event ) {
+		if ( $cpt_onomies_changed_form ) {
+			var $message = null;
+			if ( cpt_onomies_admin_options_L10n.unsaved_message1 != '' )
+				$message = cpt_onomies_admin_options_L10n.unsaved_message1
+			else
+				$message = 'It looks like you might have some unsaved changes.';
+			if ( cpt_onomies_admin_options_L10n.unsaved_message2 != '' )
+				$message += '\n' + cpt_onomies_admin_options_L10n.unsaved_message2
+			else
+				$message += '\nAre you sure you want to leave?';
+			var $confirm = confirm( $message );
+			if ( $confirm != true )
+				event.preventDefault();
+		}
+	});	
 	
 	// show message
 	jQuery( '.show_cpt_message' ).live( 'click', function( event ) {
 		event.preventDefault();
-		alert( jQuery( this ).attr( 'alt' ) );		
+		alert( jQuery( this ).attr( 'alt' ) );
 	});
 	
 	// show delete confirmation
 	jQuery( '.delete_cpt_onomy_custom_post_type' ).live( 'click', function( event ) {
-		var $message = 'Are you sure you want to delete this custom post type?\n\nThere is NO undo and once you click "OK", all of your settings will be gone.\n\n';
-		$message += 'FYI: Deleting your custom post type DOES NOT delete the actual posts.\nThey\'ll be waiting for you if you decide to register this post type again.\nJust make sure you use the same name.';
+		var $message = null;
+		if ( cpt_onomies_admin_options_L10n.delete_message1 != '' )
+			$message = cpt_onomies_admin_options_L10n.delete_message1;
+		else
+			$message = 'Are you sure you want to delete this custom post type?';
+		if ( cpt_onomies_admin_options_L10n.delete_message2 != '' )
+			$message += '\n\n' + cpt_onomies_admin_options_L10n.delete_message2;
+		else
+			$message += '\n\nThere is NO undo and once you click "OK", all of your settings will be gone.';
+		if ( cpt_onomies_admin_options_L10n.delete_message3 != '' )
+			$message += '\n\n' + cpt_onomies_admin_options_L10n.delete_message3;
+		else
+			$message += '\n\nDeleting your custom post type DOES NOT delete the actual posts.';
+		if ( cpt_onomies_admin_options_L10n.delete_message4 != '' )
+			$message += '\n' + cpt_onomies_admin_options_L10n.delete_message4;
+		else
+			$message += '\nThey\'ll be waiting for you if you decide to register this post type again.';
+		if ( cpt_onomies_admin_options_L10n.delete_message5 != '' )
+			$message += '\n' + cpt_onomies_admin_options_L10n.delete_message5;
+		else
+			$message += '\nJust make sure you use the same name.';
 		var $confirm = confirm( $message );
 		if ( $confirm != true )
 			event.preventDefault();
+	});
+	
+	// change the header label
+	jQuery( '#custom-post-type-onomies-custom-post-type-label' ).keyup( function() {
+		jQuery( '#edit_custom_post_type_header .label' ).html( jQuery( this ).val() );
+	});
+	jQuery( '#custom-post-type-onomies-custom-post-type-label' ).change( function() {
+		jQuery( '#edit_custom_post_type_header .label' ).html( jQuery( this ).val() );
+	});
+
+	jQuery( '#custom-post-type-onomies-custom-post-type-label' ).blur( function() {
+		jQuery( '#edit_custom_post_type_header .label' ).html( jQuery( this ).val() );
+	});
+	
+	// create a field name
+	jQuery( '#custom-post-type-onomies-custom-post-type-label' ).change( function() {
+		var $cpt_name = jQuery( '#custom-post-type-onomies-custom-post-type-name' );
+		if ( $cpt_name.val() == '' ) {
+			// convert label to name
+			$cpt_name.val( jQuery( this ).val().replace( /[^a-zA-Z0-9\_\s]/i, '' ).replace( /\s/, '_' ).toLowerCase() );
+		}
 	});
 	
 	// dim post type name if already set
@@ -66,6 +96,38 @@ jQuery.noConflict()(function(){
 	// take care of the advanced open-close and messages
 	jQuery( 'table.edit_custom_post_type td.advanced' ).each( function() {
 		jQuery( this ).children( 'table' ).custom_post_type_onomies_setup_advanced_table();		
+	});
+	
+	// open the help tab
+	jQuery( '.custom_post_type_onomies_show_help_tab' ).live( 'click', function( event ) {
+		event.preventDefault();
+		
+		// define the help tab
+		var $panel = jQuery( '#contextual-help-wrap' );
+		if ( !$panel.length )
+			return;
+
+		// open help tab
+		if ( !$panel.is( ':visible' ) ) {
+			
+			// scroll to top of page
+			jQuery( 'html,body' ).scrollTop( 0 );
+			
+			// define the "Help" tab link
+			var $link = jQuery( '#contextual-help-link' );
+			
+			// hide any other tab links
+			jQuery( '.screen-meta-toggle' ).not( $link.parent() ).css( 'visibility', 'hidden' );
+
+			// show the help tab
+			$panel.parent().show();
+			$panel.slideDown( 'fast', function() {
+				// make the tab link active
+				$link.addClass('screen-meta-active');
+			});
+		
+		}
+		
 	});
 	
 });
@@ -92,9 +154,15 @@ jQuery.fn.custom_post_type_onomies_show_advanced_table = function() {
 		$edit_table = 'labels';
 	
 	// create close message
-	var $close_message = 'Close ';
-	if ( $edit_table == 'labels' ) $close_message += 'Labels';
-	else $close_message += 'Advanced Options';
+	var $close_message = null;
+	if ( $edit_table == 'labels' && cpt_onomies_admin_options_L10n.close_labels != '' )
+		$close_message = cpt_onomies_admin_options_L10n.close_labels;
+	else if ( $edit_table == 'labels' )
+		$close_message = 'Close Labels';
+	else if ( cpt_onomies_admin_options_L10n.close_advanced_options != '' )
+		$close_message = cpt_onomies_admin_options_L10n.close_advanced_options;
+	else
+		$close_message = 'Advanced Options';
 	$close_message = '<span class="close_advanced">' + $close_message + '</span>';
 	
 	// add close message	
@@ -136,13 +204,27 @@ jQuery.fn.custom_post_type_onomies_hide_advanced_table = function() {
 	if ( $advanced.closest( 'table.edit_custom_post_type' ).hasClass( 'labels' ) )
 		$edit_table = 'labels';
 	
-	// create mesage
-	var $message = '';
-	if ( $edit_table == 'labels' ) $message += 'Instead of sticking with the boring defaults, why don\'t you customize the labels used for your custom post type. They can really add a nice touch.';
-	else $message += 'You can make your custom post type as "advanced" as you like but, beware, some of these options can get tricky. Visit the "Help" tab if you get stuck.';
+	// create message
+	var $message = null;
+	if ( $edit_table == 'labels' && cpt_onomies_admin_options_L10n.labels_message1 != '' )
+		$message = cpt_onomies_admin_options_L10n.labels_message1;
+	else if ( $edit_table == 'labels' )
+		$message = 'Instead of sticking with the boring defaults, why don\'t you customize the labels used for your custom post type. They can really add a nice touch.';
+	else if ( cpt_onomies_admin_options_L10n.advanced_options_message1 != '' )
+		$message = cpt_onomies_admin_options_L10n.advanced_options_message1;
+	else
+		$message = 'You can make your custom post type as "advanced" as you like but, beware, some of these options can get tricky. Visit the "Help" tab if you get stuck.';
+		
+	// add links to message
 	$message += ' <span class="show_advanced">';
-	if ( $edit_table == 'labels' ) $message += 'Customize the Labels';
-	else $message += 'Edit the Advanced Options';
+	if ( $edit_table == 'labels' && cpt_onomies_admin_options_L10n.labels_message2 != '' )
+		$message += cpt_onomies_admin_options_L10n.labels_message2;
+	else if ( $edit_table == 'labels' )
+		$message += 'Customize the Labels';
+	else if ( cpt_onomies_admin_options_L10n.advanced_options_message2 != '' )
+		$message += cpt_onomies_admin_options_L10n.advanced_options_message2;
+	else
+		$message += 'Edit the Advanced Options';
 	$message += '</span>';
 	
 	// add message
