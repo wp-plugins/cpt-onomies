@@ -36,9 +36,7 @@ It doesn't take long to figure out that custom post types can be a pretty powerf
 
 = Using CPT-onomies =
 
-What's really great about CPT-onomies is that they work just like any other taxonomy, allowing you to use WordPress taxonomy functions, like [get_terms()](http://codex.wordpress.org/Function_Reference/get_terms "get_terms()"), [get_the_terms()](http://codex.wordpress.org/Function_Reference/get_the_terms "get_the_terms()") and [wp_get_object_terms()](http://codex.wordpress.org/Function_Reference/wp_get_object_terms "wp_get_object_terms()"), to access the CPT-onomy information you need. CPT-onomies even includes a tag cloud widget for your sidebar.
-
-CPT-onomies also work with tax queries when using [The Loop](http://rachelcarden.com/cpt-onomies/documentation/The_Loop/ "The WordPress Loop").
+What's really great about CPT-onomies is that they work just like any other taxonomy, allowing you to use WordPress taxonomy functions, like [get_terms()](http://codex.wordpress.org/Function_Reference/get_terms "get_terms()"), [get_the_terms()](http://codex.wordpress.org/Function_Reference/get_the_terms "get_the_terms()") and [wp_get_object_terms()](http://codex.wordpress.org/Function_Reference/wp_get_object_terms "wp_get_object_terms()"), to access the CPT-onomy information you need. CPT-onomies will also work with tax queries when using [The Loop](http://rachelcarden.com/cpt-onomies/documentation/The_Loop/ "The WordPress Loop") and includes a tag cloud widget for your sidebar.
 
 ***Note:** Unfortunately, not every taxonomy function can be used at this time. [Check out the CPT-onomy documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomy documentation") to see which WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy functions.*
 
@@ -55,7 +53,7 @@ CPT-onomies also work with tax queries when using [The Loop](http://rachelcarden
 
 = I'm not able to save my custom post type because the page keeps telling me "That post type name already exists." =
 
-I hope that version 1.1 fixed this bug but, if you're still having the problem, you can dequeue the validation script with the following code:
+This is a jQuery "bug" that only seems to plague a few. I've noticed that this validation standstill will occur if you have any text printed outside the <body> element on your page. If that's not the case, and the problem still lingers after you've upgraded to version 1.1, you can dequeue the validation script by placing the following code in your functions.php file:
 
 `add_action( 'admin_head', 'my_website_admin_head' );
 function my_website_admin_head() {
