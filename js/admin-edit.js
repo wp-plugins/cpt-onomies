@@ -46,7 +46,8 @@ jQuery.noConflict()(function(){
 					data: {
 						action: 'custom_post_type_onomy_populate_bulk_quick_edit',
 						custom_post_type_onomies_post_ids: $id,
-						custom_post_type_onomies_taxonomies: $taxonomies
+						custom_post_type_onomies_taxonomies: $taxonomies,
+						custom_post_type_onomies_wp_get_object_terms_fields: 'ids'
 					},
 					success: function( $term_ids ) {
 						// if $term_ids is array and not empty
