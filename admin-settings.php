@@ -88,7 +88,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 		$new = ( isset( $_REQUEST[ 'edit' ] ) && strtolower( $_REQUEST[ 'edit' ] ) == 'new' ) ? true : false;
 		
 		// if its not new, then check to see if the name exists in the settings
-		$edit = ( !$new && isset( $_REQUEST[ 'edit' ] ) && ( ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) || ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) ) ) ? strtolower( $_REQUEST[ 'edit' ] ) : false;
+		$edit = ( !$new && isset( $_REQUEST[ 'edit' ] ) && ( ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) || ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) || ( post_type_exists( strtolower( $_REQUEST[ 'edit' ] ) ) ) ) ) ? strtolower( $_REQUEST[ 'edit' ] ) : false;
 				
 		// we need to know if the custom post type was created by our plugin, or someone else
 		$other = ( !$new && $edit && isset( $_REQUEST[ 'other' ] ) && ( post_type_exists( $edit ) ||  isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( $edit, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) ) ? true : false;
@@ -980,7 +980,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	
 			$text = $this->get_plugin_options_help_tab_getting_started();
 			$text .= $this->get_plugin_options_help_tab_managing_editing_your_cpts();
-			$text .= $this->get_plugin_options_help_tab_managing_your_cpt_onomy_terms();
+			$text .= $this->get_plugin_options_help_tab_assigning_your_cpt_onomy_terms();
 			$text .= $this->get_plugin_options_help_tab_troubleshooting();
     		add_contextual_help( $this->options_page, $text );
 			
@@ -1002,9 +1002,9 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 		        'callback'	=> array( &$this, 'get_plugin_options_help_tab_managing_editing_your_cpts' )
 		    ));
 			$screen->add_help_tab( array( 
-		        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_managing_your_cpt_onomy_terms',
-		        'title'	=> sprintf( __( 'Managing Your %s Terms', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ),
-		        'callback'	=> array( &$this, 'get_plugin_options_help_tab_managing_your_cpt_onomy_terms' )
+		        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_assigning_your_cpt_onomy_terms',
+		        'title'	=> sprintf( __( 'Assigning Your %s Terms', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ),
+		        'callback'	=> array( &$this, 'get_plugin_options_help_tab_assigning_your_cpt_onomy_terms' )
 		    ));
 			$screen->add_help_tab( array( 
 		        'id'	=> CPT_ONOMIES_UNDERSCORE . '_help_troubleshooting',
@@ -1087,13 +1087,13 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
  	}
 	
 	/**
-	 * This function returns the content for the Managing Your CPT-onomy Terms "Help" tab on the options page.
+	 * This function returns the content for the Assigning Your CPT-onomy Terms "Help" tab on the options page.
 	 *
 	 * @since 1.1
 	 */
-	public function get_plugin_options_help_tab_managing_your_cpt_onomy_terms() {
-		$text = '<h3>' . sprintf( __( 'Managing Your %s Terms', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</h3>
-        <p>' . sprintf( __( 'Managing your %s terms is no different than managing taxonomy terms. Meta boxes will be added to each "edit post" page, where applicable, so users who have the capability can select, or "assign", the desired terms.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</p>
+	public function get_plugin_options_help_tab_assigning_your_cpt_onomy_terms() {
+		$text = '<h3>' . sprintf( __( 'Assigning Your %s Terms', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</h3>
+        <p>' . sprintf( __( 'Assigning your %s terms is no different than assigning taxonomy terms. Meta boxes will be added to each "edit post" page, where applicable, so users who have the capability can select, or "assign", the desired terms.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</p>
         <h4>' . sprintf( __( 'There are three different formats for %s term selection', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</h4>
         <ul>
         	<li><strong>' . __( 'a checklist', CPT_ONOMIES_TEXTDOMAIN ) . '</strong> - ' . sprintf( __( 'which is the default for hierarchical %s', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomies' ) . '</li>
@@ -1258,7 +1258,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 */
 	public function add_plugin_options_page_meta_boxes() {
 		global $cpt_onomies_manager;
-		
+				
 		// detect if we're editing a CPT AND whether its a new CPT or an "other" CPT
 		// will create $new, $edit and $other		
 		extract( $this->detect_custom_post_type_new_edit_other() );

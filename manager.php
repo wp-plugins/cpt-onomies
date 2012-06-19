@@ -625,10 +625,9 @@ class CPT_ONOMIES_MANAGER {
 	 		'public' (boolean)						If the CPT-onomy should be publicly queryable.
 	 												If not set, defaults to custom post type's public definition.
 	 		'has_cpt_onomy_archive' (boolean)		Sets whether the CPT-onomy will have an archive page. Defaults to true.
-	 												'cpt_onomy_archive_slug' must be defined.
 	 		'cpt_onomy_archive_slug' (string)		The slug for the CPT-onomy archive page. 'has_cpt_onomy_archive' must be true.
-	 												Accepts variables $post_type and $term in string format as placeholders.
-	 												Default is '$post_type/tax/$term'.
+	 												Accepts variables $post_type, $term_slug and $term_id in string format as placeholders.
+	 												Default is '$post_type/tax/$term_slug'.
 	 		'restrict_user_capabilities' (array)	User roles who have capability to assign CPT-onomy terms.
 	 												If empty, ALL user roles will have the capability.
 	 												Default is array( 'administrator', 'editor', 'author' ).
@@ -657,7 +656,7 @@ class CPT_ONOMIES_MANAGER {
 		 		'labels' => '', // if no labels are provided, WordPress uses their own
 		 		'public' => $custom_post_type->public,
 		 		'has_cpt_onomy_archive' => true,
-		 		'cpt_onomy_archive_slug' => '$post_type/tax/$term',
+		 		'cpt_onomy_archive_slug' => '$post_type/tax/$term_slug',
 		 		'restrict_user_capabilities' => array( 'administrator', 'editor', 'author' )
 		 	);
 		 	
@@ -688,7 +687,7 @@ class CPT_ONOMIES_MANAGER {
 				)
 			);
 									
-			// add rewrite rule (default is true) to display CPT-onomy archive page - default is '{post type}/tax/{term}'
+			// add rewrite rule (default is true) to display CPT-onomy archive page - default is '{post type}/tax/{term slug}'
 			// we must add our own rewrite rule instead of defining the 'rewrite' property because
 			// post types and taxonomies with the same name share the same $wp_rewrite permastruct
 			// and post types must win the rewrite war.
@@ -726,7 +725,7 @@ class CPT_ONOMIES_MANAGER {
 	 *
 	 * If 'Use Custom Post Type as Taxonomy' is set, registers a CPT-onomy
 	 * and adds a rewrite rule to display the CPT-onomy archive page. As of 1.1,
-	 * the user can customize the archive page slug. The default is {cpt name}/tax/{term}.
+	 * the user can customize the archive page slug. The default is {cpt name}/tax/{term slug}.
 	 *
 	 * This function is invoked by the action 'init'.
 	 *

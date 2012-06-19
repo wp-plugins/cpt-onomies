@@ -115,6 +115,7 @@ class CPT_ONOMIES_ADMIN {
 				break;
 				
 			case 'post.php':
+			case 'post-new.php':
 				wp_enqueue_style( CPT_ONOMIES_DASH . '-admin-post', CPT_ONOMIES_URL . 'css/admin-post.css' );
 				wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-post', CPT_ONOMIES_URL . 'js/admin-post.js', array( 'jquery', 'post', 'jquery-ui-autocomplete' ), '', true );
 				
@@ -205,10 +206,10 @@ class CPT_ONOMIES_ADMIN {
 			// get terms
 			$terms = wp_get_object_terms( $post_ids, $taxonomies, $args );
 			
-			// get parent title, if desired
+			// get parent title, if desired AND if post type is hierarchical
 			if ( $get_parent_title ) {
-				foreach( $terms as $term_index => $term ) {					
-					$terms[ $term_index ]->parent = $this->build_term_parent_title_with_csv( $term->parent );
+				foreach( $terms as $term_index => $term ) {
+					$terms[ $term_index ]->parent = ( is_post_type_hierarchical( $term->taxonomy ) ) ? $this->build_term_parent_title_with_csv( $term->parent ) : '';
 				}		
 			}
 			
@@ -232,10 +233,15 @@ class CPT_ONOMIES_ADMIN {
 	public function ajax_check_if_term_exists() {
 		global $cpt_onomy;
 		$term = ( isset( $_POST[ 'custom_post_type_onomies_term' ] ) && !empty( $_POST[ 'custom_post_type_onomies_term' ] ) ) ? $_POST[ 'custom_post_type_onomies_term' ] : '';
+		$term_id = ( isset( $_POST[ 'custom_post_type_onomies_term_id' ] ) && !empty( $_POST[ 'custom_post_type_onomies_term_id' ] ) && (int)$_POST[ 'custom_post_type_onomies_term_id' ] > 0 ) ? (int)$_POST[ 'custom_post_type_onomies_term_id' ] : 0;
 		$taxonomy = ( isset( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) && !empty( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) ) ? $_POST[ 'custom_post_type_onomies_taxonomy' ] : '';
 		$get_parent_title = ( isset( $_POST[ 'custom_post_type_onomies_get_parent_title' ] ) && !empty( $_POST[ 'custom_post_type_onomies_get_parent_title' ] ) ) ? true : false;
-		if ( $term && $taxonomy ) {
-			$term_exists = $cpt_onomy->term_exists( $term, $taxonomy );
+		if ( ( $term || $term_id > 0 ) && $taxonomy ) {
+			$term_exists = false;
+			if ( $term_id > 0 )
+				$term_exists = $cpt_onomy->term_exists( $term_id, $taxonomy );
+			if ( !$term_exists && $term )
+				$term_exists = $cpt_onomy->term_exists( $term, $taxonomy );
 			if ( !$term_exists )
 				echo json_encode( array() );
 			elseif ( is_numeric( $term_exists ) )
@@ -272,7 +278,6 @@ class CPT_ONOMIES_ADMIN {
 		$term = ( isset( $_POST[ 'custom_post_type_onomies_term' ] ) && !empty( $_POST[ 'custom_post_type_onomies_term' ] ) ) ? $_POST[ 'custom_post_type_onomies_term' ] : NULL;
 		$post_id = ( isset( $_POST[ 'custom_post_type_onomies_post_id' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_id' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_id' ] : 0;	
 		if ( $taxonomy && $term ) {
-			//$available_terms = $wpdb->get_results( $wpdb->prepare( "SELECT ID AS value, post_title AS label, ( SELECT post_title FROM " . $wpdb->posts . " wpposts2 WHERE ID = wpposts1.post_parent ) AS parent FROM " . $wpdb->posts . " wpposts1 WHERE post_type = '" . $taxonomy . "' AND post_status = 'publish'" ) );
 			$available_terms = $wpdb->get_results( $wpdb->prepare( "SELECT ID AS value, post_title AS label, post_parent AS parent FROM " . $wpdb->posts . " WHERE post_type = '" . $taxonomy . "' AND post_status = 'publish'" ) );
 			if ( $available_terms ) {
 				$results = array();
@@ -282,8 +287,8 @@ class CPT_ONOMIES_ADMIN {
 					// If a match was found, add it to the suggestions
 					if ( !( $post_id > 0 && $this_term->value == $post_id ) && stripos( $this_term->label, $term ) !== false ) {
 					
-						// if post parent, get post parent title
-						$this_term->parent = $this->build_term_parent_title_with_csv( $this_term->parent );
+						// if post parent AND post type is hierarchical, get post parent title
+						$this_term->parent = ( is_post_type_hierarchical( $taxonomy ) ) ? $this->build_term_parent_title_with_csv( $this_term->parent ) : '';
 						
 						$results[] = array(
 							'value' => $this_term->value,
@@ -368,7 +373,7 @@ class CPT_ONOMIES_ADMIN {
 				case 'autocomplete':
 												
 					?>
-					<div id="taxonomy-<?php echo $taxonomy; ?>" class="tagsdiv cpt_onomies">
+					<div id="taxonomy-<?php echo $taxonomy; ?>" class="cpt_onomies_tags_div">
 						<div class="jaxtag">
 							<div class="nojs-tags hide-if-js">
 								<p><?php _e( $tax->labels->add_or_remove_items,  CPT_ONOMIES_TEXTDOMAIN ); ?></p>
@@ -379,17 +384,17 @@ class CPT_ONOMIES_ADMIN {
 									<label class="screen-reader-text" for="new-tag-<?php echo $taxonomy; ?>"><?php echo $metabox['title']; ?></label>
 									<div class="taghint"><?php _e( $tax->labels->add_new_item, CPT_ONOMIES_TEXTDOMAIN ); ?></div>
 									<p>
-										<input type="text" id="new-tag-<?php echo $taxonomy; ?>" name="newtag[<?php echo $taxonomy; ?>]" class="newtag form-input-tip" size="16" autocomplete="off" value="" />
-										<input type="button" class="button tagadd" value="<?php esc_attr_e( 'Add', CPT_ONOMIES_TEXTDOMAIN ); ?>" tabindex="3" />
+										<input type="text" id="new-tag-<?php echo $taxonomy; ?>" name="cpt_onomies_new_tag[<?php echo $taxonomy; ?>]" class="cpt_onomies_new_tag form-input-tip" size="16" autocomplete="off" value="" />
+										<input type="button" class="button cpt_onomies_tag_add" value="<?php esc_attr_e( 'Add', CPT_ONOMIES_TEXTDOMAIN ); ?>" tabindex="3" />
 									</p>
 								</div>
 								<p class="howto"><?php echo esc_attr( $tax->labels->separate_items_with_commas, CPT_ONOMIES_TEXTDOMAIN ); ?></p>
 							<?php endif; ?>
 						</div>
-						<div class="tagchecklist<?php if ( !current_user_can( $tax->cap->assign_terms) ) { echo ' alone'; } ?>"></div>
+						<div class="cpt_onomies_tag_checklist<?php if ( !current_user_can( $tax->cap->assign_terms) ) { echo ' alone'; } ?>"></div>
 					</div>
 					<?php if ( current_user_can( $tax->cap->assign_terms ) ) : ?>
-						<p class="hide-if-no-js"><a href="#titlediv" class="tagcloud-link cpt_onomies" id="link-<?php echo $taxonomy; ?>"><?php _e( $tax->labels->choose_from_most_used, CPT_ONOMIES_TEXTDOMAIN ); ?></a></p>
+						<p class="hide-if-no-js"><a href="#titlediv" class="cpt_onomies_tag_cloud" id="link-<?php echo $taxonomy; ?>"><?php _e( $tax->labels->choose_from_most_used, CPT_ONOMIES_TEXTDOMAIN ); ?></a></p>
 					<?php endif;
 					break;
 				

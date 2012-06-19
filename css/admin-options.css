@@ -47,13 +47,13 @@
 
 #tab-panel-custom_post_type_onomies_help_getting_started h3,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts h3,
-#tab-panel-custom_post_type_onomies_help_managing_your_cpt_onomy_terms h3,
+#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms h3,
 #tab-panel-custom_post_type_onomies_help_troubleshooting h3 {
 	margin-bottom:0;
 	}
 #tab-panel-custom_post_type_onomies_help_getting_started h4,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts h4,
-#tab-panel-custom_post_type_onomies_help_managing_your_cpt_onomy_terms h4,
+#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms h4,
 #tab-panel-custom_post_type_onomies_help_troubleshooting h4 {
 	margin-top:0;
 	margin-bottom:0;
@@ -62,33 +62,33 @@
 	}
 #tab-panel-custom_post_type_onomies_help_getting_started p,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts p,
-#tab-panel-custom_post_type_onomies_help_managing_your_cpt_onomy_terms p,
+#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms p,
 #tab-panel-custom_post_type_onomies_help_troubleshooting p {
 	margin-top:0;
 	}
 	
 #tab-panel-custom_post_type_onomies_help_getting_started pre,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts pre,
-#tab-panel-custom_post_type_onomies_help_managing_your_cpt_onomy_terms pre,
+#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms pre,
 #tab-panel-custom_post_type_onomies_help_troubleshooting pre {
 	margin-left: 20px;
 	}
 
 #tab-panel-custom_post_type_onomies_help_getting_started li,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts li,
-#tab-panel-custom_post_type_onomies_help_managing_your_cpt_onomy_terms li,
+#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms li,
 #tab-panel-custom_post_type_onomies_help_troubleshooting li {
 	margin:0 0 0 26px;
 	}
 #tab-panel-custom_post_type_onomies_help_getting_started li li,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts li li,
-#tab-panel-custom_post_type_onomies_help_managing_your_cpt_onomy_terms li li,
+#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms li li,
 #tab-panel-custom_post_type_onomies_help_troubleshooting li li {
 	margin-left:0;
 	}
 #tab-panel-custom_post_type_onomies_help_getting_started table,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts table,
-#tab-panel-custom_post_type_onomies_help_managing_your_cpt_onomy_terms table,
+#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms table,
 #tab-panel-custom_post_type_onomies_help_troubleshooting table {
 	width:100%;
 }

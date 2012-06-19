@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamad
 Tags: custom post type, custom, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, cptonomies, custom post type taxonomies, custom post type as taxonomy, custom post types as taxonomies, relationships
 Requires at least: 3.1
 Tested up to: 3.3.2
-Stable tag: 1.1
+Stable tag: 1.1.1
 
 Use your custom post types as taxonomies and create relationships between your posts, just as you would create taxonomy relationships.
 
@@ -55,10 +55,36 @@ What's really great about CPT-onomies is that they work just like any other taxo
 
 This is a jQuery "bug" that only seems to plague a few. I've noticed that this validation standstill will occur if you have any text printed outside the <body> element on your page. If that's not the case, and the problem still lingers after you've upgraded to version 1.1, you can dequeue the validation script by placing the following code in your functions.php file:
 
-`add_action( 'admin_head', 'my_website_admin_head' );
+`<?php
+add_action( 'admin_head', 'my_website_admin_head' );
 function my_website_admin_head() {
 	wp_dequeue_script( 'custom-post-type-onomies-admin-options-validate' );
-}`
+}
+?>`
+
+= When assigning my CPT-onomy terms, I see a checklist but I would like to use the autocomplete box (or a select dropdown). =
+
+If you have a hierarchical CPT-onomy, the default selection format is a checklist. But if you would rather use the autocomplete box, or a select dropdown, CPT-onomies allows you to hook into the meta box (via a filter) and overwrite the default selection format.
+
+Here's an example of the filter. More information, check out the "Help" tab in the CPT-onomies settings or [visit the FAQ on my web site](http://rachelcarden.com/cpt-onomies/faq/ "visit the FAQ on my web site").
+
+`<?php
+add_filter( 'custom_post_type_onomies_meta_box_format', 'my_website_custom_post_type_onomies_meta_box_format', 1, 3 );
+function my_website_custom_post_type_onomies_meta_box_format( $format, $taxonomy, $post_type ) {
+   // when editing a post with the post type 'movies',
+   // we want to assign the 'actors' CPT-onomy terms with an autocomplete box
+   if ( $post_type == 'movies' && $taxonomy == 'actors' )
+      return 'autocomplete';
+   // no matter the post type, we want to assign the 'actors' CPT-onomy terms with a select dropdown
+   elseif ( $taxonomy == 'actors' )
+      return 'dropdown';
+   // no matter the post type, we want to assign the 'directors' CPT-onomy terms with a checklist
+   elseif ( $taxonomy == 'directors' )
+      return 'checklist';
+   // WordPress filters must always return a value
+   return $format;
+}
+?>`
 
 = I added support for "Thumbnail" to my custom post type, but the "Featured Image" box does not show up =
 
@@ -80,6 +106,11 @@ If FAQ didn't cover your problem, refer to the following resources:
 5. The admin allows you to sort and filter your posts by CPT-onomy terms.
 
 == Changelog ==
+
+= 1.1.1 =
+* Fixed bug with autocomplete box.
+* Fixed bug when editing "other" custom post types.
+* Fixed bug with custom CPT-onomy archive slug.
 
 = 1.1 =
 * Added support to programmatically register CPT-onomies.
@@ -115,6 +146,11 @@ If FAQ didn't cover your problem, refer to the following resources:
 * Plugin launch!
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+* Fixed bug with autocomplete box.
+* Fixed bug when editing "other" custom post types.
+* Fixed bug with custom CPT-onomy archive slug.
 
 = 1.1 =
 * Added support to programmatically register CPT-onomies.

@@ -1,7 +1,7 @@
 (function($){
 
 	// "most used" tag cloud
-    $( '.tagcloud-link.cpt_onomies' ).click( function( $event ) {	
+    $( '.cpt_onomies_tag_cloud' ).click( function( $event ) {	
     	$event.preventDefault();
 		
 		// code taken from tagBox.get
@@ -26,7 +26,7 @@
 				
 				if ( $term && $term_id ) {
 					// find tag checklist
-					var $tag_checklist = $( this ).closest( '.inside' ).find( '.tagsdiv.cpt_onomies' ).find( '.tagchecklist' );
+					var $tag_checklist = $( this ).closest( '.inside' ).find( '.cpt_onomies_tags_div' ).find( '.cpt_onomies_tag_checklist' );
 					$tag_checklist.custom_post_type_onomies_tag_checklist_add_tag_term( $taxonomy, $term, $term_id, '' );
 				}
 				
@@ -61,22 +61,22 @@ jQuery.noConflict()(function(){
 	});
 			
 	// Handle autocomplete for CPT-onomies tags
-	jQuery( '.tagsdiv.cpt_onomies' ).each( function() {
+	jQuery( '.cpt_onomies_tags_div' ).each( function() {
 	
 		var $post_id = jQuery( '#post_ID' ).val();
 		var $post_type = jQuery( '#post_type' ).val();
 		var $taxonomy = jQuery( this ).attr( 'id' ).replace( /^taxonomy-/i, '' );
 				
 		// these elements wont "exist" if user does not have capability to assign terms
-		var $new_tag_input = jQuery( this ).find( '#new-tag-' + $taxonomy );
-		var $add_tag_button = jQuery( this ).find( 'input.tagadd' );
+		var $new_tag_input = jQuery( this ).find( 'input.cpt_onomies_new_tag' );
+		var $add_tag_button = jQuery( this ).find( 'input.cpt_onomies_tag_add' );
 		
 		// this hidden element is used to save the tag id for terms added to the new tag input
 		var $hidden_tag_id = 'custom_post_type_onomy_' + $taxonomy + '_selected_term_id';
 		var $hidden_tag_parent = 'custom_post_type_onomy_' + $taxonomy + '_selected_term_parent';
 		
 		// this element stores our list of tags and shows up no matter what
-		var $tag_checklist = jQuery( this ).find( '.tagchecklist' );
+		var $tag_checklist = jQuery( this ).find( '.cpt_onomies_tag_checklist' );
 				
 		// remove the hidden textarea to remove any $_POST confusion
 		jQuery( this ).find( '.nojs-tags' ).remove();
@@ -179,10 +179,10 @@ jQuery.noConflict()(function(){
         	
         	// remove the hidden tag parent
        		jQuery( '#' + $hidden_tag_parent ).remove();
-        	        	        	        	
-        	// check to see if term exists if they typed in a term on their own
+       		
+       		// check to see if term exists if they typed in a term on their own
         	// this will retrieve term id AND also get term name if they typed in a slug
-        	if ( $term && ( !$term_id || $term_id == 0 || $term_id == '' ) ) {
+        	if ( $term == '' || ( !$term_id || $term_id == 0 || $term_id == '' ) ) {
         		jQuery.ajax({
 					url: ajaxurl,
 					type: 'POST',
@@ -192,6 +192,7 @@ jQuery.noConflict()(function(){
 					data: {
 						action: 'custom_post_type_onomy_check_if_term_exists',
 						custom_post_type_onomies_term: $term,
+						custom_post_type_onomies_term_id: $term_id,
 						custom_post_type_onomies_taxonomy: $taxonomy,
 						custom_post_type_onomies_get_parent_title: 'true'
 					},
@@ -290,7 +291,7 @@ jQuery.noConflict()(function(){
 									$term_parent = $value;
 							}
 						});
-						// add to tagchecklist
+						// add to cpt_onomies_tag_checklist
 						if ( $term != '' && $term_id != '' )
 							$tag_checklist.custom_post_type_onomies_tag_checklist_add_tag_term( $taxonomy, $term, $term_id, $term_parent );
 					});
@@ -342,11 +343,11 @@ jQuery.fn.custom_post_type_onomies_tag_checklist_add_tag_term = function( $taxon
 	   	if ( cpt_onomies_admin_post_data.can_assign_terms[ $taxonomy ] ) {
 	   	
 		   	// add delete button
-		   	$tag_delete = jQuery( '<a id="' + $taxonomy + '-check-num-' + $tag_checklist.find( '.tag' ).size() + '" class="ntdelbutton">X</a>' );
+		   	$tag_delete = jQuery( '<a id="' + $taxonomy + '-check-num-' + $tag_checklist.find( '.tag' ).size() + '" class="delbutton">X</a>' );
 		   	$tag.append( $tag_delete );
 		   	
 		   	// assign tag delete event
-		   	$tag.find( '.ntdelbutton' ).click( function() {
+		   	$tag.find( '.delbutton' ).click( function() {
 		   		var $parent_tag = jQuery( this ).closest( 'span.tag' );
 				
 				// remove from data
@@ -384,7 +385,11 @@ jQuery.fn.custom_post_type_onomies_tag_checklist_add_tag_term = function( $taxon
 		
 		// if term is too big, adjust term width
 		if ( $tag_elements_width > ( $tag.width() - 5 ) ) // 5 is for a little breathing room
-			$tag_term.css({ 'width': ( $tag_term.width() - $tag_delete_width ) + 'px' });
+			$tag_term.css({ 'width': ( $tag.width() - $tag_delete_width - 5 ) + 'px' });
+			
+		// if the term is STILL too long, i.e. one word and very long, then break the word-wrap
+		if ( $tag_elements_width > ( $tag.width() - 5 ) ) // 5 is for a little breathing room
+			$tag_term.css({ 'width': ( $tag.width() - $tag_delete_width - 5 ) + 'px', 'word-wrap': 'break-word' });
 			
 	}
 
