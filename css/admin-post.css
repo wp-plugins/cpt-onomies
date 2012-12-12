@@ -103,6 +103,7 @@ select.category.cpt_onomies {
 	margin: 3px 0 0 0!important;
 	color: #fff!important;
 	line-height: 1.1em;
+	white-space: normal!important;
 	}
 	
 .ui-autocomplete.cpt_onomies .ui-menu-item .parent {

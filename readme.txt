@@ -3,8 +3,8 @@ Contributors: bamadesigner
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
 Tags: custom post type, custom, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, cptonomies, custom post type taxonomies, custom post type as taxonomy, custom post types as taxonomies, relationships, relate
 Requires at least: 3.1
-Tested up to: 3.3.2
-Stable tag: 1.1.1
+Tested up to: 3.5
+Stable tag: 1.2
 
 Use your custom post types as taxonomies and create relationships between your posts, just as you would create taxonomy relationships.
 
@@ -107,6 +107,20 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 == Changelog ==
 
+= 1.2 =
+* Minor bug fixes.
+* Custom archive pages can be created pretty easily. See documentation for more information.
+* Non-public custom post types can now be used as CPT-onomies.
+* Added the ability to customize settings by removing options and setting default property values using various filters. See documentation for more information.
+* Added the ability to exclude terms from being assigned by passing term IDs to filter. See documentation for more information.
+* Added the ability to remove assign CPT-onomy terms meta box from edit screen via filter. See documentation for more information.
+* Added the ability to remove CPT-onomy dropdown filter from admin manage custom post type screen via filter. See documentation for more information.
+* Added the ability to remove CPT-onomy column (and/or it's sortability) from admin manage custom post type screen via filter. See documentation for more information.
+* Fixed a bug with the capability type setting. *BE SURE TO RE-SAVE YOUR SETTINGS IF YOU USE THIS PROPERTY.*
+* Fixed a bug with the 'read_private_posts' CPT capability. *BE SURE TO RE-SAVE YOUR SETTINGS IF YOU USE THIS PROPERTY.*
+* Changed cpt_onomy.php filename to cpt-onomy.php to match cpt-onomies.php. I'm not sure why I gave it an underscore to begin with.
+* Added the ability to set CPT-onomy term description using 'term_description' or '{$taxonomy}_description' filter'.
+
 = 1.1.1 =
 * Fixed bug with autocomplete box.
 * Fixed bug when editing "other" custom post types.
@@ -146,6 +160,20 @@ If FAQ didn't cover your problem, refer to the following resources:
 * Plugin launch!
 
 == Upgrade Notice ==
+
+= 1.2 =
+* Minor bug fixes.
+* Custom archive pages can be created pretty easily. See documentation for more information.
+* Non-public custom post types can now be used as CPT-onomies.
+* Added the ability to customize settings by removing options and setting default property values using various filters. See documentation for more information.
+* Added the ability to exclude terms from being assigned by passing term IDs to filter. See documentation for more information.
+* Added the ability to remove assign CPT-onomy terms meta box from edit screen via filter. See documentation for more information.
+* Added the ability to remove CPT-onomy dropdown filter from admin manage custom post type screen via filter. See documentation for more information.
+* Added the ability to remove CPT-onomy column (and/or it's sortability) from admin manage custom post type screen via filter. See documentation for more information.
+* Fixed a bug with the capability type setting. *BE SURE TO RE-SAVE YOUR SETTINGS IF YOU USE THIS PROPERTY.*
+* Fixed a bug with the 'read_private_posts' CPT capability. *BE SURE TO RE-SAVE YOUR SETTINGS IF YOU USE THIS PROPERTY.*
+* Changed cpt_onomy.php filename to cpt-onomy.php to match cpt-onomies.php. I'm not sure why I gave it an underscore to begin with.
+* Added the ability to set CPT-onomy term description using 'term_description' or '{$taxonomy}_description' filter'.
 
 = 1.1.1 =
 * Fixed bug with autocomplete box.

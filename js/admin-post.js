@@ -96,6 +96,7 @@ jQuery.noConflict()(function(){
 							action: 'custom_post_type_onomy_meta_box_autocomplete_callback',
 							custom_post_type_onomies_taxonomy: $taxonomy,
 							custom_post_type_onomies_term: $request.term,
+							custom_post_type_onomies_post_type: $post_type,
 							custom_post_type_onomies_post_id: $post_id
 						},
 						success: function( $data ){
@@ -368,7 +369,6 @@ jQuery.fn.custom_post_type_onomies_tag_checklist_add_tag_term = function( $taxon
 	   	// add parent
 	   	if ( $term_parent != '' && $term_parent != null && $term_parent != undefined ) {
 	   		$tag_term.prepend( '<span class="parent">' + $term_parent.replace( ',', '/ ' ) + '/</span>' );
-	   		//$tag_term.prepend( '<span class="parent">' + $term_parent + '/</span> ' );
 	   	}
 	   	$tag.append( $tag_term );
 	   		        	

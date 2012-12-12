@@ -14,7 +14,7 @@ function cpt_onomies_register_widgets() {
  * CPT-onomy tag cloud widget class
  *
  * This widget was created because the plugin cannot hook into the WordPress tag cloud widget without receiving errors.
- * The widget, however, contains the same functionality. 
+ * The widget, however, contains the same functionality.
  *
  * This class mimics the WordPress class WP_Widget_Tag_Cloud.
  *
@@ -42,35 +42,38 @@ class WP_Widget_CPTonomy_Tag_Cloud extends WP_Widget {
 		global $cpt_onomies_manager, $cpt_onomy;
 		extract( $args );
 		if ( isset( $instance[ 'taxonomy' ] ) ) {
-			$taxonomy = $instance[ 'taxonomy' ];
-			if ( $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
-				$tax = get_taxonomy( $taxonomy );
-				if ( $tax->public ) {
+			$current_taxonomy = $instance[ 'taxonomy' ];
+			if ( $cpt_onomies_manager->is_registered_cpt_onomy( $current_taxonomy ) ) {
+			
+				// get tag cloud
+				$tag_cloud = $cpt_onomy->wp_tag_cloud( apply_filters( 'widget_tag_cloud_args', array(
+					'taxonomy' => $current_taxonomy,
+					'echo' => false,
+					'link' => ( isset( $instance[ 'term_link' ] ) && $instance[ 'term_link' ] == 'cpt_post' ) ? 'cpt_post' : 'view'
+					)
+				));
+				
+				// if empty, and they dont' want to show if empty, then don't show
+				if ( $instance[ 'show_if_empty' ] || ( !$instance[ 'show_if_empty' ] && !empty( $tag_cloud ) ) ) {
+				
+					if ( !empty( $instance[ 'title' ] ) )
+						$title = $instance[ 'title' ];
+					else {
+						$tax = get_taxonomy( $current_taxonomy );
+						$title = $tax->labels->name;
+					}						
+					$title = apply_filters( 'widget_title', $title, $instance, $this->id_base );
 					
-					// get tag cloud
-					$tag_cloud = $cpt_onomy->wp_tag_cloud( apply_filters( 'widget_tag_cloud_args', array(
-						'taxonomy' => $taxonomy,
-						'echo' => false,
-						'link' => ( isset( $instance[ 'term_link' ] ) && $instance[ 'term_link' ] == 'cpt_post' ) ? 'cpt_post' : 'view'
-						)
-					));
+					echo $before_widget;
+					if ( $title )
+						echo $before_title . __( $title, CPT_ONOMIES_TEXTDOMAIN ) . $after_title;
+					echo '<div class="tagcloud">' . $tag_cloud . "</div>\n";
+					echo $after_widget;
 					
-					// if empty, and they dont' want to show if empty, then don't show
-					if ( $instance[ 'show_if_empty' ] || ( !$instance[ 'show_if_empty' ] && !empty( $tag_cloud ) ) ) {
-						if ( !empty( $instance[ 'title' ] ) )
-							$title = $instance['title'];
-						else
-							$title = $tax->labels->name;
-						$title = apply_filters( 'widget_title', $title, $instance, $this->id_base );
-					
-						echo $before_widget;
-						if ( $title )
-							echo $before_title . __( $title, CPT_ONOMIES_TEXTDOMAIN ) . $after_title;
-						echo '<div class="tagcloud">' . $tag_cloud . "</div>\n";
-						echo $after_widget;
-					}					
 				}
+			
 			}
+		
 		}
 	}
 
@@ -103,16 +106,16 @@ class WP_Widget_CPTonomy_Tag_Cloud extends WP_Widget {
 		global $cpt_onomies_manager;
 		$defaults = array( 'show_if_empty' => 1, 'term_link' => 'view' );
 		$instance = wp_parse_args( $instance, $defaults );
-		$current_taxonomy = ( !empty( $instance[ 'taxonomy' ] ) && $cpt_onomies_manager->is_registered_cpt_onomy( $instance[ 'taxonomy' ] ) ) ? $instance['taxonomy'] : NULL;
+		$current_taxonomy = ( !empty( $instance[ 'taxonomy' ] ) && $cpt_onomies_manager->is_registered_cpt_onomy( $instance[ 'taxonomy' ] ) ) ? $instance[ 'taxonomy' ] : NULL;
 		?>
 		<p><label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:', CPT_ONOMIES_TEXTDOMAIN ) ?></label>
 		<input type="text" class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" value="<?php if ( isset( $instance[ 'title' ] ) ) { echo esc_attr( $instance[ 'title' ] ); } ?>" /></p>
 		<p><label for="<?php echo $this->get_field_id( 'taxonomy' ); ?>"><?php _e( 'Taxonomy:', CPT_ONOMIES_TEXTDOMAIN ) ?></label>
 		<select class="widefat" id="<?php echo $this->get_field_id( 'taxonomy' ); ?>" name="<?php echo $this->get_field_name( 'taxonomy' ); ?>">
-        <?php foreach( get_taxonomies( array( '_builtin' => false, 'public' => true ), 'objects' ) as $taxonomy => $tax ) {
-			if ( !empty( $tax->labels->name ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) )  { ?>
-	      		<option value="<?php echo esc_attr( $taxonomy ); ?>" <?php selected( $taxonomy, $current_taxonomy ); ?>><?php _e( $tax->labels->name, CPT_ONOMIES_TEXTDOMAIN ); ?></option>
-	      	<?php }
+        <?php foreach ( get_taxonomies( array(), 'objects' ) as $taxonomy => $tax ) {
+        	if ( !$cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) || empty( $tax->labels->name ) )
+        		continue;
+        	?><option value="<?php echo esc_attr( $taxonomy ); ?>" <?php selected( $taxonomy, $current_taxonomy ); ?>><?php _e( $tax->labels->name, CPT_ONOMIES_TEXTDOMAIN ); ?></option><?php
 		} ?>
 		</select></p>
         <p><label for="<?php echo $this->get_field_id( 'show_if_empty' ); ?>"><?php _e( 'Show tag cloud if empty:', CPT_ONOMIES_TEXTDOMAIN ) ?></label>
