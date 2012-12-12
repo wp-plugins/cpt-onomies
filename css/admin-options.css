@@ -7,8 +7,11 @@
 	text-decoration:underline!important;
 }
 
-.red { color:red; }
-.green { color:green; }
+.notbold { font-weight: normal; }
+
+.gray, .gray a { color: gray; }
+.red, .red a { color: red; }
+.green, .green a { color: green; }
 
 #save_changes {
 	margin-top:0;
@@ -47,13 +50,19 @@
 
 #tab-panel-custom_post_type_onomies_help_getting_started h3,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts h3,
-#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms h3,
+#tab-panel-custom_post_type_onomies_help_assigning_cpt_onomy_terms h3,
+#tab-panel-custom_post_type_onomies_help_excluding_cpt_onomy_terms h3,
+#tab-panel-custom_post_type_onomies_help_custom_cpt_onomy_archive_pages h3,
+#tab-panel-custom_post_type_onomies_help_filters h3,
 #tab-panel-custom_post_type_onomies_help_troubleshooting h3 {
 	margin-bottom:0;
 	}
 #tab-panel-custom_post_type_onomies_help_getting_started h4,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts h4,
-#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms h4,
+#tab-panel-custom_post_type_onomies_help_assigning_cpt_onomy_terms h4,
+#tab-panel-custom_post_type_onomies_help_excluding_cpt_onomy_terms h4,
+#tab-panel-custom_post_type_onomies_help_custom_cpt_onomy_archive_pages h4,
+#tab-panel-custom_post_type_onomies_help_filters h4,
 #tab-panel-custom_post_type_onomies_help_troubleshooting h4 {
 	margin-top:0;
 	margin-bottom:0;
@@ -62,33 +71,49 @@
 	}
 #tab-panel-custom_post_type_onomies_help_getting_started p,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts p,
-#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms p,
+#tab-panel-custom_post_type_onomies_help_assigning_cpt_onomy_terms p,
+#tab-panel-custom_post_type_onomies_help_excluding_cpt_onomy_terms p,
+#tab-panel-custom_post_type_onomies_help_custom_cpt_onomy_archive_pages p,
+#tab-panel-custom_post_type_onomies_help_filters p,
 #tab-panel-custom_post_type_onomies_help_troubleshooting p {
 	margin-top:0;
+	line-height: 1.5em;
 	}
 	
 #tab-panel-custom_post_type_onomies_help_getting_started pre,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts pre,
-#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms pre,
+#tab-panel-custom_post_type_onomies_help_assigning_cpt_onomy_terms pre,
+#tab-panel-custom_post_type_onomies_help_excluding_cpt_onomy_terms pre,
+#tab-panel-custom_post_type_onomies_help_custom_cpt_onomy_archive_pages pre,
+#tab-panel-custom_post_type_onomies_help_filters pre,
 #tab-panel-custom_post_type_onomies_help_troubleshooting pre {
 	margin-left: 20px;
 	}
 
 #tab-panel-custom_post_type_onomies_help_getting_started li,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts li,
-#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms li,
+#tab-panel-custom_post_type_onomies_help_assigning_cpt_onomy_terms li,
+#tab-panel-custom_post_type_onomies_help_excluding_cpt_onomy_terms li,
+#tab-panel-custom_post_type_onomies_help_custom_cpt_onomy_archive_pages li,
+#tab-panel-custom_post_type_onomies_help_filters li,
 #tab-panel-custom_post_type_onomies_help_troubleshooting li {
 	margin:0 0 0 26px;
 	}
 #tab-panel-custom_post_type_onomies_help_getting_started li li,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts li li,
-#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms li li,
+#tab-panel-custom_post_type_onomies_help_assigning_cpt_onomy_terms li li,
+#tab-panel-custom_post_type_onomies_help_excluding_cpt_onomy_terms li li,
+#tab-panel-custom_post_type_onomies_help_custom_cpt_onomy_archive_pages li li,
+#tab-panel-custom_post_type_onomies_help_filters li li,
 #tab-panel-custom_post_type_onomies_help_troubleshooting li li {
 	margin-left:0;
 	}
 #tab-panel-custom_post_type_onomies_help_getting_started table,
 #tab-panel-custom_post_type_onomies_help_managing_editing_your_cpts table,
-#tab-panel-custom_post_type_onomies_help_assigning_your_cpt_onomy_terms table,
+#tab-panel-custom_post_type_onomies_help_assigning_cpt_onomy_terms table,
+#tab-panel-custom_post_type_onomies_help_excluding_cpt_onomy_terms table,
+#tab-panel-custom_post_type_onomies_help_custom_cpt_onomy_archive_pages table,
+#tab-panel-custom_post_type_onomies_help_filters table,
 #tab-panel-custom_post_type_onomies_help_troubleshooting table {
 	width:100%;
 }
@@ -102,20 +127,22 @@
 }
 
 #custom-post-type-onomies-save-custom-post-type #custom-post-type-onomies-save-changes,
+#custom-post-type-onomies-add-new-custom-post-type .add_new_cpt_onomy_custom_post_type,
 #custom-post-type-onomies-delete-custom-post-type .delete_cpt_onomy_custom_post_type {
-	display:block;
-	padding:7px 5px;
-	color:#fff;
-	font-size:1.1em;
-	line-height:normal;
-	text-align:center;
-	font-weight:bold;
-	text-decoration:none;
-	cursor:pointer;
-	border:1px solid #6d0019;
-	-webkit-border-radius:5px;
-	-moz-border-radius:5px;
-	border-radius:5px;	
+	display: block;
+	height: auto!important;
+	padding: 7px 5px!important;
+	color: #fff;
+	font-size: 1.1em;
+	line-height: normal;
+	text-align: center;
+	font-weight: bold;
+	text-decoration: none;
+	cursor: pointer;
+	border: 1px solid #6d0019;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;	
 	background: #a90329; /* Old browsers */
 	background: -moz-linear-gradient(top,  #a90329 0%, #8f0222 44%, #6d0019 100%); /* FF3.6+ */
 	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#a90329), color-stop(44%,#8f0222), color-stop(100%,#6d0019)); /* Chrome,Safari4+ */
@@ -126,25 +153,27 @@
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a90329', endColorstr='#6d0019',GradientType=0 ); /* IE6-9 */
 }
 
-#custom-post-type-onomies-save-custom-post-type #custom-post-type-onomies-save-changes {
-	font-size:1.1em!important;
-	line-height:normal!important;
-	width:99%;
-	margin:0;
-	padding-left:0;
-	padding-right:0;
-	border-color:#175b7b;
-	background:#298cba; /* Old browsers */
-	background:-moz-linear-gradient(top,  #298cba 0%, #175b7b 100%); /* FF3.6+ */
-	background:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#298cba), color-stop(100%,#175b7b)); /* Chrome,Safari4+ */
-	background:-webkit-linear-gradient(top,  #298cba 0%,#175b7b 100%); /* Chrome10+,Safari5.1+ */
-	background:-o-linear-gradient(top,  #298cba 0%,#175b7b 100%); /* Opera 11.10+ */
-	background:-ms-linear-gradient(top,  #298cba 0%,#175b7b 100%); /* IE10+ */
-	background:linear-gradient(top,  #298cba 0%,#175b7b 100%); /* W3C */
-	filter:progid:DXImageTransform.Microsoft.gradient( startColorstr='#298cba', endColorstr='#175b7b',GradientType=0 ); /* IE6-9 */
+#custom-post-type-onomies-save-custom-post-type #custom-post-type-onomies-save-changes,
+#custom-post-type-onomies-add-new-custom-post-type .add_new_cpt_onomy_custom_post_type {
+	font-size: 1.1em!important;
+	line-height: normal!important;
+	width: 99%;
+	margin: 0;
+	padding-left: 0!important;
+	padding-right: 0!important;
+	border-color: #175b7b;
+	background: #298cba; /* Old browsers */
+	background: -moz-linear-gradient(top,  #298cba 0%, #175b7b 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#298cba), color-stop(100%,#175b7b)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #298cba 0%,#175b7b 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #298cba 0%,#175b7b 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #298cba 0%,#175b7b 100%); /* IE10+ */
+	background: linear-gradient(top,  #298cba 0%,#175b7b 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#298cba', endColorstr='#175b7b',GradientType=0 ); /* IE6-9 */
 }
 
-#custom-post-type-onomies-save-custom-post-type #custom-post-type-onomies-save-changes:hover {
+#custom-post-type-onomies-save-custom-post-type #custom-post-type-onomies-save-changes:hover,
+#custom-post-type-onomies-add-new-custom-post-type .add_new_cpt_onomy_custom_post_type:hover {
 	border-color:#083a51;
 	color:#f2f5f8;
 }
@@ -339,8 +368,6 @@ table.manage_custom_post_type_onomies .add a:hover {
 }
 
 
-
-
 #custom-post-type-onomies-edit-custom-post-type .inside {
 	padding-top: 5px;
 	padding-bottom: 1px;
@@ -399,6 +426,7 @@ table.manage_custom_post_type_onomies .add a:hover {
 	border:1px solid #c7cfbd;
 	font-weight:bold;
 }
+.edit_custom_post_type_message a { color:#457800; }
 
 .edit_custom_post_type_message.information,
 .edit_custom_post_type_message.inactive {
@@ -409,6 +437,9 @@ table.manage_custom_post_type_onomies .add a:hover {
 	}
 
 .edit_custom_post_type_message.information { background-image:url(../images/information.png); }
+
+.edit_custom_post_type_message.information a,
+.edit_custom_post_type_message.inactive a { color:#333; }
 
 .edit_custom_post_type_message.attention {
 	background-image:url(../images/attention.png);
@@ -423,10 +454,6 @@ table.manage_custom_post_type_onomies .add a:hover {
 	padding: 12px 0;
 	line-height: 1.2em;
 }
-/*.edit_custom_post_type_message.attention p {
-	padding-top:13px;
-	padding: 0;
-}*/
 
 
 
@@ -438,9 +465,6 @@ table.edit_custom_post_type {
 	margin:0 0 7px 0;
 	padding:10px 10px 0 10px;
 	border:1px solid #ddd;
-	/*-webkit-border-radius: 5px;
-	-moz-border-radius: 5px;
-	border-radius: 5px;*/
 	text-align:left;
 }
 
@@ -477,8 +501,15 @@ table.edit_custom_post_type td.label {
 	line-height:normal;
 	padding-top:2px;
 	padding-right:15px;
-	/*color:#0f5372;*/
 }
+
+table.edit_custom_post_type td.label .programmatically {
+	display: block;
+	font-style: italic;
+	font-weight: normal;
+	line-height: 120%;
+}
+
 table.edit_custom_post_type table td.label {
 	width:16%;
 	font-size:1em;
@@ -510,9 +541,6 @@ table.edit_custom_post_type .advanced_message  .close_advanced {
 	text-align:underline;
 	cursor:pointer;
 	border:1px solid #21759b;
-	/*-webkit-border-radius:5px;
-	-moz-border-radius:5px;
-	border-radius:5px;*/
 }
 
 table.edit_custom_post_type input[type="text"], table.edit_custom_post_type select, table.edit_custom_post_type textarea {
