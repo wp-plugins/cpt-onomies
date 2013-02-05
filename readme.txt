@@ -3,8 +3,8 @@ Contributors: bamadesigner
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
 Tags: custom post type, custom, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, cptonomies, custom post type taxonomies, custom post type as taxonomy, custom post types as taxonomies, relationships, relate
 Requires at least: 3.1
-Tested up to: 3.5
-Stable tag: 1.2
+Tested up to: 3.5.1
+Stable tag: 1.2.1
 
 Use your custom post types as taxonomies and create relationships between your posts, just as you would create taxonomy relationships.
 
@@ -107,6 +107,13 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 == Changelog ==
 
+= 1.2.1 =
+* Cleaned up/fixed a bug with $cpt_onomy->wp_set_object_terms().
+* Fixed a bug when assigning terms to CPTs with long names.
+* Fixed a bug when excluding terms from being assigned to new posts via checklist.
+* Fixed bug that sometimes caused fatal error during activation.
+* Added the exclude terms filter to the bulk and quick edit.
+
 = 1.2 =
 * Minor bug fixes.
 * Custom archive pages can be created pretty easily. See documentation for more information.
@@ -160,6 +167,13 @@ If FAQ didn't cover your problem, refer to the following resources:
 * Plugin launch!
 
 == Upgrade Notice ==
+
+= 1.2.1 =
+* Cleaned up/fixed a bug with $cpt_onomy->wp_set_object_terms().
+* Fixed a bug when assigning terms to CPTs with long names.
+* Fixed a bug when excluding terms from being assigned to new posts via checklist.
+* Fixed bug that sometimes caused fatal error during activation.
+* Added the exclude terms filter to the bulk and quick edit.
 
 = 1.2 =
 * Minor bug fixes.

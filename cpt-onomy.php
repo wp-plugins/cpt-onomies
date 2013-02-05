@@ -1,5 +1,9 @@
 <?php
 
+/* Instantiate the class. */
+global $cpt_onomy;
+$cpt_onomy = new CPT_TAXONOMY();
+
 /**
  * Holds the functions needed for using a custom post type as a taxonomy.
  *
@@ -1424,18 +1428,37 @@ class CPT_TAXONOMY {
 	*/
 	public function wp_set_object_terms( $object_id, $terms, $taxonomy, $append = false ) {
 		global $wpdb, $cpt_onomies_manager;
+		
+		// this function only processes registered CPT-onomies
+		// if this is a normal taxonomy, then use the WordPress function
+		if ( !$cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) )
+			return wp_set_object_terms( $object_id, $terms, $taxonomy, $append );
 	
-		if ( ! taxonomy_exists($taxonomy) )
+		if ( !taxonomy_exists( $taxonomy ) )
 			return new WP_Error( 'invalid_taxonomy', __( 'Invalid Taxonomy', CPT_ONOMIES_TEXTDOMAIN ) );
+			
+		$tax = get_taxonomy( $taxonomy );
+		if ( !current_user_can( $tax->cap->assign_terms ) )
+			return new WP_Error( $tax->cap->assign_terms, __( 'You are not allowed to assign terms for this taxonomy.', CPT_ONOMIES_TEXTDOMAIN ) );
 			
 		$object_id = (int) $object_id;
 		$object_post_type = get_post_type( $object_id );
+			
+		//make sure these posts are allowed to have a relationship
+		if ( !is_object_in_taxonomy( $object_post_type, $taxonomy ) )
+			return new WP_Error( 'taxonomy_relationship', __( 'This post type object and taxonomy are not allowed to have a relationship.', CPT_ONOMIES_TEXTDOMAIN ) );
+		
+		// make sure terms is an array
+		if ( !is_array( $terms ) ) {
+			$terms = str_replace( ' ', ',', str_replace( ', ', ',', $terms ) );
+			$terms = explode( ',', $terms );
+		}
 		
 		// allows you to exclude term IDs from being assigned
 		// can be array, space-separated or comma separated string
 		$exclude_term_ids = apply_filters( 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids', array(), $taxonomy, $object_post_type, $object_id );
 		
-		// make sure its an array
+		// make sure $exclude_term_ids is an array
 		if ( !is_array( $exclude_term_ids ) ) {
 			$exclude_term_ids = str_replace( ' ', ',', str_replace( ', ', ',', $exclude_term_ids ) );
 			$exclude_term_ids = explode( ',', $exclude_term_ids );
@@ -1444,42 +1467,12 @@ class CPT_TAXONOMY {
 		// make sure the 'excludes' includes the current object ID
 		if ( !in_array( $object_id, $exclude_term_ids ) )
 			$exclude_term_ids[] = $object_id;
-				
-		// remove excluded IDs from terms
-		$new_terms = array();
-		foreach( $terms as $term ) {
-			// might be a slug? TODO: incorporate that into exclude IDs
-			if ( !is_numeric( $term ) || ( is_numeric( $term ) && !in_array( $term, $exclude_term_ids ) ) )
-				$new_terms[] = $term;
-		}
-		$terms = $new_terms;
 		
-		// this function only processes registered CPT-onomies
-		// if this is a normal taxonomy, then use the WordPress function
-		if ( !$cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) )
-			return wp_set_object_terms( $object_id, $terms, $taxonomy, $append );
-			
-		//make sure these posts are allowed to have a relationship
-		if ( !is_object_in_taxonomy( $object_post_type, $taxonomy ) )
-			return new WP_Error( 'taxonomy_relationship', __( 'This post type object and taxonomy are not allowed to have a relationship.', CPT_ONOMIES_TEXTDOMAIN ) );
-			
-		$tax = get_taxonomy( $taxonomy );
-		if ( !current_user_can( $tax->cap->assign_terms ) )
-			return new WP_Error( $tax->cap->assign_terms, __( 'You are not allowed to assign terms for this taxonomy.', CPT_ONOMIES_TEXTDOMAIN ) );
-		
-		if ( !is_array( $terms ) )
-			$terms = array( $terms );
-	
-		// we don't have to retrieve 'all' of the terminfo here
-		// because we're only dealing with CPT-onomies and not mingling with taxonomies
-		if ( ! $append )
-			$old_term_ids =  wp_get_object_terms( $object_id, $taxonomy, array( 'fields' => 'ids', 'orderby' => 'id' ) );
-		else
-			$old_term_ids = array();
-				
+		// we need the term IDs for $append logic at the end
 		$term_ids = array();
 				
 		foreach ( (array) $terms as $term ) {
+			
 			if ( !strlen( trim( $term ) ) )
 				continue;
 				
@@ -1492,7 +1485,12 @@ class CPT_TAXONOMY {
 			}
 			if ( is_wp_error( $term_info ) )
 				return $term_info;
+				
+			// do not assign excluded terms
+			if ( in_array( $term_info->term_id, $exclude_term_ids ) )
+				continue;
 			
+			// keep track of all the term IDs for $append logic at the end
 			$term_ids[] = $term_info->term_id;
 			
 			// make sure the relationship doesn't already exist
@@ -1501,16 +1499,23 @@ class CPT_TAXONOMY {
 				
 			// create relationship
 			add_post_meta( $object_id, CPT_ONOMIES_POSTMETA_KEY, $term_info->term_id, false );
+			
 		}
 			
 		// delete all pre-existing term relationships
-		if ( ! $append ) {
-			$delete_terms = array_diff($old_term_ids, $term_ids);
+		if ( !$append ) {
+		
+			// we don't have to retrieve 'all' of the term info here
+			// because we're only dealing with CPT-onomies and not mingling with taxonomies
+			$old_term_ids = wp_get_object_terms( $object_id, $taxonomy, array( 'fields' => 'ids', 'orderby' => 'id' ) );
+			
+			$delete_terms = array_diff( $old_term_ids, $term_ids );
 			if ( $delete_terms ) {
 				foreach( $delete_terms as $delete_term_id ) {
 					$this->wp_delete_object_term_relationship( $object_id, $delete_term_id );
 				}
 			}
+			
 		}
 	
 		return $term_ids;
@@ -1633,7 +1638,7 @@ class CPT_TAXONOMY {
 	
 		$return = apply_filters( 'wp_tag_cloud', $return, $args );
 	
-		if ( 'array' == $args['format'] || empty($args['echo']) )
+		if ( 'array' == $args[ 'format' ] || empty( $args[ 'echo' ] ) )
 			return $return;
 	
 		echo $return;

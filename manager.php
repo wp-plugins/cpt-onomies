@@ -1,5 +1,9 @@
 <?php
 
+/* Instantiate the class. */
+global $cpt_onomies_manager;
+$cpt_onomies_manager = new CPT_ONOMIES_MANAGER();
+
 /**
  * Holds the functions needed for managing the custom post types and taxonomies.
  *
@@ -33,7 +37,7 @@ class CPT_ONOMIES_MANAGER {
 		add_filter( 'query_vars', array( &$this, 'register_custom_query_vars' ) );
 		
 		// revert the query vars
-		add_action( 'parse_request', array( &$this, 'revert_query_vars' ) );
+		add_action( 'parse_request', array( &$this, 'revert_query_vars' ), 100 );
 		
 		// manage user capabilities
 		add_filter( 'user_has_cap', array( &$this, 'user_has_term_capabilities' ), 10, 3 );

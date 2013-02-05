@@ -31,11 +31,42 @@ jQuery.noConflict()(function(){
 			if ( $id > 0 ) {
 				
 				// define the edit row
-				var $edit_row = $( '#edit-'+$id );
+				var $quick_edit_row = $( '#edit-'+$id );
+				
+				// get the post type
+				var $post_type = jQuery( 'input[name="post_type"]' ).val();
 				
 				// get the taxonomies
-				var $taxonomies = $edit_row.cpt_onomy_bulk_quick_edit_get_taxonomies();
-																
+				var $taxonomies = $quick_edit_row.cpt_onomy_bulk_quick_edit_get_taxonomies();
+				
+				// get this object's taxonomies excluded term IDs
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					dataType: 'json',
+					async: true,
+					cache: false,
+					data: {
+						action: 'custom_post_type_onomy_get_cpt_onomy_terms_excluded_term_ids',
+						custom_post_type_onomies_taxonomies: $taxonomies,
+						custom_post_type_onomies_post_type: $post_type,
+						custom_post_type_onomies_post_id: $id
+					},
+					success: function( $term_ids ) {
+						// if $term_ids is array and not empty
+						if ( $.isArray( $term_ids ) && $term_ids.length > 0 && $quick_edit_row.size() > 0 ) {
+						
+							// remove from checklists
+							$quick_edit_row.find( 'ul.cpt-onomy-checklist' ).each( function() {
+								
+								$( this ).cpt_onomy_remove_from_quick_edit_checklist( $term_ids );
+								
+							});
+														
+						}
+					}
+				});
+				
 				// get this object's term IDs
 				$.ajax({
 					url: ajaxurl,
@@ -51,10 +82,10 @@ jQuery.noConflict()(function(){
 					},
 					success: function( $term_ids ) {
 						// if $term_ids is array and not empty
-						if ( $.isArray( $term_ids ) && $term_ids.length > 0 && $edit_row.size() > 0 ) {
+						if ( $.isArray( $term_ids ) && $term_ids.length > 0 && $quick_edit_row.size() > 0 ) {
 													
 							// populate the checklists
-							$edit_row.find( 'ul.cpt-onomy-checklist' ).each( function() {
+							$quick_edit_row.find( 'ul.cpt-onomy-checklist' ).each( function() {
 								
 								$( this ).cpt_onomy_populate_quick_edit_checklist( $term_ids );
 								
@@ -185,6 +216,54 @@ jQuery.noConflict()(function(){
 		}
 		
 	}
+	
+	function cpt_onomy_exclude_from_bulk_edit() {
+	    
+		// we create a copy of the original inline edit post, overwrite and then "call" the copy
+		var $wp_inline_set_bulk = inlineEditPost.setBulk;
+	    inlineEditPost.setBulk = function() {
+						
+			// "call" the original function
+	        $wp_inline_set_bulk.apply( this, arguments );
+	        
+	        // define the bulk edit row
+			var $bulk_edit_row = $( '#bulk-edit' );
+			
+			// get the post type
+			var $post_type = jQuery( 'input[name="post_type"]' ).val();
+				
+			// get the taxonomies
+			var $taxonomies = $bulk_edit_row.cpt_onomy_bulk_quick_edit_get_taxonomies();
+	        
+	        // get the excluded term IDs
+			$.ajax({
+				url: ajaxurl,
+				type: 'POST',
+				dataType: 'json',
+				async: true,
+				cache: false,
+				data: {
+					action: 'custom_post_type_onomy_get_cpt_onomy_terms_excluded_term_ids',
+					custom_post_type_onomies_taxonomies: $taxonomies,
+					custom_post_type_onomies_post_type: $post_type
+				},
+				success: function( $term_ids ) {
+					// if $term_ids is array and not empty
+					if ( $.isArray( $term_ids ) && $term_ids.length > 0 && $bulk_edit_row.size() > 0 ) {
+
+						// remove from checklists
+						$bulk_edit_row.find( 'ul.cpt-onomy-checklist' ).each( function() {
+							
+							$( this ).cpt_onomy_remove_from_quick_edit_checklist( $term_ids );
+							
+						});
+													
+					}
+				}
+			});
+			
+		};
+	}
 		
 	function cpt_onomy_save_bulk_edit() {
 		
@@ -240,6 +319,7 @@ jQuery.noConflict()(function(){
 	if ( inlineEditPost ) {
 	    cpt_onomy_populate_quick_edit();
 	   	cpt_onomy_save_quick_edit();
+	   	cpt_onomy_exclude_from_bulk_edit();
 	}
 	else {
 	    jQuery( cpt_onomy_populate_quick_edit );
@@ -262,8 +342,21 @@ jQuery.fn.cpt_onomy_bulk_quick_edit_get_taxonomies = function() {
 	return $taxonomies;
 }
 
-jQuery.fn.cpt_onomy_populate_quick_edit_checklist = function( $term_ids ) {
+jQuery.fn.cpt_onomy_remove_from_quick_edit_checklist = function( $term_ids ) {
+	jQuery( this ).children( 'li' ).each( function() {
 		
+		// retrieve item info
+		var $list_item = jQuery( this );
+		var $list_item_id = parseInt( $list_item.attr( 'id' ).match( /[0-9]+/ ) );
+		
+		// remove item
+		if ( jQuery.inArray( $list_item_id, $term_ids ) > -1 )
+			$list_item.remove();
+			
+	});
+}
+
+jQuery.fn.cpt_onomy_populate_quick_edit_checklist = function( $term_ids ) {
 	jQuery( this ).children( 'li' ).each( function() {
 		
 		var $list_item = jQuery( this );
@@ -278,5 +371,4 @@ jQuery.fn.cpt_onomy_populate_quick_edit_checklist = function( $term_ids ) {
 			$list_item.children( 'ul' ).cpt_onomy_populate_quick_edit_checklist( $term_ids );
 		
 	});
-	
 }

@@ -1,5 +1,9 @@
 <?php
 
+/* Instantiate the class. */
+global $cpt_onomies_admin;
+$cpt_onomies_admin = new CPT_ONOMIES_ADMIN();
+
 /**
  * Holds the functions needed for the admin.
  *
@@ -49,6 +53,7 @@ class CPT_ONOMIES_ADMIN {
 			// bulk/quick edit
 			add_action( 'bulk_edit_custom_box', array( &$this, 'bulk_quick_edit_custom_box' ), 100, 2 );
 			add_action( 'quick_edit_custom_box', array( &$this, 'bulk_quick_edit_custom_box' ), 100, 2 );
+			add_action( 'wp_ajax_custom_post_type_onomy_get_cpt_onomy_terms_excluded_term_ids', array( &$this, 'ajax_get_cpt_onomy_terms_excluded_term_ids' ) );
 			add_action( 'wp_ajax_custom_post_type_onomy_populate_bulk_quick_edit', array( &$this, 'ajax_get_wp_object_terms' ) );
 			add_action( 'wp_ajax_custom_post_type_onomy_save_bulk_edit', array( &$this, 'save_bulk_edit' ) );
 			add_action( 'wp_ajax_custom_post_type_onomy_quick_edit_populate_custom_columns', array( &$this, 'quick_edit_populate_custom_columns' ) );
@@ -154,6 +159,62 @@ class CPT_ONOMIES_ADMIN {
 	}
 	
 	/**
+	 * Allows ajax to invoke the get_cpt_onomy_terms_excluded_term_ids() function.
+	 *
+	 * Prints an array of term ids.
+	 *
+	 * @since 1.2.1
+	 */		
+	public function ajax_get_cpt_onomy_terms_excluded_term_ids() {
+		$taxonomies = ( isset( $_POST[ 'custom_post_type_onomies_taxonomies' ] ) && !empty( $_POST[ 'custom_post_type_onomies_taxonomies' ] ) ) ? $_POST[ 'custom_post_type_onomies_taxonomies' ] : array();
+		$post_type = ( isset( $_POST[ 'custom_post_type_onomies_post_type' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_type' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_type' ] : NULL;
+		$post_id = ( isset( $_POST[ 'custom_post_type_onomies_post_id' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_id' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_id' ] : 0;
+		$exclude_term_ids = array();
+		foreach( $taxonomies as $taxonomy ) {
+			$taxonomy_exclude_term_ids = $this->get_cpt_onomy_terms_excluded_term_ids( $taxonomy, $post_type, $post_id );
+			if ( !empty( $taxonomy_exclude_term_ids ) )
+				$exclude_term_ids = array_merge( $exclude_term_ids, $taxonomy_exclude_term_ids );
+		}
+		echo json_encode( $exclude_term_ids );
+		die();
+	}
+	
+	/**
+	 * The 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' filter
+	 * allows you to exclude specific terms from being printed, and therefore assigned,
+	 * in the admin by returning their term IDs. This function invokes that filter when 
+	 * needed, cleans up the data, stores the data in a global class variable and returns the data.
+	 *
+	 * The data returned to the filter can be an array, space-separated or comma separated string.
+	 * The filter passes three parameters: the $taxonomy, the $post_type and the $post_id.
+	 *
+	 * @since 1.2.1
+	 * @param string $taxonomy - the name of the CPT-onomy
+	 * @param string $post_type - the name of the post type the CPT-onomy is being assigned to
+	 * @param int $post_id - the ID for the post the CPT-onomy is being assigned to
+	 * @return array - the ids for the excluded cpt_onomy terms
+	 * @filters 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' - $taxonomy, $post_type, $post_id
+	 */	
+	public function get_cpt_onomy_terms_excluded_term_ids( $taxonomy = NULL, $post_type = NULL, $post_id = 0 ) {
+		$exclude_term_ids = apply_filters( 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids', array(), $taxonomy, $post_type, $post_id );
+			
+		// make sure its an array
+		if ( !is_array( $exclude_term_ids ) ) {
+			$exclude_term_ids = str_replace( ' ', ',', str_replace( ', ', ',', $exclude_term_ids ) );
+			$exclude_term_ids = explode( ',', $exclude_term_ids );
+		}
+			
+		// make sure the 'excludes' includes the current post ID
+		if ( !in_array( $post_id, $exclude_term_ids ) )
+			$exclude_term_ids[] = $post_id;
+			
+		// store the data
+		$this->assigning_terms_exclude_term_ids[ $taxonomy ][ $post_type ][ $post_id ] = $exclude_term_ids;
+		
+		return $exclude_term_ids;
+	}
+	
+	/**
 	 * Used in collaboration with the CPT-onomy autocomplete term selection,
 	 * if the CPT-onomy is hierarchical, in order to display a term's parents
 	 * in the autocomplete dropdown and in the selected terms' checklist.
@@ -222,7 +283,7 @@ class CPT_ONOMIES_ADMIN {
 			echo json_encode( $terms );
 			
 		}
-		die();	
+		die();
 	}
 	
 	/**
@@ -291,19 +352,10 @@ class CPT_ONOMIES_ADMIN {
 			$available_terms = $wpdb->get_results( $wpdb->prepare( "SELECT ID, post_title AS label, post_parent AS parent FROM " . $wpdb->posts . " WHERE post_type = %s AND post_status = 'publish' ORDER BY post_title ASC", $taxonomy ) );
 			if ( $available_terms ) {
 			
-				// allows you to exclude term IDs from being assigned
-				// can be array, space-separated or comma separated string
-				$exclude_term_ids = apply_filters( 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids', array(), $taxonomy, $post_type, $post_id );
-				
-				// make sure its an array
-				if ( !is_array( $exclude_term_ids ) ) {
-					$exclude_term_ids = str_replace( ' ', ',', str_replace( ', ', ',', $exclude_term_ids ) );
-					$exclude_term_ids = explode( ',', $exclude_term_ids );
-				}
-			
-				// make sure the 'excludes' includes the current post ID
-				if ( !in_array( $post_id, $exclude_term_ids ) )
-					$exclude_term_ids[] = $post_id;
+				// allows you to use the 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' filter
+				// to exclude specific terms from being printed and therefore assigned. The term ids are stored in
+				// an array that is used to customize each printed format.
+				$exclude_term_ids = $this->get_cpt_onomy_terms_excluded_term_ids( $taxonomy, $post_type, $post_id );
 				
 				$results = array();
 				foreach( $available_terms as $this_term ) {
@@ -406,8 +458,6 @@ class CPT_ONOMIES_ADMIN {
 	 * @param object $post - the current post's information
 	 * @param array $box - information about the metabox
 	 * @filters 'custom_post_type_onomies_meta_box_format' - $taxonomy, $post_type
-	 *			'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' - $taxonomy,
-	 *				$post_type, $post_id
 	 */
 	public function print_cpt_onomy_meta_box( $post, $metabox ) {	
 		
@@ -429,25 +479,13 @@ class CPT_ONOMIES_ADMIN {
 			// does the user have permission to assign terms?
 			$disabled = !current_user_can( $tax->cap->assign_terms ) ? ' disabled="disabled"' : '';
 			
-			// allows you to exclude term IDs from being assigned
-			// can be array, space-separated or comma separated string
-			$exclude_term_ids = apply_filters( 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids', array(), $taxonomy, $post_type, $post->ID );
-			
-			// make sure its an array
-			if ( !is_array( $exclude_term_ids ) ) {
-				$exclude_term_ids = str_replace( ' ', ',', str_replace( ', ', ',', $exclude_term_ids ) );
-				$exclude_term_ids = explode( ',', $exclude_term_ids );
-			}
-			
-			// make sure the 'excludes' includes the current post ID
-			if ( !in_array( $post->ID, $exclude_term_ids ) )
-				$exclude_term_ids[] = $post->ID;
-				
-			// store the data
-			$this->assigning_terms_exclude_term_ids[ $taxonomy ][ $post_type ][ $post->ID ] = $exclude_term_ids;
+			// allows you to use the 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' filter
+			// to exclude specific terms from being printed and therefore assigned. The term ids are stored in
+			// an array that is used to customize each printed format.
+			$exclude_term_ids = $this->get_cpt_onomy_terms_excluded_term_ids( $taxonomy, $post_type, $post->ID );
 			
 			// add field for testing "editability" when we save the information
-			?><input type="hidden" name="assigning_<?php echo CPT_ONOMIES_UNDERSCORE; ?>_<?php echo $taxonomy; ?>_relationships" value="1" /><?php
+			?><input type="hidden" name="assign_cpt_onomies_<?php echo $taxonomy; ?>_rel" value="1" /><?php
 	        
 			switch( $format ) {
 			
@@ -556,7 +594,7 @@ class CPT_ONOMIES_ADMIN {
 	 * @param object $post - the current post's information
 	 */
 	public function save_post( $post_id, $post ) {
-		global $cpt_onomies_manager, $cpt_onomy, $wpdb;
+		global $cpt_onomies_manager, $cpt_onomy;
 
 		// pointless if $_POST is empty (this happens on bulk edit)
 		if ( empty( $_POST ) )
@@ -576,10 +614,10 @@ class CPT_ONOMIES_ADMIN {
 						
 		// check cpt-onomies
 		foreach( get_object_taxonomies( $post->post_type, 'objects' ) as $taxonomy => $tax ) {
-			
+		
 			// make sure cpt-onomy was visible, otherwise we might be deleting relationships for taxonomies that weren't even "editable"
-			if ( isset( $_POST[ 'assigning_' . CPT_ONOMIES_UNDERSCORE . '_' . $taxonomy . '_relationships' ] ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
-				
+			if ( isset( $_POST[ 'assign_cpt_onomies_' . $taxonomy . '_rel' ] ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
+			
 				// check permissions
 				if ( !current_user_can( $tax->cap->assign_terms ) )
 					continue;
@@ -627,16 +665,16 @@ class CPT_ONOMIES_ADMIN {
 	 * This function is invoked by the actions 'bulk_edit_custom_box' and 'quick_edit_custom_box'.
 	 * 
 	 * @since 1.0.3
-	 * @uses $cpt_onomies_manager, $post
+	 * @uses $cpt_onomies_manager
 	 * @param string $column_name - the name of the column (which tells us which taxonomy to show)
 	 * @param string $post_type - the current post's post type 
 	 */
 	public function bulk_quick_edit_custom_box( $column_name, $post_type ) {
-		global $cpt_onomies_manager, $post;
+		global $cpt_onomies_manager;
 		if ( strpos( $column_name, CPT_ONOMIES_UNDERSCORE ) !== false ) {
 			$taxonomy = strtolower( str_replace( CPT_ONOMIES_UNDERSCORE . '_', '', $column_name ) );
 			if ( taxonomy_exists( $taxonomy ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
-				$tax = get_taxonomy( $taxonomy );
+				$tax = get_taxonomy( $taxonomy );				
 				?>
 				
 				<fieldset class="inline-edit-col-center inline-edit-<?php echo $taxonomy; ?>"><div class="inline-edit-col">
@@ -651,7 +689,7 @@ class CPT_ONOMIES_ADMIN {
                     
                     <?php // these variables help with processing/saving the info ?>
                     <input type="hidden" name="is_bulk_quick_edit" value="true" />
-                  	<input type="hidden" name="<?php echo 'assigning_' . CPT_ONOMIES_UNDERSCORE . '_' . $taxonomy . '_relationships'; ?>" value="true" />
+                  	<input type="hidden" name="<?php echo 'assign_cpt_onomies_' . $taxonomy . '_rel'; ?>" value="true" />
 				
 				</div></fieldset>
                               
@@ -998,6 +1036,7 @@ class CPTonomy_Walker_Terms_Checklist extends Walker {
 	 * Added this function in version 1.2 in order to allow
 	 * users to exclude term ids from the checklist.
 	 *
+	 * @uses $cpt_onomies_admin, $post_type, $post
 	 * @param object $element Data object
 	 * @param array $children_elements List of elements to continue traversing.
 	 * @param int $max_depth Max depth to traverse.
@@ -1007,7 +1046,7 @@ class CPTonomy_Walker_Terms_Checklist extends Walker {
 	 * @return null Null on failure with no changes to parameters.
 	 */
 	function display_element( $element, &$children_elements, $max_depth, $depth=0, $args, &$output ) {
-		global $cpt_onomies_admin, $post_type, $post_id;
+		global $cpt_onomies_admin, $post_type, $post;
 		
 		if ( !$element )
 			return;
@@ -1017,55 +1056,55 @@ class CPTonomy_Walker_Terms_Checklist extends Walker {
 		// this data was retrieved from the filter
 		// 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids'
 		// when we printed the CPT-onomy meta boxes
-		$exclude_term_ids = isset( $cpt_onomies_admin->assigning_terms_exclude_term_ids[ $element->taxonomy ][ $post_type ][ $post_id ] ) ? $cpt_onomies_admin->assigning_terms_exclude_term_ids[ $element->taxonomy ][ $post_type ][ $post_id ] : array();
-
+		$exclude_term_ids = isset( $cpt_onomies_admin->assigning_terms_exclude_term_ids[ $element->taxonomy ][ $post_type ][ $post->ID ] ) ? $cpt_onomies_admin->assigning_terms_exclude_term_ids[ $element->taxonomy ][ $post_type ][ $post->ID ] : array();
+		
 		// we don't want to display terms we filtered out
 		if ( in_array( $element->$id_field, $exclude_term_ids ) ? false : true ) {
 
 			//display this element
 			if ( is_array( $args[0] ) )
-				$args[0]['has_children'] = ! empty( $children_elements[$element->$id_field] );
-			$cb_args = array_merge( array(&$output, $element, $depth), $args);
-			call_user_func_array(array(&$this, 'start_el'), $cb_args);
+				$args[0][ 'has_children' ] = ! empty( $children_elements[ $element->$id_field ] );
+			$cb_args = array_merge( array( &$output, $element, $depth ), $args );
+			call_user_func_array( array( &$this, 'start_el' ), $cb_args );
 	
 			$id = $element->$id_field;
 	
 			// descend only when the depth is right and there are childrens for this element
-			if ( ($max_depth == 0 || $max_depth > $depth+1 ) && isset( $children_elements[$id]) ) {
+			if ( ( $max_depth == 0 || $max_depth > $depth+1 ) && isset( $children_elements[ $id ] ) ) {
 	
-				foreach( $children_elements[ $id ] as $child ){
+				foreach( $children_elements[ $id ] as $child ) {
 	
-					if ( !isset($newlevel) ) {
+					if ( !isset( $newlevel ) ) {
 						$newlevel = true;
 						//start the child delimiter
-						$cb_args = array_merge( array(&$output, $depth), $args);
-						call_user_func_array(array(&$this, 'start_lvl'), $cb_args);
+						$cb_args = array_merge( array( &$output, $depth ), $args );
+						call_user_func_array( array( &$this, 'start_lvl' ), $cb_args );
 					}
 					$this->display_element( $child, $children_elements, $max_depth, $depth + 1, $args, $output );
 				}
 				unset( $children_elements[ $id ] );
 			}
 	
-			if ( isset($newlevel) && $newlevel ){
+			if ( isset( $newlevel ) && $newlevel ) {
 				//end the child delimiter
-				$cb_args = array_merge( array(&$output, $depth), $args);
-				call_user_func_array(array(&$this, 'end_lvl'), $cb_args);
+				$cb_args = array_merge( array( &$output, $depth ), $args );
+				call_user_func_array( array( &$this, 'end_lvl' ), $cb_args );
 			}
 	
 			//end this element
-			$cb_args = array_merge( array(&$output, $element, $depth), $args);
-			call_user_func_array(array(&$this, 'end_el'), $cb_args);
+			$cb_args = array_merge( array( &$output, $element, $depth ), $args );
+			call_user_func_array( array( &$this, 'end_el' ), $cb_args );
 			
 		}
 	}
 	
 	function start_lvl( &$output, $depth = 0, $args = array() ) {
-		$indent = str_repeat("\t", $depth);
+		$indent = str_repeat( "\t", $depth );
 		$output .= "$indent<ul class='children'>\n";
 	}
 
 	function end_lvl( &$output, $depth = 0, $args = array() ) {
-		$indent = str_repeat("\t", $depth);
+		$indent = str_repeat( "\t", $depth );
 		$output .= "$indent</ul>\n";
 	}
 	
