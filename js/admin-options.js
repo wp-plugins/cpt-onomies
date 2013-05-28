@@ -7,7 +7,7 @@ jQuery.noConflict()(function(){
 	});
 	
 	// check to make sure info is saved before continuing
-	jQuery( 'a:not(.delete_cpt_onomy_custom_post_type):not([target="_blank"])' ).live( 'click', function( event ) {
+	jQuery( 'a:not(.delete_cpt_onomy_custom_post_type):not(.thickbox):not([target="_blank"])' ).live( 'click', function( event ) {
 		if ( $cpt_onomies_changed_form ) {
 			var $message = null;
 			if ( cpt_onomies_admin_options_L10n.unsaved_message1 != '' )
@@ -59,38 +59,48 @@ jQuery.noConflict()(function(){
 	});
 	
 	// change the header label
-	jQuery( '#custom-post-type-onomies-custom-post-type-label' ).keyup( function() {
-		jQuery( '#edit_custom_post_type_header .label' ).html( jQuery( this ).val() );
+	var $default_header_label = jQuery( '#edit_custom_post_type_header .label' ).html();
+	var $cpt_label = jQuery( '#custom-post-type-onomies-custom-post-type-label' );
+	
+	// make sure the label is checked out the gate
+	$cpt_label.custom_post_type_onomies_change_header_label( $default_header_label );
+	$cpt_label.keyup( function() {
+		jQuery( this ).custom_post_type_onomies_change_header_label( $default_header_label );
 	});
-	jQuery( '#custom-post-type-onomies-custom-post-type-label' ).change( function() {
-		jQuery( '#edit_custom_post_type_header .label' ).html( jQuery( this ).val() );
+	$cpt_label.change( function() {
+		jQuery( this ).custom_post_type_onomies_change_header_label( $default_header_label );
 	});
 
-	jQuery( '#custom-post-type-onomies-custom-post-type-label' ).blur( function() {
-		jQuery( '#edit_custom_post_type_header .label' ).html( jQuery( this ).val() );
+	$cpt_label.blur( function() {
+		jQuery( this ).custom_post_type_onomies_change_header_label( $default_header_label );
 	});
 	
 	// create a field name
-	jQuery( '#custom-post-type-onomies-custom-post-type-label' ).change( function() {
-		var $cpt_name = jQuery( '#custom-post-type-onomies-custom-post-type-name' );
-		if ( $cpt_name.val() == '' ) {
-			// convert label to name
-			$cpt_name.val( jQuery( this ).val().replace( /[^a-zA-Z0-9\_\s]/i, '' ).replace( /\s/, '_' ).toLowerCase() );
-		}
-	});
+	var $cpt_name = jQuery( 'input#custom-post-type-onomies-custom-post-type-name' );
 	
-	// dim post type name if already set
-	jQuery( 'input#custom-post-type-onomies-custom-post-type-name' ).addClass( 'inactive' );
-	jQuery( 'input#custom-post-type-onomies-custom-post-type-name' ).focus( function() {
+	// make sure the name is created out the gate, if need be
+	$cpt_name.custom_post_type_onomies_create_name( $cpt_label.val() );
+	$cpt_label.change( function() {
+		$cpt_name.custom_post_type_onomies_create_name( jQuery( this ).val() );
+	});
+		
+	// dim post type name when not "active"
+	$cpt_name.addClass( 'inactive' );
+	$cpt_name.focus( function() {
 		jQuery( this ).removeClass( 'inactive' );
 	});
-	jQuery( 'input#custom-post-type-onomies-custom-post-type-name' ).blur( function() {
+	$cpt_name.blur( function() {
 		jQuery( this ).addClass( 'inactive' );
 	});
 	
 	// reset properties
 	jQuery( 'table.edit_custom_post_type .reset_property' ).live( 'click', function() {
 		jQuery( this ).closest( 'table' ).find( 'input[type="radio"]:checked' ).removeAttr( 'checked' );
+	});
+	
+	// take care of any dismiss messages
+	jQuery( '.dismiss' ).each( function() {
+		jQuery( this ).custom_post_type_onomies_setup_dismiss();
 	});
 	
 	// take care of the advanced open-close and messages
@@ -132,15 +142,47 @@ jQuery.noConflict()(function(){
 	
 });
 
+jQuery.fn.custom_post_type_onomies_change_header_label = function( $default_header_label = '' ) {
+	if ( jQuery( this ).val() != '' )
+		jQuery( '#edit_custom_post_type_header .label' ).html( jQuery( this ).val() );
+	else if ( $default_header_label != '' )
+		jQuery( '#edit_custom_post_type_header .label' ).html( $default_header_label );
+}
+
+jQuery.fn.custom_post_type_onomies_create_name = function( $label_value ) {
+	// if name is blank, convert label value to name
+	if ( jQuery( this ).val() == '' )
+		jQuery( this ).val( $label_value.replace( /[^a-zA-Z0-9\_\s]/i, '' ).replace( /\s/, '_' ).toLowerCase() );	
+}
+
+jQuery.fn.custom_post_type_onomies_setup_dismiss = function() {
+	var $dismiss = jQuery( this );
+	var $dismiss_id = jQuery( this ).attr( 'id' );
+	var $close = jQuery( '<span class="close">x</span>' );
+	$close.click( function() {
+		// remove message
+		jQuery( this ).parent( '.dismiss' ).remove();
+		// update user options
+		jQuery.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			async: false,
+			cache: false,
+			data: {
+				action: 'custom_post_type_onomy_update_edit_custom_post_type_dismiss',
+				custom_post_type_onomies_dismiss_id: $dismiss_id
+			}
+		});
+	});
+	$dismiss.append( $close );
+}
+
 jQuery.fn.custom_post_type_onomies_setup_advanced_table = function() {
-	
 	var $advanced = jQuery( this );
-	
 	if ( $advanced.closest( 'table.edit_custom_post_type' ).hasClass( 'show' ) )
 		$advanced.custom_post_type_onomies_show_advanced_table();
 	else
 		$advanced.custom_post_type_onomies_hide_advanced_table();
-			
 }
 
 jQuery.fn.custom_post_type_onomies_show_advanced_table = function() {
@@ -149,20 +191,30 @@ jQuery.fn.custom_post_type_onomies_show_advanced_table = function() {
 	$advanced.removeClass( 'hide' );
 	
 	// get edit table
-	var $edit_table = 'options';
-	if ( $advanced.closest( 'table.edit_custom_post_type' ).hasClass( 'labels' ) )
+	var $edit_table = null;
+	if ( $advanced.closest( 'table.edit_custom_post_type' ).hasClass( 'site_registration' ) )
+		$edit_table = 'site_registration';
+	else if ( $advanced.closest( 'table.edit_custom_post_type' ).hasClass( 'labels' ) )
 		$edit_table = 'labels';
-	
+	else
+		$edit_table = 'options';
+		
 	// create close message
 	var $close_message = null;
-	if ( $edit_table == 'labels' && cpt_onomies_admin_options_L10n.close_labels != '' )
+	if ( $edit_table == 'site_registration' && cpt_onomies_admin_options_L10n.close_site_registration != '' )
+		$close_message = cpt_onomies_admin_options_L10n.close_site_registration;
+	else if ( $edit_table == 'site_registration' )
+		$close_message = 'Close Site Registration';
+	else if ( $edit_table == 'labels' && cpt_onomies_admin_options_L10n.close_labels != '' )
 		$close_message = cpt_onomies_admin_options_L10n.close_labels;
 	else if ( $edit_table == 'labels' )
 		$close_message = 'Close Labels';
 	else if ( cpt_onomies_admin_options_L10n.close_advanced_options != '' )
 		$close_message = cpt_onomies_admin_options_L10n.close_advanced_options;
+	else if ( $edit_table == 'options' )
+		$close_message = 'Close Advanced Options';
 	else
-		$close_message = 'Advanced Options';
+		$close_message = 'Close';
 	$close_message = '<span class="close_advanced">' + $close_message + '</span>';
 	
 	// add close message	
@@ -200,13 +252,21 @@ jQuery.fn.custom_post_type_onomies_hide_advanced_table = function() {
 	$advanced.addClass( 'hide' );
 	
 	// get edit table
-	var $edit_table = 'options';
-	if ( $advanced.closest( 'table.edit_custom_post_type' ).hasClass( 'labels' ) )
+	var $edit_table = null;
+	if ( $advanced.closest( 'table.edit_custom_post_type' ).hasClass( 'site_registration' ) )
+		$edit_table = 'site_registration';
+	else if ( $advanced.closest( 'table.edit_custom_post_type' ).hasClass( 'labels' ) )
 		$edit_table = 'labels';
-	
+	else
+		$edit_table = 'options';
+		
 	// create message
 	var $message = null;
-	if ( $edit_table == 'labels' && cpt_onomies_admin_options_L10n.labels_message1 != '' )
+	if ( $edit_table == 'site_registration' && cpt_onomies_admin_options_L10n.site_registration_message1 != '' )
+		$message = cpt_onomies_admin_options_L10n.site_registration_message1;
+	else if ( $edit_table == 'site_registration' )
+		$message = 'If you want to register your custom post type on multiple sites, but not the entire network, this section is for you. However, your list of sites is kind of long so we hid it away as to not clog up your screen.';
+	else if ( $edit_table == 'labels' && cpt_onomies_admin_options_L10n.labels_message1 != '' )
 		$message = cpt_onomies_admin_options_L10n.labels_message1;
 	else if ( $edit_table == 'labels' )
 		$message = 'Instead of sticking with the boring defaults, why don\'t you customize the labels used for your custom post type. They can really add a nice touch.';
@@ -217,7 +277,11 @@ jQuery.fn.custom_post_type_onomies_hide_advanced_table = function() {
 		
 	// add links to message
 	$message += ' <span class="show_advanced">';
-	if ( $edit_table == 'labels' && cpt_onomies_admin_options_L10n.labels_message2 != '' )
+	if ( $edit_table == 'site_registration' && cpt_onomies_admin_options_L10n.site_registration_message2 != '' )
+		$message += cpt_onomies_admin_options_L10n.site_registration_message2;
+	else if ( $edit_table == 'site_registration' )
+		$message += 'Customize the Sites';
+	else if ( $edit_table == 'labels' && cpt_onomies_admin_options_L10n.labels_message2 != '' )
 		$message += cpt_onomies_admin_options_L10n.labels_message2;
 	else if ( $edit_table == 'labels' )
 		$message += 'Customize the Labels';
