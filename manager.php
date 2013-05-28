@@ -12,8 +12,9 @@ $cpt_onomies_manager = new CPT_ONOMIES_MANAGER();
 class CPT_ONOMIES_MANAGER {
 	
 	public $user_settings = array(
-		'custom_post_types' => array(),
-		'other_custom_post_types' => array()
+		'network_custom_post_types'	=> array(),
+		'custom_post_types'			=> array(),
+		'other_custom_post_types'	=> array()
 	);
 	
 	/**
@@ -27,11 +28,13 @@ class CPT_ONOMIES_MANAGER {
 	public function CPT_ONOMIES_MANAGER() { $this->__construct(); }
 	public function __construct() {
 		
-		// get user settings
-		$custom_post_types = get_option( CPT_ONOMIES_UNDERSCORE . '_custom_post_types' );
-		$other_custom_post_types = get_option( CPT_ONOMIES_UNDERSCORE . '_other_custom_post_types' );
-		if ( $custom_post_types ) $this->user_settings[ 'custom_post_types' ] = $custom_post_types;
-		if ( $other_custom_post_types ) $this->user_settings[ 'other_custom_post_types' ] = $other_custom_post_types;
+		// get network user settings (only if multisite AND plugin is network activated)
+		// had to take code from is_plugin_active_for_network() because the function is not loaded in time
+		$this->user_settings[ 'network_custom_post_types' ] = ( is_multisite() && ( $plugins = get_site_option( 'active_sitewide_plugins' ) ) && isset( $plugins[ CPT_ONOMIES_PLUGIN_FILE ] ) && ( $network_custom_post_types = get_site_option( CPT_ONOMIES_UNDERSCORE . '_custom_post_types' ) ) ) ? $network_custom_post_types : array();
+		
+		// get site user settings
+		$this->user_settings[ 'custom_post_types' ] = ( $custom_post_types = get_option( CPT_ONOMIES_UNDERSCORE . '_custom_post_types' ) ) ? $custom_post_types : array();
+		$this->user_settings[ 'other_custom_post_types' ] = ( $other_custom_post_types = get_option( CPT_ONOMIES_UNDERSCORE . '_other_custom_post_types' ) ) ? $other_custom_post_types : array();
 				
 		// register custom query vars
 		add_filter( 'query_vars', array( &$this, 'register_custom_query_vars' ) );
@@ -384,7 +387,7 @@ class CPT_ONOMIES_MANAGER {
 								$children = array_merge( $children, $cpt_onomy->get_term_children( $term, $taxonomy ) );
 							// taxonomies
 							else
-								$children = array_merge( $children, get_term_children( $term, $this_query['taxonomy'] ) );
+								$children = array_merge( $children, get_term_children( $term, $this_query[ 'taxonomy' ] ) );
 								
 							$children[] = $term;
 						}
@@ -666,6 +669,42 @@ class CPT_ONOMIES_MANAGER {
 	}
 	
 	/**
+	 * Detects if a custom post is overwriting a network-wide post type
+	 * registered by this plugin.
+	 * 
+	 * @since 1.3
+	 * @uses $blog_id
+	 * @param string $cpt_key - the key, or alias, for the custom post type you are checking
+	 * @return boolean - whether this custom post type is overwriting a network-wide post type registered by this plugin
+	 */
+	public function overwrote_network_cpt( $cpt_key ) {
+		global $blog_id;
+		if ( isset( $this->user_settings[ 'network_custom_post_types' ] ) && isset( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ] )
+			&& ( ( ! isset( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) || ( isset( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) && empty( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) ) )
+				|| ( isset( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) && in_array( $blog_id, $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) ) ) && $this->is_registered_cpt( $cpt_key ) && ! $this->is_registered_network_cpt( $cpt_key ) )
+			return true;		
+		return false;
+	}
+	
+	/**
+	 * This functions checks to see if a custom post type is a network-wide
+	 * custom post type registered by this plugin. When this plugin registers
+	 * a network-wide custom post type, it adds the argument 'cpt_onomies_network_cpt'
+	 * and 'created_by_cpt_onomies' for testing purposes.
+	 *
+	 * @since 1.3
+	 * @param string $cpt_key - the key, or alias, for the custom post type you are checking
+	 * @return boolean - whether this custom post type is a network-wide post type registered by this plugin
+	 */
+	public function is_registered_network_cpt( $cpt_key ) {
+		if ( ! empty( $cpt_key ) && post_type_exists( $cpt_key ) && ( $post_type = get_post_type_object( $cpt_key ) )
+			&& isset( $post_type->cpt_onomies_network_cpt ) && $post_type->cpt_onomies_network_cpt
+			&& isset( $post_type->created_by_cpt_onomies ) && $post_type->created_by_cpt_onomies )
+			return true;
+		return false;
+	}
+	
+	/**
 	 * This functions checks to see if a custom post type is a custom post type
 	 * registered by this plugin. When this plugin registers a custom post type,
 	 * it adds the argument 'created_by_cpt_onomies' for testing purposes.
@@ -675,11 +714,9 @@ class CPT_ONOMIES_MANAGER {
 	 * @return boolean - whether this custom post type is a post type registered by this plugin
 	 */
 	public function is_registered_cpt( $cpt_key ) {
-		if ( !empty( $cpt_key ) && post_type_exists( $cpt_key ) ) {
-			$post_type = get_post_type_object( $cpt_key );
-			if ( isset( $post_type->created_by_cpt_onomies ) && $post_type->created_by_cpt_onomies == true )
-				return true;
-		}
+		if ( ! empty( $cpt_key ) && post_type_exists( $cpt_key ) && ( $post_type = get_post_type_object( $cpt_key ) )
+			&& isset( $post_type->created_by_cpt_onomies ) && $post_type->created_by_cpt_onomies )
+			return true;
 		return false;
 	}
 	
@@ -762,12 +799,13 @@ class CPT_ONOMIES_MANAGER {
 		
 		// get the matching custom post type info
 		$custom_post_type = get_post_type_object( $taxonomy );
-						
+		
 		// Define the CPT-onomy defaults
 	 	$cpt_onomy_defaults = array(
 	 		'label' => $label = strip_tags( $custom_post_type->label ),
 	 		'labels' => '', // if no labels are provided, WordPress uses their own
 	 		'public' => $custom_post_type->public,
+	 		'cpt_onomy_meta_box_format' => NULL,
 	 		'has_cpt_onomy_archive' => true,
 	 		'cpt_onomy_archive_slug' => '$post_type/tax/$term_slug',
 	 		'restrict_user_capabilities' => array( 'administrator', 'editor', 'author' )
@@ -792,6 +830,7 @@ class CPT_ONOMIES_MANAGER {
 			'show_ui' => false,
 			'show_tagcloud' => false,
 			'rewrite' => false,
+			'cpt_onomy_meta_box_format' => $cpt_onomy_meta_box_format,
 			'restrict_user_capabilities' => $restrict_user_capabilities,
 			'capabilities' => array(
 				'manage_terms' => 'manage_' . $taxonomy . '_terms',
@@ -831,6 +870,238 @@ class CPT_ONOMIES_MANAGER {
 		register_taxonomy( $taxonomy, $object_type, $cpt_onomy_args );
 	
 	}
+	
+	/**
+	 * This function takes your custom post type arguments from the settings
+	 * and prepares them for registration.
+	 *
+	 * @since 1.3
+	 * @param string $cpt_key - Name of the custom post type you are registering
+	 * @param array $cpt - Custom post type settings used to mold arguments
+	 * @param array $args - Already defined arguments.
+	 * @return array of custom post type arguments, ready for registration
+	 */
+	public function create_custom_post_type_arguments_for_registration( $cpt_key, $cpt = array(), $args = array() ) {
+		
+		// create label
+		// if no label, set to 'Posts'
+		$args[ 'label' ] = isset( $cpt[ 'label' ] ) ? strip_tags( $cpt[ 'label' ] ) : 'Posts';
+					
+		// create labels
+		$labels = array( 'name' => $args[ 'label' ] );
+		if ( isset( $cpt[ 'singular_name' ] ) && ! empty( $cpt[ 'singular_name' ] ) )
+			$labels[ 'singular_name' ] = strip_tags( $cpt[ 'singular_name' ] );
+		if ( isset( $cpt[ 'add_new' ] ) && ! empty( $cpt[ 'add_new' ] ) ) 
+			$labels[ 'add_new' ] = ( $cpt[ 'add_new' ] );
+		if ( isset( $cpt[ 'add_new_item' ] ) && ! empty( $cpt[ 'add_new_item' ] ) )
+			$labels[ 'add_new_item' ] = strip_tags( $cpt[ 'add_new_item' ] );
+		if ( isset( $cpt[ 'edit_item' ] ) && ! empty( $cpt[ 'edit_item' ] ) )
+			$labels[ 'edit_item' ] = strip_tags( $cpt[ 'edit_item' ] );
+		if ( isset( $cpt[ 'new_item' ] ) && ! empty( $cpt[ 'new_item' ] ) )
+			$labels[ 'new_item' ] = strip_tags( $cpt[ 'new_item' ] );
+		if ( isset( $cpt[ 'all_items' ] ) && ! empty( $cpt[ 'all_items' ] ) )
+			$labels[ 'all_items' ] = strip_tags( $cpt[ 'all_items' ] );
+		if ( isset( $cpt[ 'view_item' ] ) && ! empty( $cpt[ 'view_item' ] ) )
+			$labels[ 'view_item' ] = strip_tags( $cpt[ 'view_item' ] );
+		if ( isset( $cpt[ 'search_items' ] ) && ! empty( $cpt[ 'search_items' ] ) )
+			$labels[ 'search_items' ] = strip_tags( $cpt[ 'search_items' ] );
+		if ( isset( $cpt[ 'not_found' ] ) && ! empty( $cpt[ 'not_found' ] ) )
+			$labels[ 'not_found' ] = strip_tags( $cpt[ 'not_found' ] );
+		if ( isset( $cpt[ 'not_found_in_trash' ] ) && ! empty( $cpt[ 'not_found_in_trash' ] ) )
+			$labels[ 'not_found_in_trash' ] = strip_tags( $cpt[ 'not_found_in_trash' ] );
+		if ( isset( $cpt[ 'parent_item_colon' ] ) && ! empty( $cpt[ 'parent_item_colon' ] ) )
+			$labels[ 'parent_item_colon' ] = strip_tags( $cpt[ 'parent_item_colon' ] );
+		if ( isset( $cpt[ 'menu_name' ] ) && ! empty( $cpt[ 'menu_name' ] ) )
+			$labels[ 'menu_name' ] = strip_tags( $cpt[ 'menu_name' ] );
+		
+		// define the labels
+		$args[ 'labels' ] = $labels;
+		
+		// WP default = false, plugin default = true
+		$args[ 'public' ] = ( isset( $cpt[ 'public' ] ) && !$cpt[ 'public' ] ) ? false : true;
+		
+		// boolean (optional) default = false
+		// this must be defined for use with register_taxonomy()
+		$args[ 'hierarchical' ] = ( isset( $cpt[ 'hierarchical' ] ) && $cpt[ 'hierarchical' ] ) ? true : false;
+									
+		// array (optional) default = array( 'title', 'editor' )
+		if ( isset( $cpt[ 'supports' ] ) && ! empty( $cpt[ 'supports' ] ) )
+			$args[ 'supports' ] = $cpt[ 'supports' ];
+		// array (optional) no default
+		if ( isset( $cpt[ 'taxonomies' ] ) && ! empty( $cpt[ 'taxonomies' ] ) ) {
+			if ( ! is_array( $cpt[ 'taxonomies' ] ) )
+				$cpt[ 'taxonomies' ] = array( $cpt[ 'taxonomies' ] );
+			$args[ 'taxonomies' ] = $cpt[ 'taxonomies' ];
+		}
+		
+		// boolean (optional) default = public
+		if ( isset( $cpt[ 'show_ui' ] ) )
+			$args[ 'show_ui' ] = ( !$cpt[ 'show_ui' ] ) ? false : true;
+		// boolean (optional) default = public
+		if ( isset( $cpt[ 'show_in_nav_menus' ] ) )
+			$args[ 'show_in_nav_menus' ] = ( !$cpt[ 'show_in_nav_menus' ] ) ? false : true;
+		// boolean (optional) default = public
+		if ( isset( $cpt[ 'publicly_queryable' ] ) )
+			$args[ 'publicly_queryable' ] = ( !$cpt[ 'publicly_queryable' ] ) ? false : true;
+		// boolean (optional) default = opposite of public
+		if ( isset( $cpt[ 'exclude_from_search' ] ) )
+			$args[ 'exclude_from_search' ] = ( $cpt[ 'exclude_from_search' ] ) ? true : false;
+		// boolean (optional) default = false
+		if ( isset( $cpt[ 'map_meta_cap' ] ) )
+			$args[ 'map_meta_cap' ] = ( $cpt[ 'map_meta_cap' ] ) ? true : false;
+		// boolean (optional) default = true
+		if ( isset( $cpt[ 'can_export' ] ) )
+			$args[ 'can_export' ] = ( !$cpt[ 'can_export' ] ) ? false : true;
+										
+		// integer (optional) default = NULL
+		if ( isset( $cpt[ 'menu_position' ] ) && ! empty( $cpt[ 'menu_position' ] ) && is_numeric( $cpt[ 'menu_position' ] ) )
+			$args[ 'menu_position' ] = intval( $cpt[ 'menu_position' ] );
+		
+		// string (optional) default is blank
+		if ( isset( $cpt[ 'description' ] ) && ! empty( $cpt[ 'description' ] ) )
+			$args[ 'description' ] = strip_tags( $cpt[ 'description' ] );
+		// string (optional) default = NULL
+		if ( isset( $cpt[ 'menu_icon' ] ) && ! empty( $cpt[ 'menu_icon' ] ) )
+			$args[ 'menu_icon' ] = $cpt[ 'menu_icon' ];
+		// string (optional) no default
+		if ( isset( $cpt[ 'register_meta_box_cb' ] ) && ! empty( $cpt[ 'register_meta_box_cb' ] ) )
+			$args[ 'register_meta_box_cb' ] = $cpt[ 'register_meta_box_cb' ];
+		// string (optional) default = EP_PERMALINK
+		if ( isset( $cpt[ 'permalink_epmask' ] ) && ! empty( $cpt[ 'permalink_epmask' ] ) )
+			$args[ 'permalink_epmask' ] = $cpt[ 'permalink_epmask' ];
+			
+		// string or array (optional) default = "post"
+		if ( isset( $cpt[ 'capability_type' ] ) && ! empty( $cpt[ 'capability_type' ] ) )
+			$args[ 'capability_type' ] = $cpt[ 'capability_type' ];
+			
+		// boolean or string (optional)
+		// default = true (which is opposite of WP default so we must include the setting)
+		// if set to string 'true', then store as true
+		// else if not set to false, store string	
+		if ( isset( $cpt[ 'has_archive' ] ) && ! empty( $cpt[ 'has_archive' ] ) && strtolower( $cpt[ 'has_archive' ] ) != 'true' ) {
+			if ( strtolower( $cpt[ 'has_archive' ] ) == 'false' ) $args[ 'has_archive' ] = false;
+			else if ( strtolower( $cpt[ 'has_archive' ] ) != 'true' ) $args[ 'has_archive' ] = $cpt[ 'has_archive' ];
+		}
+		else
+			$args[ 'has_archive' ] = true;
+		
+		// boolean or string (optional) default = true
+		// if set to string 'false', then store as false
+		// else if set to true, store string	
+		if ( isset( $cpt[ 'query_var' ] ) && ! empty( $cpt[ 'query_var' ] ) ) {
+			if ( strtolower( $cpt[ 'query_var' ] ) == 'false' ) $args[ 'query_var' ] = false;
+			else if ( strtolower( $cpt[ 'query_var' ] ) != 'true' ) $args[ 'query_var' ] = $cpt[ 'query_var' ];							
+		}	
+		
+		// boolean or string (optional) default = NULL
+		// if set to string 'false', then store as false
+		// if set to string 'true', then store as true
+		// if set to another string, store string
+		if ( isset( $cpt[ 'show_in_menu' ] ) && ! empty( $cpt[ 'show_in_menu' ] ) ) {
+			if ( strtolower( $cpt[ 'show_in_menu' ] ) == 'false' ) $args[ 'show_in_menu' ] = false;
+			else if ( strtolower( $cpt[ 'show_in_menu' ] ) == 'true' ) $args[ 'show_in_menu' ] = true;
+			else $args[ 'show_in_menu' ] = $cpt[ 'show_in_menu' ];							
+		}
+		
+		// array (optional) default = capability_type is used to construct 
+		// if you include blank capabilities, it messes up that capability
+		if ( isset( $cpt[ 'capabilities' ] ) && ! empty( $cpt[ 'capabilities' ] ) ) {
+			foreach( $cpt[ 'capabilities' ] as $capability_key => $capability ) {
+				if ( ! empty( $capability ) ) $args[ 'capabilities' ][ $capability_key ] = $capability;
+			}
+		}
+		
+		// boolean or array (optional) default = true and use post type as slug 
+		if ( isset( $cpt[ 'rewrite' ] ) && ! empty( $cpt[ 'rewrite' ] ) ) {
+			if ( isset( $cpt[ 'rewrite' ][ 'enable_rewrite' ] ) && !$cpt[ 'rewrite' ][ 'enable_rewrite' ] )
+				$args[ 'rewrite' ] = false;
+			else {
+				// remove "enable rewrite" and include the rest
+				unset( $cpt[ 'rewrite' ][ 'enable_rewrite' ] );
+				if ( isset( $cpt[ 'rewrite' ] ) && ! empty( $cpt[ 'rewrite' ] ) )
+					$args[ 'rewrite' ] = $cpt[ 'rewrite' ];								
+			}
+		}
+		
+		return $args;
+								
+	}
+	
+	/**
+	 * If your custom post type is created in the network admin, some settings
+	 * have to use a serialized string to help set/combine network and site definitions.
+	 * 
+	 * As of 1.3., those settings include the CPT-onomy "Restrict User's Capability to
+	 * Assign Term Relationships" setting and the CPT "Taxonomies" setting.
+	 *
+	 * This function takes the serialized string and creates/returns the proper
+	 * argument for custom post type registration.
+	 *
+	 * @since 1.3
+	 * @uses $blog_id
+	 * @param string $argument - the original argument pulled from settings
+	 * @return array of prepared argument, ready for registration
+	 */
+	private function unserialize_network_custom_post_type_argument( $argument ) {
+		global $blog_id;
+		
+		// if it's already an array, there's no point
+		if ( is_array( $argument ) )
+			return $argument;
+	
+		// remove any and all white space
+		$argument = preg_replace( '/\s/i', '', $argument );
+	
+		// divide by ';' which separates site definitions
+		$argument = explode( ';', $argument );
+		
+		// going to need to store some info
+		$network_property = $site_property = $overwrite = array();
+		
+		// separate network/site definitions
+		foreach( $argument as $user_role ) {
+		
+			// see if there is a blog id
+			$site_definition = explode( ':', $user_role );
+			
+			// network definition
+			if ( count( $site_definition ) == 1 )
+				$network_property = array_merge( $network_property, explode( ',', array_shift( $site_definition ) ) );
+				
+			// site definition
+			else {
+						
+				if ( ( $site_blog_id = array_shift( $site_definition ) )
+					&& $site_blog_id > 0 ) {
+					
+					$site_property[ $site_blog_id ] = explode( ',', array_shift( $site_definition ) );
+					
+					// figure out if this is supposed to overwrite the network definition
+					if ( isset( $site_definition ) && ! empty( $site_definition ) && ( $site_definition = array_shift( $site_definition ) ) && 'overwrite' == $site_definition )
+						$overwrite[ $site_blog_id ] = true;
+					
+				}
+					
+			}
+				
+	
+		}
+		
+		// if there is a site definition for the current blog
+		if ( isset( $site_property[ $blog_id ] ) ) {
+		
+			// site definition takes precedence
+			if ( isset( $overwrite ) && isset( $overwrite[ $blog_id ] ) && $overwrite[ $blog_id ] )
+				$network_property = $site_property[ $blog_id ];
+			// merge site and network definitions
+			else
+				$network_property = array_merge( $network_property, $site_property[ $blog_id ] );
+			
+		}
+				
+		return $network_property;
+	
+	}
 	 	
 	/**
 	 * Registers the user's custom post types.
@@ -842,186 +1113,66 @@ class CPT_ONOMIES_MANAGER {
 	 * This function is invoked by the action 'init'.
 	 *
 	 * @since 1.0
-	 * @uses $wp_rewrite
+	 * @uses $blog_id
 	 */
 	public function register_custom_post_types_and_taxonomies() {
-		global $wp_rewrite;
-		if ( !empty( $this->user_settings[ 'custom_post_types' ] ) ) {
+		global $blog_id;
 		
-			// going to save register CPT-onomy info so we can register
-			// all the CPT-onomies at the same time, after the CPTs are registered
-			$register_cpt_onomies = array();
-			
-			// register the CPTs
-			foreach( $this->user_settings[ 'custom_post_types' ] as $cpt_key => $cpt ) {
-				// make sure post type is not deactivated and does not already exist
-				if ( !isset( $cpt[ 'deactivate' ] ) && !post_type_exists( $cpt_key ) ) {
-				
-					// create label
-					// if no label, set to 'Posts'
-					if ( !isset( $cpt[ 'label' ] ) || empty( $cpt[ 'label' ] ) )
-						$this->user_settings[ 'custom_post_types' ][ $cpt_key ][ 'label' ] = $cpt[ 'label' ] = 'Posts';
-					$label = strip_tags( $cpt[ 'label' ] );			
+		// going to save register CPT-onomy info so we can register
+		// all the CPT-onomies at the same time, after the CPTs are registered
+		$register_cpt_onomies = array();
+		
+		// register the network CPTs
+		if ( isset( $this->user_settings[ 'network_custom_post_types' ] ) ) {
+		
+			// take this one CPT at a time
+			foreach( $this->user_settings[ 'network_custom_post_types' ] as $cpt_key => $cpt ) {
+				if ( ( ! isset( $cpt[ 'site_registration' ] ) || ( isset( $cpt[ 'site_registration' ] ) && empty( $cpt[ 'site_registration' ] ) ) )
+					|| ( isset( $cpt[ 'site_registration' ] ) && in_array( $blog_id, $cpt[ 'site_registration' ] ) ) ) {
+					
+					// In previous versions, we had to register the post type last in order for it to win the rewrite war
+					// As of 1.1, the post type must be registered first in order to register the CPT-onomy and the
+					// post type will still win the rewrite war
+					
+					// make sure post type is not deactivated and does not already exist		
+					if ( ! isset( $cpt[ 'deactivate' ] ) && ! post_type_exists( $cpt_key ) ) {
+					
+						// unserialize 'taxonomies' for network settings, since they are a text input
+						// site property is an array of checkboxes and doesn't need to be tampered with
+						if ( isset( $cpt[ 'taxonomies' ] ) && ! empty( $cpt[ 'taxonomies' ] )
+							&& ! is_array( $cpt[ 'taxonomies' ] ) )
+							$cpt[ 'taxonomies' ] = $this->unserialize_network_custom_post_type_argument( $cpt[ 'taxonomies' ] );
+					
+						// create the arguments
+						if ( $args = $this->create_custom_post_type_arguments_for_registration( $cpt_key, $cpt, array( 'created_by_cpt_onomies' => true, 'cpt_onomies_network_cpt' => true ) ) ) {
+						
+							// register this puppy
+							register_post_type( $cpt_key, $args );
 							
-					if ( !empty( $label ) && !empty( $cpt_key ) ) {
-						
-						// create labels
-						$labels = array( 'name' => $label );
-						if ( isset( $cpt[ 'singular_name' ] ) && !empty( $cpt[ 'singular_name' ] ) )
-							$labels[ 'singular_name' ] = strip_tags( $cpt[ 'singular_name' ] );
-						if ( isset( $cpt[ 'add_new' ] ) && !empty( $cpt[ 'add_new' ] ) ) 
-							$labels[ 'add_new' ] = ( $cpt[ 'add_new' ] );
-						if ( isset( $cpt[ 'add_new_item' ] ) && !empty( $cpt[ 'add_new_item' ] ) )
-							$labels[ 'add_new_item' ] = strip_tags( $cpt[ 'add_new_item' ] );
-						if ( isset( $cpt[ 'edit_item' ] ) && !empty( $cpt[ 'edit_item' ] ) )
-							$labels[ 'edit_item' ] = strip_tags( $cpt[ 'edit_item' ] );
-						if ( isset( $cpt[ 'new_item' ] ) && !empty( $cpt[ 'new_item' ] ) )
-							$labels[ 'new_item' ] = strip_tags( $cpt[ 'new_item' ] );
-						if ( isset( $cpt[ 'all_items' ] ) && !empty( $cpt[ 'all_items' ] ) )
-							$labels[ 'all_items' ] = strip_tags( $cpt[ 'all_items' ] );
-						if ( isset( $cpt[ 'view_item' ] ) && !empty( $cpt[ 'view_item' ] ) )
-							$labels[ 'view_item' ] = strip_tags( $cpt[ 'view_item' ] );
-						if ( isset( $cpt[ 'search_items' ] ) && !empty( $cpt[ 'search_items' ] ) )
-							$labels[ 'search_items' ] = strip_tags( $cpt[ 'search_items' ] );
-						if ( isset( $cpt[ 'not_found' ] ) && !empty( $cpt[ 'not_found' ] ) )
-							$labels[ 'not_found' ] = strip_tags( $cpt[ 'not_found' ] );
-						if ( isset( $cpt[ 'not_found_in_trash' ] ) && !empty( $cpt[ 'not_found_in_trash' ] ) )
-							$labels[ 'not_found_in_trash' ] = strip_tags( $cpt[ 'not_found_in_trash' ] );
-						if ( isset( $cpt[ 'parent_item_colon' ] ) && !empty( $cpt[ 'parent_item_colon' ] ) )
-							$labels[ 'parent_item_colon' ] = strip_tags( $cpt[ 'parent_item_colon' ] );
-						if ( isset( $cpt[ 'menu_name' ] ) && !empty( $cpt[ 'menu_name' ] ) )
-							$labels[ 'menu_name' ] = strip_tags( $cpt[ 'menu_name' ] );
-						
-						// WP default = false, plugin default = true
-						$public = ( isset( $cpt[ 'public' ] ) && !$cpt[ 'public' ] ) ? false : true;
-						
-						$args = array(
-							'created_by_cpt_onomies' => true,
-							'label' => $label,
-							'labels' => $labels,
-							'public' => $public
-						);
-						
-						// boolean (optional) default = false
-						// this must be defined for use with register_taxonomy()
-						$args[ 'hierarchical' ] = ( isset( $cpt[ 'hierarchical' ] ) && $cpt[ 'hierarchical' ] ) ? true : false;
-													
-						// array (optional) default = array( 'title', 'editor' )
-						if ( isset( $cpt[ 'supports' ] ) && !empty( $cpt[ 'supports' ] ) )
-							$args[ 'supports' ] = $cpt[ 'supports' ];
-						// array (optional) no default
-						if ( isset( $cpt[ 'taxonomies' ] ) && !empty( $cpt[ 'taxonomies' ] ) )
-							$args[ 'taxonomies' ] = $cpt[ 'taxonomies' ];
-						
-						// boolean (optional) default = public
-						if ( isset( $cpt[ 'show_ui' ] ) )
-							$args[ 'show_ui' ] = ( !$cpt[ 'show_ui' ] ) ? false : true;
-						// boolean (optional) default = public
-						if ( isset( $cpt[ 'show_in_nav_menus' ] ) )
-							$args[ 'show_in_nav_menus' ] = ( !$cpt[ 'show_in_nav_menus' ] ) ? false : true;
-						// boolean (optional) default = public
-						if ( isset( $cpt[ 'publicly_queryable' ] ) )
-							$args[ 'publicly_queryable' ] = ( !$cpt[ 'publicly_queryable' ] ) ? false : true;
-						// boolean (optional) default = opposite of public
-						if ( isset( $cpt[ 'exclude_from_search' ] ) )
-							$args[ 'exclude_from_search' ] = ( $cpt[ 'exclude_from_search' ] ) ? true : false;
-						// boolean (optional) default = false
-						if ( isset( $cpt[ 'map_meta_cap' ] ) )
-							$args[ 'map_meta_cap' ] = ( $cpt[ 'map_meta_cap' ] ) ? true : false;
-						// boolean (optional) default = true
-						if ( isset( $cpt[ 'can_export' ] ) )
-							$args[ 'can_export' ] = ( !$cpt[ 'can_export' ] ) ? false : true;
-														
-						// integer (optional) default = NULL
-						if ( isset( $cpt[ 'menu_position' ] ) && !empty( $cpt[ 'menu_position' ] ) && is_numeric( $cpt[ 'menu_position' ] ) )
-							$args[ 'menu_position' ] = intval( $cpt[ 'menu_position' ] );
-						
-						// string (optional) default is blank
-						if ( isset( $cpt[ 'description' ] ) && !empty( $cpt[ 'description' ] ) )
-							$args[ 'description' ] = strip_tags( $cpt[ 'description' ] );
-						// string (optional) default = NULL
-						if ( isset( $cpt[ 'menu_icon' ] ) && !empty( $cpt[ 'menu_icon' ] ) )
-							$args[ 'menu_icon' ] = $cpt[ 'menu_icon' ];
-						// string (optional) no default
-						if ( isset( $cpt[ 'register_meta_box_cb' ] ) && !empty( $cpt[ 'register_meta_box_cb' ] ) )
-							$args[ 'register_meta_box_cb' ] = $cpt[ 'register_meta_box_cb' ];
-						// string (optional) default = EP_PERMALINK
-						if ( isset( $cpt[ 'permalink_epmask' ] ) && !empty( $cpt[ 'permalink_epmask' ] ) )
-							$args[ 'permalink_epmask' ] = $cpt[ 'permalink_epmask' ];
+							// If designated, register CPT-onomy
+							if ( isset( $cpt[ 'attach_to_post_type' ] ) && !empty( $cpt[ 'attach_to_post_type' ] ) ) {
 							
-						// string or array (optional) default = "post"
-						if ( isset( $cpt[ 'capability_type' ] ) && !empty( $cpt[ 'capability_type' ] ) )
-							$args[ 'capability_type' ] = $cpt[ 'capability_type' ];
-							
-						// boolean or string (optional)
-						// default = true (which is opposite of WP default so we must include the setting)
-						// if set to string 'true', then store as true
-						// else if not set to false, store string	
-						if ( isset( $cpt[ 'has_archive' ] ) && !empty( $cpt[ 'has_archive' ] ) && strtolower( $cpt[ 'has_archive' ] ) != 'true' ) {
-							if ( strtolower( $cpt[ 'has_archive' ] ) == 'false' ) $args[ 'has_archive' ] = false;
-							else if ( strtolower( $cpt[ 'has_archive' ] ) != 'true' ) $args[ 'has_archive' ] = $cpt[ 'has_archive' ];
-						}
-						else
-							$args[ 'has_archive' ] = true;
-						
-						// boolean or string (optional) default = true
-						// if set to string 'false', then store as false
-						// else if set to true, store string	
-						if ( isset( $cpt[ 'query_var' ] ) && !empty( $cpt[ 'query_var' ] ) ) {
-							if ( strtolower( $cpt[ 'query_var' ] ) == 'false' ) $args[ 'query_var' ] = false;
-							else if ( strtolower( $cpt[ 'query_var' ] ) != 'true' ) $args[ 'query_var' ] = $cpt[ 'query_var' ];							
-						}	
-						
-						// boolean or string (optional) default = NULL
-						// if set to string 'false', then store as false
-						// if set to string 'true', then store as true
-						// if set to another string, store string
-						if ( isset( $cpt[ 'show_in_menu' ] ) && !empty( $cpt[ 'show_in_menu' ] ) ) {
-							if ( strtolower( $cpt[ 'show_in_menu' ] ) == 'false' ) $args[ 'show_in_menu' ] = false;
-							else if ( strtolower( $cpt[ 'show_in_menu' ] ) == 'true' ) $args[ 'show_in_menu' ] = true;
-							else $args[ 'show_in_menu' ] = $cpt[ 'show_in_menu' ];							
-						}
-						
-						// array (optional) default = capability_type is used to construct 
-						// if you include blank capabilities, it messes up that capability
-						if ( isset( $cpt[ 'capabilities' ] ) && !empty( $cpt[ 'capabilities' ] ) ) {
-							foreach( $cpt[ 'capabilities' ] as $capability_key => $capability ) {
-								if ( !empty( $capability ) ) $args[ 'capabilities' ][ $capability_key ] = $capability;
+								// unserialize 'restrict_user_capabilities' for network settings, since they are a text input
+								// site property is an array of checkboxes and doesn't need to be tampered with
+								if ( isset( $cpt[ 'restrict_user_capabilities' ] ) && ! empty( $cpt[ 'restrict_user_capabilities' ] )
+									&& ! is_array( $cpt[ 'restrict_user_capabilities' ] ) )
+									$cpt[ 'restrict_user_capabilities' ] = $this->unserialize_network_custom_post_type_argument( $cpt[ 'restrict_user_capabilities' ] );
+									
+								$register_cpt_onomies[ $cpt_key ] = array(
+									'attach_to_post_type' => $cpt[ 'attach_to_post_type' ],
+									'cpt_onomy_args' => array(
+										'label' => isset( $args[ 'labels' ][ 'name' ] ) ? strip_tags( $args[ 'labels' ][ 'name' ] ) : 'Posts',
+										'public' => isset( $args[ 'public' ] ) ? $args[ 'public' ] : true,
+										'cpt_onomy_meta_box_format' => ( isset( $cpt[ 'meta_box_format' ] ) && ! empty( $cpt[ 'meta_box_format' ] ) ) ? $cpt[ 'meta_box_format' ] : NULL,
+										'has_cpt_onomy_archive' => ( isset( $cpt[ 'has_cpt_onomy_archive' ] ) && ! $cpt[ 'has_cpt_onomy_archive' ] ) ? false : true,
+										'cpt_onomy_archive_slug' => ( isset( $cpt[ 'cpt_onomy_archive_slug' ] ) && ! empty( $cpt[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt[ 'cpt_onomy_archive_slug' ] : NULL,
+										'restrict_user_capabilities' => ( isset( $cpt[ 'restrict_user_capabilities' ] ) && ! empty( $cpt[ 'restrict_user_capabilities' ] ) ) ? $cpt[ 'restrict_user_capabilities' ] : array(),
+										'created_by_cpt_onomies' => true
+									)
+								);
+								
 							}
-						}
-						
-						// boolean or array (optional) default = true and use post type as slug 
-						if ( isset( $cpt[ 'rewrite' ] ) && !empty( $cpt[ 'rewrite' ] ) ) {
-							if ( isset( $cpt[ 'rewrite' ][ 'enable_rewrite' ] ) && !$cpt[ 'rewrite' ][ 'enable_rewrite' ] )
-								$args[ 'rewrite' ] = false;
-							else {
-								// remove" enable rewrite" and include the rest
-								unset( $cpt[ 'rewrite' ][ 'enable_rewrite' ] );
-								if ( isset( $cpt[ 'rewrite' ] ) && !empty( $cpt[ 'rewrite' ] ) )
-									$args[ 'rewrite' ] = $cpt[ 'rewrite' ];								
-							}
-						}
-						
-						// In previous versions, we had to register the post type last in order for it to win the rewrite war
-						// As of 1.1, the post type must be registered first in order to register the CPT-onomy and the
-						// post type will still win the rewrite war
-						register_post_type( $cpt_key, $args );
-												
-						// If designated, register CPT-onomy
-						if ( isset( $cpt[ 'attach_to_post_type' ] ) && !empty( $cpt[ 'attach_to_post_type' ] ) ) {
-						
-							$register_cpt_onomies[ $cpt_key ] = array(
-								'attach_to_post_type' => $cpt[ 'attach_to_post_type' ],
-								'cpt_onomy_args' => array(
-									'label' => $label,
-									'public' => $public,
-									'has_cpt_onomy_archive' => ( isset( $cpt[ 'has_cpt_onomy_archive' ] ) && !$cpt[ 'has_cpt_onomy_archive' ] ) ? false : true,
-									'cpt_onomy_archive_slug' => ( isset( $cpt[ 'cpt_onomy_archive_slug' ] ) && !empty( $cpt[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt[ 'cpt_onomy_archive_slug' ] : NULL,
-									'restrict_user_capabilities' => ( isset( $cpt[ 'restrict_user_capabilities' ] ) && !empty( $cpt[ 'restrict_user_capabilities' ] ) ) ? $cpt[ 'restrict_user_capabilities' ] : array(),
-									'created_by_cpt_onomies' => true
-								)
-							);
-							
+								
 						}
 						
 					}
@@ -1029,31 +1180,91 @@ class CPT_ONOMIES_MANAGER {
 				}
 			}
 			
-			// register the CPT-onomies AFTER all the CPTs are registered
-			foreach( $register_cpt_onomies as $cpt_key => $cpt_onomy_info ) {
+		}
+		
+		// register site CPTs
+		if ( isset( $this->user_settings[ 'custom_post_types' ] ) ) {
+		
+			// take this one CPT at a time
+			foreach( $this->user_settings[ 'custom_post_types' ] as $cpt_key => $cpt ) {
 			
-				// let's get this sucker registered!							
-				$this->register_cpt_onomy( $cpt_key, $cpt_onomy_info[ 'attach_to_post_type' ], $cpt_onomy_info[ 'cpt_onomy_args' ] );
-			
+				// In previous versions, we had to register the post type last in order for it to win the rewrite war
+				// As of 1.1, the post type must be registered first in order to register the CPT-onomy and the
+				// post type will still win the rewrite war
+						
+				// make sure post type is not deactivated
+				if ( ! isset( $cpt[ 'deactivate' ] ) ) {
+				
+					// make sure the CPT does not already exist
+					// (unless its a network-wide CPT, which you're allowed to overwrite on a site level)
+					$post_type_exists = post_type_exists( $cpt_key );
+					if ( ! $post_type_exists || ( $post_type_exists && $this->is_registered_network_cpt( $cpt_key ) ) ) {
+					
+						// create the arguments
+						if ( $args = $this->create_custom_post_type_arguments_for_registration( $cpt_key, $cpt, array( 'created_by_cpt_onomies' => true ) ) ) {
+						
+							// register this puppy
+							register_post_type( $cpt_key, $args );
+													
+							// If designated, register CPT-onomy
+							if ( isset( $cpt[ 'attach_to_post_type' ] ) && ! empty( $cpt[ 'attach_to_post_type' ] ) ) {
+							
+								$register_cpt_onomies[ $cpt_key ] = array(
+									'attach_to_post_type' => $cpt[ 'attach_to_post_type' ],
+									'cpt_onomy_args' => array(
+										'label' => isset( $args[ 'labels' ][ 'name' ] ) ? strip_tags( $args[ 'labels' ][ 'name' ] ) : 'Posts',
+										'public' => isset( $args[ 'public' ] ) ? $args[ 'public' ] : true,
+										'cpt_onomy_meta_box_format' => ( isset( $cpt[ 'meta_box_format' ] ) && ! empty( $cpt[ 'meta_box_format' ] ) ) ? $cpt[ 'meta_box_format' ] : NULL,
+										'has_cpt_onomy_archive' => ( isset( $cpt[ 'has_cpt_onomy_archive' ] ) && ! $cpt[ 'has_cpt_onomy_archive' ] ) ? false : true,
+										'cpt_onomy_archive_slug' => ( isset( $cpt[ 'cpt_onomy_archive_slug' ] ) && ! empty( $cpt[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt[ 'cpt_onomy_archive_slug' ] : NULL,
+										'restrict_user_capabilities' => ( isset( $cpt[ 'restrict_user_capabilities' ] ) && ! empty( $cpt[ 'restrict_user_capabilities' ] ) ) ? $cpt[ 'restrict_user_capabilities' ] : array(),
+										'created_by_cpt_onomies' => true
+									)
+								);
+								
+							}
+							// overwriting network CPT so we have to remove existing CPT-onomy
+							else if ( isset( $register_cpt_onomies[ $cpt_key ] ) && $this->overwrote_network_cpt( $cpt_key ) )
+								unset( $register_cpt_onomies[ $cpt_key ] );
+							
+						}
+					
+					}
+					
+				}
+				
 			}
 			
-		}		
+		}
+		
+		// register the CPT-onomies AFTER all the CPTs are registered
+		foreach( $register_cpt_onomies as $cpt_key => $cpt_onomy_info ) {
+			
+			// let's get this sucker registered!							
+			$this->register_cpt_onomy( $cpt_key, $cpt_onomy_info[ 'attach_to_post_type' ], $cpt_onomy_info[ 'cpt_onomy_args' ] );
+			
+		}
+					
 		// register OTHER custom post types as taxonomies
-		if ( !empty( $this->user_settings[ 'other_custom_post_types' ] ) ) {	
+		if ( ! empty( $this->user_settings[ 'other_custom_post_types' ] ) ) {	
 			foreach( $this->user_settings[ 'other_custom_post_types' ] as $cpt_key => $cpt_settings ) {
 			
 				// If designated, register CPT-onomy
-				if ( post_type_exists( $cpt_key ) && !$this->is_registered_cpt( $cpt_key ) && isset( $cpt_settings[ 'attach_to_post_type' ] ) && !empty( $cpt_settings[ 'attach_to_post_type' ] ) ) {
+				if ( post_type_exists( $cpt_key )
+					&& ! $this->is_registered_cpt( $cpt_key )
+					&& isset( $cpt_settings[ 'attach_to_post_type' ] ) && ! empty( $cpt_settings[ 'attach_to_post_type' ] ) ) {
 				
 					// get post type object
 					$custom_post_type = get_post_type_object( $cpt_key );
 					
+					// create the arguments
 					$cpt_onomy_args = array(
 						'label' => strip_tags( $custom_post_type->label ),
 						'public' => $custom_post_type->public,
-						'has_cpt_onomy_archive' => ( isset( $cpt_settings[ 'has_cpt_onomy_archive' ] ) && !$cpt_settings[ 'has_cpt_onomy_archive' ] ) ? false : true,
-						'cpt_onomy_archive_slug' => ( isset( $cpt_settings[ 'cpt_onomy_archive_slug' ] ) && !empty( $cpt_settings[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt_settings[ 'cpt_onomy_archive_slug' ] : NULL,
-						'restrict_user_capabilities' => ( isset( $cpt_settings[ 'restrict_user_capabilities' ] ) && !empty( $cpt_settings[ 'restrict_user_capabilities' ] ) ) ? $cpt_settings[ 'restrict_user_capabilities' ] : array(),
+						'cpt_onomy_meta_box_format' => ( isset( $cpt_settings[ 'meta_box_format' ] ) && ! empty( $cpt_settings[ 'meta_box_format' ] ) ) ? $cpt_settings[ 'meta_box_format' ] : NULL,
+						'has_cpt_onomy_archive' => ( isset( $cpt_settings[ 'has_cpt_onomy_archive' ] ) && ! $cpt_settings[ 'has_cpt_onomy_archive' ] ) ? false : true,
+						'cpt_onomy_archive_slug' => ( isset( $cpt_settings[ 'cpt_onomy_archive_slug' ] ) && ! empty( $cpt_settings[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt_settings[ 'cpt_onomy_archive_slug' ] : NULL,
+						'restrict_user_capabilities' => ( isset( $cpt_settings[ 'restrict_user_capabilities' ] ) && ! empty( $cpt_settings[ 'restrict_user_capabilities' ] ) ) ? $cpt_settings[ 'restrict_user_capabilities' ] : array(),
 						'created_by_cpt_onomies' => true
 					);
 										
@@ -1064,6 +1275,7 @@ class CPT_ONOMIES_MANAGER {
 				
 			}
 		}
+		
 	}	
 }
 
