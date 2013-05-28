@@ -83,6 +83,7 @@ jQuery.noConflict()(function(){
 		
 		// autocomplete new tags
 		if ( $new_tag_input.size() > 0 ) {
+		
 			$new_tag_input.autocomplete({
 				delay: 200,
 				source: function( $request, $response ){
@@ -103,22 +104,33 @@ jQuery.noConflict()(function(){
 							$response( jQuery.map( $data, function( $item ) {
 								jQuery.data( 'selected_term_id', $item.label );
 								return {
-									value: $item.label,
-									label: $item.value,
+									value: $item.value,
+									label: $item.label,
 									parent: $item.parent
 								};
 							}));
 						}
 					});
 				},
-				select: function( $event, $ui ) {
+				focus: function( $event, $ui ) {
+					
 					// change the input value
-					$new_tag_input.val( $ui.item.value );
+					$new_tag_input.val( $ui.item.label );
+					
+					return false;
+					
+				},
+				select: function( $event, $ui ) {
+					
+					// change the input value
+					$new_tag_input.val( $ui.item.label );
+					
 					// store the ID
 					if ( jQuery( '#' + $hidden_tag_id ).size() == 0 )
-						$new_tag_input.after( '<input id="' + $hidden_tag_id + '" type="hidden" value="' + $ui.item.label + '" />' );
+						$new_tag_input.after( '<input id="' + $hidden_tag_id + '" type="hidden" value="' + $ui.item.value + '" />' );
 					else
-						jQuery( '#' + $hidden_tag_id ).val( $ui.item.label );
+						jQuery( '#' + $hidden_tag_id ).val( $ui.item.value );
+					
 					// if parent, then store parent
 					if ( $ui.item.parent != '' && $ui.item.parent != null && $ui.item.parent != undefined ) {
 						if ( jQuery( '#' + $hidden_tag_parent ).size() == 0 )
@@ -126,14 +138,16 @@ jQuery.noConflict()(function(){
 						else
 							jQuery( '#' + $hidden_tag_parent ).val( $ui.item.parent );
 					}
+					
 					// otherwise, remove the hidden input
 					else
 						jQuery( '#' + $hidden_tag_parent ).remove();
+					
 					return false;
+					
 				}
-			})
-			.data( 'autocomplete' )
-			._renderItem = function( $ul, $item ) {
+			}).data( 'ui-autocomplete' )._renderItem = function( $ul, $item ) {
+				
 				// add our class to the ul
 				$ul.addClass( 'cpt_onomies' );
 				
@@ -142,11 +156,12 @@ jQuery.noConflict()(function(){
 				if ( $item.parent != '' && $item.parent != null && $item.parent != undefined )
 					$parent = '<span class="parent">' + $item.parent.replace( ',', '/ ' ) + '/</span>';
 				
-	        	var $list_item = jQuery( '<li></li>' )
+				// return item
+	        	return jQuery( '<li></li>' )
 	            	.data( 'item.autocomplete', $item )
-	            	.append( '<a>' + $parent + $item.value + '</a>' )
+	            	.append( '<a>' + $parent + $item.label + '</a>' )
 	            	.appendTo( $ul );
-	            return $list_item;
+	            
 	        };
 	    }
 	    
