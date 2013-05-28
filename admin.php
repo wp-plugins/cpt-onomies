@@ -11,9 +11,11 @@ $cpt_onomies_admin = new CPT_ONOMIES_ADMIN();
  */
 class CPT_ONOMIES_ADMIN {
 
-	// stores data received from the filter
-	// 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids'
-	// that is invoked when printing the CPT-onomy meta boxes
+	// stores data received from the
+	// 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids'
+	// and 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids'
+	// filters that are invoked when printing the CPT-onomy meta boxes
+	public $assigning_terms_include_term_ids = array();
 	public $assigning_terms_exclude_term_ids = array();
 	
 	/**
@@ -43,7 +45,7 @@ class CPT_ONOMIES_ADMIN {
 			add_action( 'add_meta_boxes', array( &$this, 'add_cpt_onomy_meta_boxes' ), 10, 2 );
 			
 			// takes care of autocomplete meta boxes
-			add_action( 'wp_ajax_custom_post_type_onomy_meta_box_autocomplete_callback', array( &$this, 'meta_box_autocomplete_callback' ) );
+			add_action( 'wp_ajax_custom_post_type_onomy_meta_box_autocomplete_callback', array( &$this, 'ajax_meta_box_autocomplete_callback' ) );
 									
 			// runs when any post is saved
 			add_action( 'save_post', array( &$this, 'save_post' ), 10, 2 );
@@ -53,10 +55,11 @@ class CPT_ONOMIES_ADMIN {
 			// bulk/quick edit
 			add_action( 'bulk_edit_custom_box', array( &$this, 'bulk_quick_edit_custom_box' ), 100, 2 );
 			add_action( 'quick_edit_custom_box', array( &$this, 'bulk_quick_edit_custom_box' ), 100, 2 );
-			add_action( 'wp_ajax_custom_post_type_onomy_get_cpt_onomy_terms_excluded_term_ids', array( &$this, 'ajax_get_cpt_onomy_terms_excluded_term_ids' ) );
+			add_action( 'wp_ajax_custom_post_type_onomy_get_cpt_onomy_terms_include_term_ids', array( &$this, 'ajax_get_cpt_onomy_terms_include_term_ids' ) );
+			add_action( 'wp_ajax_custom_post_type_onomy_get_cpt_onomy_terms_exclude_term_ids', array( &$this, 'ajax_get_cpt_onomy_terms_exclude_term_ids' ) );
 			add_action( 'wp_ajax_custom_post_type_onomy_populate_bulk_quick_edit', array( &$this, 'ajax_get_wp_object_terms' ) );
-			add_action( 'wp_ajax_custom_post_type_onomy_save_bulk_edit', array( &$this, 'save_bulk_edit' ) );
-			add_action( 'wp_ajax_custom_post_type_onomy_quick_edit_populate_custom_columns', array( &$this, 'quick_edit_populate_custom_columns' ) );
+			add_action( 'wp_ajax_custom_post_type_onomy_save_bulk_edit', array( &$this, 'ajax_save_bulk_edit' ) );
+			add_action( 'wp_ajax_custom_post_type_onomy_quick_edit_populate_custom_columns', array( &$this, 'ajax_quick_edit_populate_custom_columns' ) );
 			
 			// add column filters
 			add_action( 'restrict_manage_posts', array( &$this, 'restrict_manage_posts' ) );
@@ -159,20 +162,79 @@ class CPT_ONOMIES_ADMIN {
 	}
 	
 	/**
-	 * Allows ajax to invoke the get_cpt_onomy_terms_excluded_term_ids() function.
+	 * Allows ajax to invoke the get_cpt_onomy_terms_include_term_ids() function.
+	 *
+	 * Prints an array of term ids.
+	 *
+	 * @since 1.3
+	 */		
+	public function ajax_get_cpt_onomy_terms_include_term_ids() {
+		$taxonomy = ( isset( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) && !empty( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) ) ? $_POST[ 'custom_post_type_onomies_taxonomy' ] : array();
+		$post_type = ( isset( $_POST[ 'custom_post_type_onomies_post_type' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_type' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_type' ] : NULL;
+		$post_id = ( isset( $_POST[ 'custom_post_type_onomies_post_id' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_id' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_id' ] : 0;
+		$include_term_ids = array();
+		if ( isset( $taxonomy ) ) {
+			$taxonomy_include_term_ids = $this->get_cpt_onomy_terms_include_term_ids( $taxonomy, $post_type, $post_id );
+			if ( ! empty( $taxonomy_include_term_ids ) )
+				$include_term_ids = array_merge( $include_term_ids, $taxonomy_include_term_ids );
+		}
+		echo json_encode( $include_term_ids );
+		die();
+	}
+	
+	/**
+	 * The 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids' filter
+	 * allows you to designate that you only want to include/print specific terms, and therefore
+	 * only want those specific terms to be able to be assigned, in the admin by returning their
+	 * term IDs. This function invokes that filter when needed, cleans up the data, stores the
+	 * data in a global class variable and returns the data.
+	 *
+	 * The data returned to the filter can be an array, space-separated or comma separated string.
+	 * The filter passes three parameters: the $taxonomy, the $post_type and the $post_id.
+	 *
+	 * @since 1.3
+	 * @param string $taxonomy - the name of the CPT-onomy
+	 * @param string $post_type - the name of the post type the CPT-onomy is being assigned to
+	 * @param int $post_id - the ID for the post the CPT-onomy is being assigned to
+	 * @return array - the ids for the included cpt_onomy terms
+	 * @filters 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids' - $taxonomy, $post_type, $post_id
+	 */	
+	public function get_cpt_onomy_terms_include_term_ids( $taxonomy = NULL, $post_type = NULL, $post_id = 0 ) {
+		$include_term_ids = apply_filters( 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids', array(), $taxonomy, $post_type, $post_id );
+			
+		// make sure its an array
+		if ( ! is_array( $include_term_ids ) ) {
+			$include_term_ids = str_replace( ' ', ',', str_replace( ', ', ',', $include_term_ids ) );
+			$include_term_ids = explode( ',', $include_term_ids );
+		}
+			
+		// make sure the 'include' does not include the current post ID
+		if ( in_array( $post_id, $include_term_ids ) ) {
+			foreach( $include_term_ids as $term_id_index => $term_id ) {
+				if ( $post_id == $term_id )
+					unset( $include_term_ids[ $term_id_index ] );
+			}
+		}
+			
+		// store and return the include term data
+		return $this->assigning_terms_include_term_ids[ $taxonomy ][ $post_type ][ $post_id ] = array_unique( $include_term_ids );
+	}
+	
+	/**
+	 * Allows ajax to invoke the get_cpt_onomy_terms_exclude_term_ids() function.
 	 *
 	 * Prints an array of term ids.
 	 *
 	 * @since 1.2.1
 	 */		
-	public function ajax_get_cpt_onomy_terms_excluded_term_ids() {
+	public function ajax_get_cpt_onomy_terms_exclude_term_ids() {
 		$taxonomies = ( isset( $_POST[ 'custom_post_type_onomies_taxonomies' ] ) && !empty( $_POST[ 'custom_post_type_onomies_taxonomies' ] ) ) ? $_POST[ 'custom_post_type_onomies_taxonomies' ] : array();
 		$post_type = ( isset( $_POST[ 'custom_post_type_onomies_post_type' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_type' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_type' ] : NULL;
 		$post_id = ( isset( $_POST[ 'custom_post_type_onomies_post_id' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_id' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_id' ] : 0;
 		$exclude_term_ids = array();
 		foreach( $taxonomies as $taxonomy ) {
-			$taxonomy_exclude_term_ids = $this->get_cpt_onomy_terms_excluded_term_ids( $taxonomy, $post_type, $post_id );
-			if ( !empty( $taxonomy_exclude_term_ids ) )
+			$taxonomy_exclude_term_ids = $this->get_cpt_onomy_terms_exclude_term_ids( $taxonomy, $post_type, $post_id );
+			if ( ! empty( $taxonomy_exclude_term_ids ) )
 				$exclude_term_ids = array_merge( $exclude_term_ids, $taxonomy_exclude_term_ids );
 		}
 		echo json_encode( $exclude_term_ids );
@@ -195,23 +257,21 @@ class CPT_ONOMIES_ADMIN {
 	 * @return array - the ids for the excluded cpt_onomy terms
 	 * @filters 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' - $taxonomy, $post_type, $post_id
 	 */	
-	public function get_cpt_onomy_terms_excluded_term_ids( $taxonomy = NULL, $post_type = NULL, $post_id = 0 ) {
+	public function get_cpt_onomy_terms_exclude_term_ids( $taxonomy = NULL, $post_type = NULL, $post_id = 0 ) {
 		$exclude_term_ids = apply_filters( 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids', array(), $taxonomy, $post_type, $post_id );
 			
 		// make sure its an array
-		if ( !is_array( $exclude_term_ids ) ) {
+		if ( ! is_array( $exclude_term_ids ) ) {
 			$exclude_term_ids = str_replace( ' ', ',', str_replace( ', ', ',', $exclude_term_ids ) );
 			$exclude_term_ids = explode( ',', $exclude_term_ids );
 		}
 			
 		// make sure the 'excludes' includes the current post ID
-		if ( !in_array( $post_id, $exclude_term_ids ) )
+		if ( ! in_array( $post_id, $exclude_term_ids ) )
 			$exclude_term_ids[] = $post_id;
 			
-		// store the data
-		$this->assigning_terms_exclude_term_ids[ $taxonomy ][ $post_type ][ $post_id ] = $exclude_term_ids;
-		
-		return $exclude_term_ids;
+		// store and return the excluded term data
+		return $this->assigning_terms_exclude_term_ids[ $taxonomy ][ $post_type ][ $post_id ] = array_unique( $exclude_term_ids );
 	}
 	
 	/**
@@ -334,16 +394,22 @@ class CPT_ONOMIES_ADMIN {
 	 *
 	 * This function returns results for the CPT-onomy autocomplete term selection.
 	 *
+	 * You can designate that you only want to include specific terms in the results by returning
+	 * their term IDs using the 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids'
+	 * filter which passes three parameters: the $taxonomy, the $post_type and the $post_id.
+	 * The "include" filter overwrites the "exclude" filter.
+	 *
 	 * You can disable specific terms from being listed in the results by returning their
 	 * term IDs using the 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids'
 	 * filter which passes three parameters: the $taxonomy, the $post_type and the $post_id.
+	 * While the "include" filter overwrites the "exclude" filter, if exclude terms are in the
+	 * include terms, they will be removed.
 	 * 
 	 * @since 1.1
 	 * @uses $wpdb
-	 * @filters 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' - $taxonomy, $post_type, $post_id
 	 */
-	public function meta_box_autocomplete_callback() {
-		global $wpdb;
+	public function ajax_meta_box_autocomplete_callback() {
+		global $wpdb;    
 		$taxonomy = ( isset( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) && !empty( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) ) ? $_POST[ 'custom_post_type_onomies_taxonomy' ] : NULL;
 		$term = ( isset( $_POST[ 'custom_post_type_onomies_term' ] ) && !empty( $_POST[ 'custom_post_type_onomies_term' ] ) ) ? $_POST[ 'custom_post_type_onomies_term' ] : NULL;
 		$post_type = ( isset( $_POST[ 'custom_post_type_onomies_post_type' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_type' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_type' ] : 0;	
@@ -352,16 +418,30 @@ class CPT_ONOMIES_ADMIN {
 			$available_terms = $wpdb->get_results( $wpdb->prepare( "SELECT ID, post_title AS label, post_parent AS parent FROM " . $wpdb->posts . " WHERE post_type = %s AND post_status = 'publish' ORDER BY post_title ASC", $taxonomy ) );
 			if ( $available_terms ) {
 			
+				// allows you to use the 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids' filter
+				// to designate that you only want specific terms to be printed and therefore assigned. The term ids
+				// are stored in an array that is used to customize each printed format. 'Include' overwrites 'exclude'.
+				$include_term_ids = $this->get_cpt_onomy_terms_include_term_ids( $taxonomy, $post_type, $post_id );
+				
 				// allows you to use the 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' filter
 				// to exclude specific terms from being printed and therefore assigned. The term ids are stored in
-				// an array that is used to customize each printed format.
-				$exclude_term_ids = $this->get_cpt_onomy_terms_excluded_term_ids( $taxonomy, $post_type, $post_id );
+				// an array that is used to customize each printed format. While 'include' overwrites 'exclude', if
+				// exclude terms are in the include array, they will be removed.
+				$exclude_term_ids = $this->get_cpt_onomy_terms_exclude_term_ids( $taxonomy, $post_type, $post_id );
 				
 				$results = array();
 				foreach( $available_terms as $this_term ) {
 					
+					// whether or not we want the element displayed
+					$add_term_to_results = true;
+					
+					// test against 'include' and 'exclude'
+					if ( $include_term_ids && ! in_array( $this_term->ID, $include_term_ids ) )
+						$add_term_to_results = false;
+					if( $exclude_term_ids && in_array( $this_term->ID, $exclude_term_ids ) )
+						$add_term_to_results = false;
+			
 					// we don't want to display children of terms we filtered out
-					$add_term_to_results = in_array( $this_term->ID, $exclude_term_ids ) ? false : true;
 					if ( $this_term->parent ) {
 						foreach( get_post_ancestors( $this_term->ID ) as $ancestor ) {
 							if ( in_array( $ancestor, $exclude_term_ids ) ) {
@@ -446,6 +526,10 @@ class CPT_ONOMIES_ADMIN {
 	 * format by hooking into the 'custom_post_type_onomies_meta_box_format' filter, which passes
 	 * two parameters: the $taxonomy and the $post_type.
 	 *
+	 * You can designate that you only want specific terms listed in the results by returning their
+	 * term IDs using the 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids'
+	 * filter which passes three parameters: the $taxonomy, the $post_type and the $post_id.
+	 *
 	 * You can disable specific terms from being listed in the results by returning their
 	 * term IDs using the 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids'
 	 * filter which passes three parameters: the $taxonomy, the $post_type and the $post_id.
@@ -470,19 +554,29 @@ class CPT_ONOMIES_ADMIN {
 		
 		if ( $post_type && $taxonomy ) {
 			
-			// allow the user to change the format - 'autocomplete', 'dropdown', 'checklist' - default
-			$format = apply_filters( 'custom_post_type_onomies_meta_box_format', ( is_post_type_hierarchical( $taxonomy ) ? 'checklist' : 'autocomplete' ), $taxonomy, $post_type );
-			
 			// get taxonomy info
 			$tax = get_taxonomy( $taxonomy );
 			
+			// if 'cpt_onomy_meta_box_format' is not defined, use default WordPress setting
+			if ( ! ( $format = ( isset( $tax->cpt_onomy_meta_box_format ) && ! empty( $tax->cpt_onomy_meta_box_format ) ) ? $tax->cpt_onomy_meta_box_format : NULL ) )
+				$format = is_post_type_hierarchical( $taxonomy ) ? 'checklist' : 'autocomplete';
+			
+			// allow the user to change the format - 'autocomplete', 'dropdown', 'checklist' - default
+			$format = apply_filters( 'custom_post_type_onomies_meta_box_format', $format, $taxonomy, $post_type );
+			
 			// does the user have permission to assign terms?
-			$disabled = !current_user_can( $tax->cap->assign_terms ) ? ' disabled="disabled"' : '';
+			$disabled = ! current_user_can( $tax->cap->assign_terms ) ? ' disabled="disabled"' : '';
+			
+			// allows you to use the 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids' filter
+			// to designate that you only want specific terms to be printed and therefore assigned. The term ids
+			// are stored in an array that is used to customize each printed format. 'Include' overwrites 'exclude'.
+			$include_term_ids = $this->get_cpt_onomy_terms_include_term_ids( $taxonomy, $post_type, $post->ID );
 			
 			// allows you to use the 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' filter
 			// to exclude specific terms from being printed and therefore assigned. The term ids are stored in
-			// an array that is used to customize each printed format.
-			$exclude_term_ids = $this->get_cpt_onomy_terms_excluded_term_ids( $taxonomy, $post_type, $post->ID );
+			// an array that is used to customize each printed format. While 'include' overwrites 'exclude', if
+			// exclude terms are in the include array, they will be removed.
+			$exclude_term_ids = $this->get_cpt_onomy_terms_exclude_term_ids( $taxonomy, $post_type, $post->ID );
 			
 			// add field for testing "editability" when we save the information
 			?><input type="hidden" name="assign_cpt_onomies_<?php echo $taxonomy; ?>_rel" value="1" /><?php
@@ -491,16 +585,15 @@ class CPT_ONOMIES_ADMIN {
 			
 				case 'autocomplete':
 												
-					?>
-					<div id="taxonomy-<?php echo $taxonomy; ?>" class="cpt_onomies_tags_div">
+					?><div id="taxonomy-<?php echo $taxonomy; ?>" class="cpt_onomies_tags_div">
 						<div class="jaxtag">
 							<div class="nojs-tags hide-if-js">
-								<p><?php _e( $tax->labels->add_or_remove_items,  CPT_ONOMIES_TEXTDOMAIN ); ?></p>
+								<p><?php _e( $tax->labels->add_or_remove_items, CPT_ONOMIES_TEXTDOMAIN ); ?></p>
 								<textarea name="<?php echo CPT_ONOMIES_POSTMETA_KEY; ?>[<?php echo $taxonomy; ?>]" rows="3" cols="20" class="the-tags" id="tax-input-<?php echo $taxonomy; ?>"<?php echo $disabled; ?>><?php echo get_terms_to_edit( $post->ID, $taxonomy ); // textarea_escaped by esc_attr() ?></textarea>
 							</div>
 							<?php if ( current_user_can( $tax->cap->assign_terms ) ) : ?>
 								<div class="ajaxtag hide-if-no-js">
-									<label class="screen-reader-text" for="new-tag-<?php echo $taxonomy; ?>"><?php echo $metabox['title']; ?></label>
+									<label class="screen-reader-text" for="new-tag-<?php echo $taxonomy; ?>"><?php echo $metabox[ 'title' ]; ?></label>
 									<div class="taghint"><?php _e( $tax->labels->add_new_item, CPT_ONOMIES_TEXTDOMAIN ); ?></div>
 									<p>
 										<input type="text" id="new-tag-<?php echo $taxonomy; ?>" name="cpt_onomies_new_tag[<?php echo $taxonomy; ?>]" class="cpt_onomies_new_tag form-input-tip" size="16" autocomplete="off" value="" />
@@ -525,13 +618,29 @@ class CPT_ONOMIES_ADMIN {
 					// we only need the first term for a dropdown
 					$selected_term = $selected_terms ? array_shift( $selected_terms )->term_id : 0;
 					
+					// because the dropdown function only has 'exclude', if 'include' is set,
+					// we have to get all of the terms and exclude everything but what's in 'include'
+					$dropdown_exclude_term_ids = array();
+					if ( $include_term_ids ) {
+					
+						// get all terms for this taxonomy that are not in 'include'
+						foreach( get_terms( $taxonomy, array( 'hide_empty' => false, 'fields' => 'ids' ) ) as $term_id ) {
+							if ( ! in_array( $term_id, $include_term_ids ) )
+								$dropdown_exclude_term_ids[] = $term_id;
+						}
+						
+					}
+					// make sure 'exclude' term ids are included
+					if ( $exclude_term_ids )
+						$dropdown_exclude_term_ids = array_unique( array_merge( $dropdown_exclude_term_ids, $exclude_term_ids ) );
+					
 					$dropdown = wp_dropdown_categories( array(
 						'show_option_none' => 'No ' . $tax->labels->all_items . ' are selected',
 						'orderby' => 'name',
 						'order' => 'ASC',
 						'show_count' => false,
 						'hide_empty' => false,
-						'exclude' => $this->assigning_terms_exclude_term_ids[ $taxonomy ][ $post_type ][ $post->ID ],
+						'exclude' => $dropdown_exclude_term_ids,
 						'echo' => false,
 						'selected' => $selected_term,
 						'hierarchical' => is_post_type_hierarchical( $taxonomy ),
@@ -555,8 +664,7 @@ class CPT_ONOMIES_ADMIN {
 				case 'checklist':
 				default:
 				
-					?>
-					<div id="taxonomy-<?php echo $taxonomy; ?>" class="categorydiv cpt_onomies">
+					?><div id="taxonomy-<?php echo $taxonomy; ?>" class="categorydiv cpt_onomies">
 						<ul id="<?php echo $taxonomy; ?>-tabs" class="category-tabs">
 							<li class="tabs"><a href="#<?php echo $taxonomy; ?>-all" tabindex="3"><?php _e( $tax->labels->all_items, CPT_ONOMIES_TEXTDOMAIN ); ?></a></li>
 							<li class="hide-if-no-js"><a href="#<?php echo $taxonomy; ?>-pop" tabindex="3"><?php _e( 'Most Used', CPT_ONOMIES_TEXTDOMAIN ); ?></a></li>
@@ -573,8 +681,7 @@ class CPT_ONOMIES_ADMIN {
 								<?php wp_terms_checklist( $post->ID, array( 'taxonomy' => $taxonomy, 'popular_cats' => $popular_ids, 'walker' => new CPTonomy_Walker_Terms_Checklist() ) ); ?>
 							</ul>
 						</div>
-					</div>
-					<?php
+					</div><?php
 					break;
 					
 			}
@@ -707,7 +814,7 @@ class CPT_ONOMIES_ADMIN {
 	 * @since 1.0.3
 	 * @uses $cpt_onomy
 	 */	
-	public function save_bulk_edit() {
+	public function ajax_save_bulk_edit() {
 		global $cpt_onomy;
 		$post_ids = ( isset( $_POST[ 'custom_post_type_onomies_post_ids' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_ids' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_ids' ] : array();
 		$taxonomy = ( isset( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) && !empty( $_POST[ 'custom_post_type_onomies_taxonomy' ] ) ) ? $_POST[ 'custom_post_type_onomies_taxonomy' ] : NULL;
@@ -738,7 +845,7 @@ class CPT_ONOMIES_ADMIN {
 	 *  
 	 * @since 1.0.3
 	 */	
-	public function quick_edit_populate_custom_columns() {		
+	public function ajax_quick_edit_populate_custom_columns() {		
 		$post_id = ( isset( $_POST[ 'custom_post_type_onomies_post_id' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_id' ] ) && is_numeric( $_POST[ 'custom_post_type_onomies_post_id' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_id' ] : 0;
 		$post_type = ( isset( $_POST[ 'custom_post_type_onomies_post_type' ] ) && !empty( $_POST[ 'custom_post_type_onomies_post_type' ] ) ) ? $_POST[ 'custom_post_type_onomies_post_type' ] : NULL;
 		$column_name = ( isset( $_POST[ 'custom_post_type_onomies_column_name' ] ) && !empty( $_POST[ 'custom_post_type_onomies_column_name' ] ) ) ? $_POST[ 'custom_post_type_onomies_column_name' ] : NULL;		
@@ -1051,15 +1158,26 @@ class CPTonomy_Walker_Terms_Checklist extends Walker {
 		if ( !$element )
 			return;
 
-		$id_field = $this->db_fields['id'];
+		$id_field = $this->db_fields[ 'id' ];
+		
+		// this data was retrieved from the filter
+		// 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids'
+		// when we printed the CPT-onomy meta boxes
+		$include_term_ids = isset( $cpt_onomies_admin->assigning_terms_include_term_ids[ $element->taxonomy ][ $post_type ][ $post->ID ] ) ? $cpt_onomies_admin->assigning_terms_include_term_ids[ $element->taxonomy ][ $post_type ][ $post->ID ] : array();
 		
 		// this data was retrieved from the filter
 		// 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids'
 		// when we printed the CPT-onomy meta boxes
 		$exclude_term_ids = isset( $cpt_onomies_admin->assigning_terms_exclude_term_ids[ $element->taxonomy ][ $post_type ][ $post->ID ] ) ? $cpt_onomies_admin->assigning_terms_exclude_term_ids[ $element->taxonomy ][ $post_type ][ $post->ID ] : array();
 		
-		// we don't want to display terms we filtered out
-		if ( in_array( $element->$id_field, $exclude_term_ids ) ? false : true ) {
+		// whether or not we want the element displayed
+		$display_element = true;
+		if ( $include_term_ids && ! in_array( $element->$id_field, $include_term_ids ) )
+			$display_element = false;
+		if( $exclude_term_ids && in_array( $element->$id_field, $exclude_term_ids ) )
+			$display_element = false;
+			
+		if ( $display_element ) {
 
 			//display this element
 			if ( is_array( $args[0] ) )
@@ -1112,7 +1230,7 @@ class CPTonomy_Walker_Terms_Checklist extends Walker {
 		extract( $args );
 		if ( !empty( $taxonomy ) ) {
 			$class = in_array( $category->term_id, $popular_cats ) ? ' class="popular-category"' : '';
-			$output .= "\n<li id='{$taxonomy}-{$category->term_id}'$class>" . '<label class="selectit"><input value="' . $category->term_id . '" type="checkbox" name="' . CPT_ONOMIES_POSTMETA_KEY . '[' . $taxonomy . '][]" id="in-'.$taxonomy.'-' . $category->term_id . '"' . checked( in_array( $category->term_id, $selected_cats ), true, false ) . disabled( empty( $args['disabled'] ), false, false ) . ' /> ' . esc_html( apply_filters( 'the_category', $category->name )) . '</label>';
+			$output .= "\n<li id='{$taxonomy}-{$category->term_id}'$class>" . '<label class="selectit"><input value="' . $category->term_id . '" type="checkbox" name="' . CPT_ONOMIES_POSTMETA_KEY . '[' . $taxonomy . '][]" id="in-'.$taxonomy.'-' . $category->term_id . '"' . checked( in_array( $category->term_id, $selected_cats ), true, false ) . disabled( empty( $args[ 'disabled' ] ), false, false ) . ' /> ' . esc_html( apply_filters( 'the_category', $category->name )) . '</label>';
 		}
 	}
 
