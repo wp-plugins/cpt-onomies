@@ -90,3 +90,10 @@ select.category.cpt_onomies {
 	border: 0!important;
 	white-space: normal!important;
 	}
+	
+.ui-autocomplete.cpt_onomies .ui-menu-item .parent {
+	font-size: 90%!important;
+	font-style: italic!important;
+	opacity: 0.8!important;
+	padding: 0 3px 0 0!important;
+	}
