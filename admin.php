@@ -600,7 +600,6 @@ class CPT_ONOMIES_ADMIN {
 										<input type="button" class="button cpt_onomies_tag_add" value="<?php esc_attr_e( 'Add', CPT_ONOMIES_TEXTDOMAIN ); ?>" tabindex="3" />
 									</p>
 								</div>
-								<p class="howto"><?php echo esc_attr( $tax->labels->separate_items_with_commas, CPT_ONOMIES_TEXTDOMAIN ); ?></p>
 							<?php endif; ?>
 						</div>
 						<div class="cpt_onomies_tag_checklist<?php if ( !current_user_can( $tax->cap->assign_terms ) ) { echo ' alone'; } ?>"></div>
