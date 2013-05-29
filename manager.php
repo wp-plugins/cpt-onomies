@@ -802,13 +802,14 @@ class CPT_ONOMIES_MANAGER {
 		
 		// Define the CPT-onomy defaults
 	 	$cpt_onomy_defaults = array(
-	 		'label' => $label = strip_tags( $custom_post_type->label ),
-	 		'labels' => '', // if no labels are provided, WordPress uses their own
-	 		'public' => $custom_post_type->public,
-	 		'cpt_onomy_meta_box_format' => NULL,
-	 		'has_cpt_onomy_archive' => true,
-	 		'cpt_onomy_archive_slug' => '$post_type/tax/$term_slug',
-	 		'restrict_user_capabilities' => array( 'administrator', 'editor', 'author' )
+	 		'label'						=> $label = strip_tags( $custom_post_type->label ),
+	 		'labels'					=> '', // if no labels are provided, WordPress uses their own
+	 		'public'					=> $custom_post_type->public,
+	 		'meta_box_format'			=> NULL,
+	 		'show_admin_column'			=> false,
+	 		'has_cpt_onomy_archive'		=> true,
+	 		'cpt_onomy_archive_slug'	=> '$post_type/tax/$term_slug',
+	 		'restrict_user_capabilities'=> array( 'administrator', 'editor', 'author' )
 	 	);
 	 	
 	 	// Merge defaults with incoming $args then extract
@@ -820,19 +821,20 @@ class CPT_ONOMIES_MANAGER {
 	 	// share the same $wp_rewrite permastruct and custom post types MUST win the rewrite war.
 		// we will add our own rewrite rule for the CPT-onomy archive page
 	 	$cpt_onomy_args = array(
-			'cpt_onomy' => true,
-			'created_by_cpt_onomies' => isset( $created_by_cpt_onomies ) ? $created_by_cpt_onomies : false,
-			'label' => $label,
-			'labels' => $labels,
-			'public' => $public,
-			'hierarchical' => $custom_post_type->hierarchical,
-			'show_in_nav_menus' => false,
-			'show_ui' => false,
-			'show_tagcloud' => false,
-			'rewrite' => false,
-			'cpt_onomy_meta_box_format' => $cpt_onomy_meta_box_format,
-			'restrict_user_capabilities' => $restrict_user_capabilities,
-			'capabilities' => array(
+			'cpt_onomy'					=> true,
+			'created_by_cpt_onomies'	=> isset( $created_by_cpt_onomies ) ? $created_by_cpt_onomies : false,
+			'label'						=> $label,
+			'labels'					=> $labels,
+			'public'					=> $public,
+			'hierarchical'				=> $custom_post_type->hierarchical,
+			'show_in_nav_menus'			=> false,
+			'show_ui'					=> false,
+			'show_tagcloud'				=> false,
+			'show_admin_column'			=> $show_admin_column,
+			'rewrite'					=> false,
+			'meta_box_format'			=> $meta_box_format,
+			'restrict_user_capabilities'=> $restrict_user_capabilities,
+			'capabilities'				=> array(
 				'manage_terms' => 'manage_' . $taxonomy . '_terms',
 				'edit_terms' => 'edit_' . $taxonomy . '_terms',
 				'delete_terms' => 'delete_' . $taxonomy . '_terms',
@@ -1163,7 +1165,8 @@ class CPT_ONOMIES_MANAGER {
 									'cpt_onomy_args' => array(
 										'label' => isset( $args[ 'labels' ][ 'name' ] ) ? strip_tags( $args[ 'labels' ][ 'name' ] ) : 'Posts',
 										'public' => isset( $args[ 'public' ] ) ? $args[ 'public' ] : true,
-										'cpt_onomy_meta_box_format' => ( isset( $cpt[ 'meta_box_format' ] ) && ! empty( $cpt[ 'meta_box_format' ] ) ) ? $cpt[ 'meta_box_format' ] : NULL,
+										'meta_box_format' => ( isset( $cpt[ 'meta_box_format' ] ) && ! empty( $cpt[ 'meta_box_format' ] ) ) ? $cpt[ 'meta_box_format' ] : NULL,
+										'show_admin_column' => ( isset( $cpt[ 'show_admin_column' ] ) && $cpt[ 'show_admin_column' ] ) ? true : false,
 										'has_cpt_onomy_archive' => ( isset( $cpt[ 'has_cpt_onomy_archive' ] ) && ! $cpt[ 'has_cpt_onomy_archive' ] ) ? false : true,
 										'cpt_onomy_archive_slug' => ( isset( $cpt[ 'cpt_onomy_archive_slug' ] ) && ! empty( $cpt[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt[ 'cpt_onomy_archive_slug' ] : NULL,
 										'restrict_user_capabilities' => ( isset( $cpt[ 'restrict_user_capabilities' ] ) && ! empty( $cpt[ 'restrict_user_capabilities' ] ) ) ? $cpt[ 'restrict_user_capabilities' ] : array(),
@@ -1214,7 +1217,8 @@ class CPT_ONOMIES_MANAGER {
 									'cpt_onomy_args' => array(
 										'label' => isset( $args[ 'labels' ][ 'name' ] ) ? strip_tags( $args[ 'labels' ][ 'name' ] ) : 'Posts',
 										'public' => isset( $args[ 'public' ] ) ? $args[ 'public' ] : true,
-										'cpt_onomy_meta_box_format' => ( isset( $cpt[ 'meta_box_format' ] ) && ! empty( $cpt[ 'meta_box_format' ] ) ) ? $cpt[ 'meta_box_format' ] : NULL,
+										'meta_box_format' => ( isset( $cpt[ 'meta_box_format' ] ) && ! empty( $cpt[ 'meta_box_format' ] ) ) ? $cpt[ 'meta_box_format' ] : NULL,
+										'show_admin_column' => ( isset( $cpt[ 'show_admin_column' ] ) && $cpt[ 'show_admin_column' ] ) ? true : false,
 										'has_cpt_onomy_archive' => ( isset( $cpt[ 'has_cpt_onomy_archive' ] ) && ! $cpt[ 'has_cpt_onomy_archive' ] ) ? false : true,
 										'cpt_onomy_archive_slug' => ( isset( $cpt[ 'cpt_onomy_archive_slug' ] ) && ! empty( $cpt[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt[ 'cpt_onomy_archive_slug' ] : NULL,
 										'restrict_user_capabilities' => ( isset( $cpt[ 'restrict_user_capabilities' ] ) && ! empty( $cpt[ 'restrict_user_capabilities' ] ) ) ? $cpt[ 'restrict_user_capabilities' ] : array(),
@@ -1261,7 +1265,8 @@ class CPT_ONOMIES_MANAGER {
 					$cpt_onomy_args = array(
 						'label' => strip_tags( $custom_post_type->label ),
 						'public' => $custom_post_type->public,
-						'cpt_onomy_meta_box_format' => ( isset( $cpt_settings[ 'meta_box_format' ] ) && ! empty( $cpt_settings[ 'meta_box_format' ] ) ) ? $cpt_settings[ 'meta_box_format' ] : NULL,
+						'meta_box_format' => ( isset( $cpt_settings[ 'meta_box_format' ] ) && ! empty( $cpt_settings[ 'meta_box_format' ] ) ) ? $cpt_settings[ 'meta_box_format' ] : NULL,
+						'show_admin_column' => ( isset( $cpt_settings[ 'show_admin_column' ] ) && $cpt_settings[ 'show_admin_column' ] ) ? true : false,
 						'has_cpt_onomy_archive' => ( isset( $cpt_settings[ 'has_cpt_onomy_archive' ] ) && ! $cpt_settings[ 'has_cpt_onomy_archive' ] ) ? false : true,
 						'cpt_onomy_archive_slug' => ( isset( $cpt_settings[ 'cpt_onomy_archive_slug' ] ) && ! empty( $cpt_settings[ 'cpt_onomy_archive_slug' ] ) ) ? $cpt_settings[ 'cpt_onomy_archive_slug' ] : NULL,
 						'restrict_user_capabilities' => ( isset( $cpt_settings[ 'restrict_user_capabilities' ] ) && ! empty( $cpt_settings[ 'restrict_user_capabilities' ] ) ) ? $cpt_settings[ 'restrict_user_capabilities' ] : array(),
