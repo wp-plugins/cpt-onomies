@@ -102,7 +102,6 @@ jQuery.noConflict()(function(){
 						},
 						success: function( $data ){
 							$response( jQuery.map( $data, function( $item ) {
-								jQuery.data( 'selected_term_id', $item.label );
 								return {
 									value: $item.value,
 									label: $item.label,
@@ -115,7 +114,8 @@ jQuery.noConflict()(function(){
 				focus: function( $event, $ui ) {
 					
 					// change the input value
-					$new_tag_input.val( $ui.item.label );
+					// this approach allows us "html entity decode" the label        
+					$new_tag_input.val( jQuery( '<div />' ).html( $ui.item.label ).text() );
 					
 					return false;
 					
@@ -123,7 +123,8 @@ jQuery.noConflict()(function(){
 				select: function( $event, $ui ) {
 					
 					// change the input value
-					$new_tag_input.val( $ui.item.label );
+					// this approach allows us "html entity decode" the label
+					$new_tag_input.val( jQuery( '<div />' ).html( $ui.item.label ).text() );
 					
 					// store the ID
 					if ( jQuery( '#' + $hidden_tag_id ).size() == 0 )
