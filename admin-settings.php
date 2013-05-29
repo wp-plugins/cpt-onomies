@@ -868,6 +868,20 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 								)
 							)
 						),
+						'show_admin_column' => (object) array(
+							'label' => __( 'Show Admin Column', CPT_ONOMIES_TEXTDOMAIN ),
+							'type' => 'radio',
+							'description' => sprintf( __( 'Whether or not to add/show the %s column on the admin edit screen for associated post types.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy\'s' ),
+							'default' => 0,
+							'data' => array(
+								'true' => (object) array(
+									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
+								),
+								'false' => (object) array(
+									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
+								)
+							)
+						),
 						'has_cpt_onomy_archive' => (object) array(
 							'label' => __( 'Has Archive Page', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'radio',
