@@ -849,7 +849,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 						'attach_to_post_type' => (object) array(
 							'label' => __( 'Attach to Post Types', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'checkbox',
-							'description' => sprintf( __( 'This setting allows you to use your custom post type in the same manner as a taxonomy, using your post titles as the terms. This is what we call a "%1$s". You can attach this %2$s to to any post type and assign posts just as you would assign taxonomy terms.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', 'CPT-onomy' ) . ' <strong><span class="red">' . sprintf( __( 'A post type must be checked in order to register this custom post type as a %s.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</span></strong>',
+							'description' => sprintf( __( 'This setting allows you to use your custom post type in the same manner as a taxonomy, using your post titles as the terms. This is what we call a "%1$s". You can attach this %2$s to to any post type and assign posts just as you would assign taxonomy terms.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', 'CPT-onomy' ) . ( $this->is_network_admin ? ' <strong>This will register the CPT-onomy on each individual site and not across the network.</strong>' : NULL ) . ' <strong><span class="red">' . sprintf( __( 'A post type must be checked in order to register this custom post type as a %s.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</span></strong>',
 							'data' => $attach_to_post_type_data
 						),
 						'meta_box_format' => (object) array(
