@@ -669,13 +669,13 @@ class CPT_ONOMIES_MANAGER {
 	}
 	
 	/**
-	 * Detects if a custom post is overwriting a network-wide post type
+	 * Detects if a custom post is overwriting a network-registered post type
 	 * registered by this plugin.
 	 * 
 	 * @since 1.3
 	 * @uses $blog_id
 	 * @param string $cpt_key - the key, or alias, for the custom post type you are checking
-	 * @return boolean - whether this custom post type is overwriting a network-wide post type registered by this plugin
+	 * @return boolean - whether this custom post type is overwriting a network-registered post type registered by this plugin
 	 */
 	public function overwrote_network_cpt( $cpt_key ) {
 		global $blog_id;
@@ -687,14 +687,14 @@ class CPT_ONOMIES_MANAGER {
 	}
 	
 	/**
-	 * This functions checks to see if a custom post type is a network-wide
+	 * This functions checks to see if a custom post type is a network-registered
 	 * custom post type registered by this plugin. When this plugin registers
-	 * a network-wide custom post type, it adds the argument 'cpt_onomies_network_cpt'
+	 * a network-registered custom post type, it adds the argument 'cpt_onomies_network_cpt'
 	 * and 'created_by_cpt_onomies' for testing purposes.
 	 *
 	 * @since 1.3
 	 * @param string $cpt_key - the key, or alias, for the custom post type you are checking
-	 * @return boolean - whether this custom post type is a network-wide post type registered by this plugin
+	 * @return boolean - whether this custom post type is a network-registered post type registered by this plugin
 	 */
 	public function is_registered_network_cpt( $cpt_key ) {
 		if ( ! empty( $cpt_key ) && post_type_exists( $cpt_key ) && ( $post_type = get_post_type_object( $cpt_key ) )
@@ -1196,7 +1196,7 @@ class CPT_ONOMIES_MANAGER {
 				if ( ! isset( $cpt[ 'deactivate' ] ) ) {
 				
 					// make sure the CPT does not already exist
-					// (unless its a network-wide CPT, which you're allowed to overwrite on a site level)
+					// (unless its a network-registered CPT, which you're allowed to overwrite on a site level)
 					$post_type_exists = post_type_exists( $cpt_key );
 					if ( ! $post_type_exists || ( $post_type_exists && $this->is_registered_network_cpt( $cpt_key ) ) ) {
 					

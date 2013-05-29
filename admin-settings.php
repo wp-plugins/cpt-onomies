@@ -173,7 +173,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 * with the custom post type and/or CPT-onomy settings.
 	 *
 	 * Because WordPress gives the network admin a blog ID of 1, it's too difficult
-	 * to troubleshoot/validate network-wide custom post types so, with the exception
+	 * to troubleshoot/validate network-registered custom post types so, with the exception
 	 * being inactive, all error messages are disabled for now.
 	 *
 	 * @since 1.2
@@ -351,7 +351,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	}
 	
 	/**
-	 * Validates/updates user's network-wide plugin settings.
+	 * Validates/updates user's network-registered plugin settings.
 	 *
 	 * If saving the "edit" options page and a new custom post type is added,
 	 * the function will edit the redirect to show new CPT.
@@ -1562,7 +1562,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
         <p>' . sprintf( __( 'If you\'re having trouble, and can\'t find the answer below, %1$scheck the support forums%2$s or %3$svisit my web site%4$s. If your problem involves a custom post type setting, %5$sthe WordPress Codex%6$s might be able to help.', CPT_ONOMIES_TEXTDOMAIN ), '<a href="http://wordpress.org/support/plugin/cpt-onomies" target="_blank">', '</a>', '<a href="http://www.rachelcarden.com/cpt-onomies/" target="_blank">', '</a>', '<a href="http://codex.wordpress.org/Function_Reference/register_post_type" target="_blank">', '</a>' ) . '</p>';
         
         if ( $this->is_network_admin )
-        	$text .= '<p class="red"><strong>FYI:</strong> ' . sprintf( __( 'Because the network admin is assigned a blog ID of 1, which is the same as your main blog, it detects registered network-wide post types AND post types intended for your main blog. This makes it hard to troubleshoot/validate network-wide custom post type settings. Please keep this in mind while managing your network-wide custom post types. If a custom post type, or %s, is not behaving as it should on an individual site, check your individual site settings to make sure you do not have a custom post type, with the same name, overwriting your network settings.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</p>';
+        	$text .= '<p class="red"><strong>FYI:</strong> ' . sprintf( __( 'Because the network admin is assigned a blog ID of 1, which is the same as your main blog, it detects network-registered post types AND post types registered for your main blog. This makes it hard to troubleshoot/validate network-registered custom post type settings. Please keep this in mind while managing your network-registered custom post types. If a custom post type, or %s, is not behaving as it should on an individual site, check your individual site settings to make sure you do not have a custom post type, with the same name, overwriting your network settings.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</p>';
         	
         $text .= '<h5>' . sprintf( __( 'My custom post type and/or %s is not showing up', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '</h5>
         <p>' . sprintf( __( 'Make sure your custom post type has not been deactivated. If you are %1$sprogrammatically registering a %2$s%3$s, and it is not showing up, make sure your custom post type has been registered BEFORE you register it\'s namesake %4$s.', CPT_ONOMIES_TEXTDOMAIN ), '<a href="http://rachelcarden.com/cpt-onomies/documentation/register_cpt_onomy/" target="_blank">', 'CPT-onomy', '</a>', 'CPT-onomy' ) . '</p>
@@ -1783,7 +1783,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			add_meta_box( CPT_ONOMIES_DASH . '-add-new-custom-post-type', __( 'Add A New Custom Post Type', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'side', 'core', 'add_new_custom_post_type' );
 						
 			// Manage Custom Post Types
-			add_meta_box( CPT_ONOMIES_DASH . '-custom-post-types', __( 'Manage Your ' . ( $this->is_network_admin ? 'Network-Wide ' : NULL ) . 'Custom Post Types', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'normal', 'core', 'custom_post_types' );			
+			add_meta_box( CPT_ONOMIES_DASH . '-custom-post-types', __( 'Manage Your Custom Post Types', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'normal', 'core', 'custom_post_types' );			
 			
 			// Other Custom Post Types
 			if ( ! $this->is_network_admin )
@@ -2043,7 +2043,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 						?><p><?php printf( __( 'If you\'re using a theme, or another plugin, that creates a custom post type, you can still register these "other" custom post types as %s.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomies' ); ?> <span class="description"><?php _e( 'You cannot, however, manage the actual custom post type. Sorry, but that\'s up to the plugin and/or theme.', CPT_ONOMIES_TEXTDOMAIN ); ?></span></p><?php
 					}
 					else {
-						?><p><?php _e( 'If you\'d like to create a' . ( $this->is_network_admin ? ' network-wide' : NULL ) . ' custom post type, but don\'t want to mess with code, you\'ve come to the right place.' . ( $this->is_network_admin ? ' Only want to register your custom post type on select sites? No problem!' : NULL ) . ' Customize every setting, or just give us a name, and we\'ll take care of the rest.', CPT_ONOMIES_TEXTDOMAIN ); ?> <span class="description"><?php printf( __( 'For more information, like how to create a %s, visit the \'Help\' tab.</span>', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ); ?></p><?php
+						?><p><?php _e( 'If you\'d like to create a custom post type' . ( $this->is_network_admin ? ' that\'s registered across your entire network' : NULL ) . ', but don\'t want to mess with code, you\'ve come to the right place.' . ( $this->is_network_admin ? ' Only want to register your custom post type on select sites? No problem!' : NULL ) . ' Customize every setting, or just give us a name, and we\'ll take care of the rest.', CPT_ONOMIES_TEXTDOMAIN ); ?> <span class="description"><?php printf( __( 'For more information, like how to create a %s, visit the \'Help\' tab.</span>', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ); ?></p><?php
                   	}
                   	
                   	// get custom post type settings
@@ -2208,7 +2208,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 														echo '<span class="message"><a class="show_cpt_message" href="' . $edit_url . '" title="' . esc_attr__( 'Find out why this custom post type is not registered', CPT_ONOMIES_TEXTDOMAIN ) . '" alt="' . $message . '">' . __( 'Find out why this CPT is not registered.', CPT_ONOMIES_TEXTDOMAIN ) . '</a></span>';
 														
 													else if ( $overwrote_network_cpt )
-														echo '<span class="message">' . __( 'This site-wide custom post type is overwriting a network-wide custom post type.', CPT_ONOMIES_TEXTDOMAIN ) . '</span>'; ?>
+														echo '<span class="message">' . __( 'This site-wide custom post type is overwriting a custom post type registered by your network admin.', CPT_ONOMIES_TEXTDOMAIN ) . '</span>'; ?>
 														
 												</div>
 												
@@ -2416,13 +2416,10 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 						$label = __( $CPT->label, CPT_ONOMIES_TEXTDOMAIN );
 					
 					$information = NULL;
-					if ( $this->is_network_admin ) {
-						if ( ! $inactive_cpt && ! $attention_cpt )
-							$information = __( 'This custom post type is registered network-wide.', CPT_ONOMIES_TEXTDOMAIN );
-					} else {
+					if ( ! $this->is_network_admin ) {
 					
 						if ( $overwrote_network_cpt )
-							$information = __( 'This site-wide custom post type is overwriting a network-wide custom post type.', CPT_ONOMIES_TEXTDOMAIN );
+							$information = __( 'This site-wide custom post type is overwriting a custom post type registered by your network admin.', CPT_ONOMIES_TEXTDOMAIN );
 						else if ( $other )
 							$information = sprintf( __( 'This custom post type is probably setup in your theme, or another plugin, but you can still register it for use as a %s. You cannot, however, manage the actual custom post type. Sorry, but that\'s up to the plugin and/or theme.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' );
 							
