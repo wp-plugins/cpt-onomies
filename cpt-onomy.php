@@ -1416,40 +1416,40 @@ class CPT_TAXONOMY {
 	 * @since 1.3
 	 * @uses $cpt_onomies_manager
 	 * @param int $post_id Post ID.
-	 * @param string $tags The tags to set for the post, separated by commas.
-	 * @param string $taxonomy Taxonomy name. Defaults to 'post_tag'.
-	 * @param bool $append If true, don't delete existing tags, just add on. If false, replace the tags with the new tags.
+	 * @param string|array $terms The terms to set for the post. Can be an array or a comma separated string.
+	 * @param string $taxonomy Taxonomy name.
+	 * @param bool $append If true, don't delete existing terms, just add on. If false, replace the terms with the new terms.
 	 * @return mixed Array of affected term IDs. WP_Error or false on failure.
 	*/
-	public function wp_set_post_terms( $post_id = 0, $tags = '', $taxonomy = 'post_tag', $append = false ) {
+	public function wp_set_post_terms( $post_id, $terms, $taxonomy, $append = false ) {
 		global $cpt_onomies_manager;
 		
 		// this function only processes registered CPT-onomies
 		// if this is a normal taxonomy, then use the WordPress function
 		if ( ! $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) )
-			return wp_set_post_terms( $post_id, $tags, $taxonomy, $append );
+			return wp_set_post_terms( $post_id, $terms, $taxonomy, $append );
 		
 		$post_id = (int) $post_id;
 		
 		if ( ! $post_id )
 			return false;
 			
-		if ( empty( $tags ) )
-			$tags = array();
+		if ( empty( $terms ) )
+			$terms = array();
 			
-		if ( ! is_array( $tags ) ) {
+		if ( ! is_array( $terms ) ) {
 			$comma = _x( ',', 'tag delimiter' );
 			if ( ',' !== $comma )
-				$tags = str_replace( $comma, ',', $tags );
-			$tags = explode( ',', trim( $tags, " \n\t\r\0\x0B," ) );
+				$terms = str_replace( $comma, ',', $terms );
+			$terms = explode( ',', trim( $terms, " \n\t\r\0\x0B," ) );
 		}
 		
 		// Hierarchical taxonomies must always pass IDs rather than names so that children with the same
 		// names but different parents aren't confused.
 		if ( is_taxonomy_hierarchical( $taxonomy ) )
-			$tags = array_unique( array_map( 'intval', $tags ) );
+			$terms = array_unique( array_map( 'intval', $terms ) );
 			
-		return $this->wp_set_object_terms( $post_id, $tags, $taxonomy, $append );
+		return $this->wp_set_object_terms( $post_id, $terms, $taxonomy, $append );
 	}
 	
 	/**
