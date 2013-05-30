@@ -65,10 +65,12 @@ class CPT_ONOMIES_ADMIN {
 			add_action( 'restrict_manage_posts', array( &$this, 'restrict_manage_posts' ) );
 			
 			// add custom admin columns
+			// >= 3.5 - it allows you to remove "show_admin_column" column via filter
+			// < 3.5 - backwards compatibility for a little while - adds column
 			add_filter( 'manage_pages_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 100, 1 );
 			add_filter( 'manage_posts_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 100, 2 );
 			
-			// edit custom admin columns
+			// edit custom admin columns for version < 3.5 - backwards compatibility for a little while
 			add_action( 'manage_pages_custom_column', array( &$this, 'edit_cpt_onomy_admin_column' ), 10, 2 );
 			add_action( 'manage_posts_custom_column', array( &$this, 'edit_cpt_onomy_admin_column' ), 10, 2 );
 				
@@ -936,20 +938,29 @@ class CPT_ONOMIES_ADMIN {
 	}
 		
 	/**
+	 * As of version 1.3, the admin columns are added via the new WordPress
+	 * register_taxonomy() "show_admin_column" setting. WordPress 3.5
+	 * introduced the "show_admin_column" setting for register_taxonomy(),
+	 * bringing about default WordPress functionality for admin "Edit Posts"
+	 * taxonomy columns so CPT-onomies will now hook into this functionality.
+	 *
+	 * However, this  setting was not introduced until 3.5 so I will keep this
+	 * functionality, for a little while, for backwards compatibility. If version
+	 * is less than 3.5, this function will add the column. No matter the method,
+	 * the 'custom_post_type_onomies_add_cpt_onomy_admin_column' filter will
+	 * allow the user the ability to remove the column by CPT-onomy or post type.
+	 *
+	 * Version 1.3 also deprecated column sortability to align with new
+	 * default WordPress taxonomy column functionality. I will keep CPT-onomy
+	 * functions for simply adding a column, for a little while, for backwards
+	 * compatibility but am going ahead and removing sortability.
+	 *
 	 * If a CPT-onomy is attached to a post type, the plugin adds a column
 	 * to the post type's edit screen which lists each post's assigned terms.
 	 *
 	 * You can remove the column by returning false to the
 	 * 'custom_post_type_onomies_add_cpt_onomy_admin_column' filter, which passes
 	 * two parameters: the $taxonomy and the $post_type.
-	 *
-	 * Version 1.3 deprecated column sortability to align with default WordPress
-	 * functionality. WP 3.5 introduced the "show_admin_column" setting for
-	 * register_taxonomy(), bringing about default WordPress functionality for
-	 * admin "Edit Posts" taxonomy columns so CPT-onomies will now hook into this
-	 * functionality. I will keep CPT-onomy functions for simply adding a column,
-	 * for a little while, for backwards compatibility but am going ahead and
-	 * removing sortability.
 	 * 
 	 * This function adds the columns to the screen.
 	 * $this->edit_cpt_onomy_admin_column() adds the assigned terms to each column.
@@ -970,43 +981,67 @@ class CPT_ONOMIES_ADMIN {
 		foreach( get_object_taxonomies( $post_type, 'objects' ) as $taxonomy => $tax ) {
 			// make sure its a registered CPT-onomy
 			if ( $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
-			
-				// this filter allows you to remove the column by returning false
-				// if 'show_ui' is false, do not add column
-				if ( apply_filters( 'custom_post_type_onomies_add_cpt_onomy_admin_column', ( post_type_exists( $taxonomy ) ? get_post_type_object( $taxonomy )->show_ui : true ), $taxonomy, $post_type ) ) {
+		
+				// "show_admin_column" works for you but you still have capability
+				// to remove column, via filter, if desired. In this case,
+				// "show_admin_column" must already be set to true, which is similar
+				// to previous setup where the column was added by default and you
+				// just used the filter to remove it.
+				if ( get_bloginfo( 'version' ) >= 3.5 ) {
 				
-					// want to add before comments and date
-					$split = -1;
-					$comments = array_search( 'comments', array_keys( $columns ) );
-					$date = array_search( 'date', array_keys( $columns ) );
+					// if the column already exists, this filter allows you
+					// to remove the column by returning false.
+					if ( array_key_exists( 'taxonomy-' . $taxonomy, $columns )
+						&& ! apply_filters( 'custom_post_type_onomies_add_cpt_onomy_admin_column', true, $taxonomy, $post_type ) ) {
 					
-					if ( $comments !== false || $date !== false ) {
-						
-						if ( $comments !== false && $date !== false )
-							$split = ( $comments < $date ) ? $comments : $date;
-						else if ( $comments !== false && $date === false )
-							$split = $comments;
-						else if ( $comments === false && $date !== false )
-							$split = $date;
-						
+						// remove the column
+						unset( $columns[ 'taxonomy-' . $taxonomy ] );
+					
 					}
+				
+				}
+				
+				// backwards compatability
+				else {
+				
+					// this filter allows you to remove the column by returning false
+					// if 'show_ui' is false, do not add column. default is true/add the column.
+					if ( apply_filters( 'custom_post_type_onomies_add_cpt_onomy_admin_column', ( post_type_exists( $taxonomy ) ? get_post_type_object( $taxonomy )->show_ui : true ), $taxonomy, $post_type ) ) {
 					
-					// new column
-					$new_column = array( CPT_ONOMIES_UNDERSCORE . '_' . $taxonomy => __( $tax->label, CPT_ONOMIES_TEXTDOMAIN ) );
-					
-					// add somewhere in the middle
-					if ( $split > 0 ) {
-						$beginning = array_slice( $columns, 0, $split );
-						$end = array_slice( $columns, $split );
-						$columns = $beginning + $new_column + $end;
-					}
-					// add at the beginning
-					else if ( $split == 0 )
-						$columns = $new_column + $columns;
-					// add at the end
-					else
-						$columns += $new_column;
+						// want to add before comments and date
+						$split = -1;
+						$comments = array_search( 'comments', array_keys( $columns ) );
+						$date = array_search( 'date', array_keys( $columns ) );
 						
+						if ( $comments !== false || $date !== false ) {
+							
+							if ( $comments !== false && $date !== false )
+								$split = ( $comments < $date ) ? $comments : $date;
+							else if ( $comments !== false && $date === false )
+								$split = $comments;
+							else if ( $comments === false && $date !== false )
+								$split = $date;
+							
+						}
+						
+						// new column
+						$new_column = array( CPT_ONOMIES_UNDERSCORE . '_' . $taxonomy => __( $tax->label, CPT_ONOMIES_TEXTDOMAIN ) );
+						
+						// add somewhere in the middle
+						if ( $split > 0 ) {
+							$beginning = array_slice( $columns, 0, $split );
+							$end = array_slice( $columns, $split );
+							$columns = $beginning + $new_column + $end;
+						}
+						// add at the beginning
+						else if ( $split == 0 )
+							$columns = $new_column + $columns;
+						// add at the end
+						else
+							$columns += $new_column;
+							
+					}
+				
 				}
 				
 			}
@@ -1015,6 +1050,15 @@ class CPT_ONOMIES_ADMIN {
 	}
 		
 	/**
+	 * As of version 1.3, the admin columns are added via the new WordPress
+	 * register_taxonomy() "show_admin_column" setting. WordPress 3.5
+	 * introduced the "show_admin_column" setting for register_taxonomy(),
+	 * bringing about default WordPress functionality for admin "Edit Posts"
+	 * taxonomy columns so CPT-onomies will now hook into this functionality.
+	 *
+	 * However, this setting was not introduced until 3.5 so I will keep this
+	 * functionality, for a little while, for backwards compatibility.
+	 *
 	 * If a CPT-onomy is attached to a post type, the plugin adds a column
 	 * to the post type's edit screen which lists each post's assigned terms.
 	 *
