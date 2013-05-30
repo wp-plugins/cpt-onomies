@@ -66,8 +66,8 @@ class CPT_ONOMIES_ADMIN {
 			
 			// add custom admin columns
 			add_filter( 'manage_pages_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 100, 1 );
-			add_filter( 'manage_posts_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 100, 2 );		
-				
+			add_filter( 'manage_posts_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 100, 2 );
+			
 			// sortable columns
 			add_action( 'load-edit.php', array( &$this, 'manage_cpt_onomy_admin_sortable_columns' ) );
 			add_filter( 'posts_clauses', array( &$this, 'order_cpt_onomy_admin_by_sortable_column' ), 100, 2 );
@@ -557,8 +557,8 @@ class CPT_ONOMIES_ADMIN {
 			// get taxonomy info
 			$tax = get_taxonomy( $taxonomy );
 			
-			// if 'cpt_onomy_meta_box_format' is not defined, use default WordPress setting
-			if ( ! ( $format = ( isset( $tax->cpt_onomy_meta_box_format ) && ! empty( $tax->cpt_onomy_meta_box_format ) ) ? $tax->cpt_onomy_meta_box_format : NULL ) )
+			// if 'meta_box_format' is not defined, use default WordPress setting
+			if ( ! ( $format = ( isset( $tax->meta_box_format ) && ! empty( $tax->meta_box_format ) ) ? $tax->meta_box_format : NULL ) )
 				$format = is_post_type_hierarchical( $taxonomy ) ? 'checklist' : 'autocomplete';
 			
 			// allow the user to change the format - 'autocomplete', 'dropdown', 'checklist' - default
