@@ -872,7 +872,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							'label' => __( 'Show Admin Column', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'radio',
 							'description' => sprintf( __( 'Whether or not to add/show the %s column on the admin edit screen for associated post types.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy\'s' ),
-							'default' => 0,
+							'default' => 1,
 							'data' => array(
 								'true' => (object) array(
 									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
