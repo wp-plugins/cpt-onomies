@@ -12,7 +12,7 @@ Use your custom post types as taxonomies. Create powerful relationships between 
 
 *CPT-onomies* is a **multisite compatible** WordPress plugin that allows you to create very powerful taxonomies and, therefore, very powerful relationships between your posts.
 
-CPT-onomies are Custom-Post-Type powered taxonomies that function just like regular WordPress taxonomies, even allowing you to use core WordPress taxonomy functions, such as [get_terms()](http://codex.wordpress.org/Function_Reference/get_terms "get_terms()") and [wp_get_object_terms()](http://codex.wordpress.org/Function_Reference/wp_get_object_terms "wp_get_object_terms()"). *[Check out the CPT-onomy documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomy documentation") to see which core WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy functions.*
+CPT-onomies are Custom-Post-Type-powered taxonomies that function just like regular WordPress taxonomies, even allowing you to use core WordPress taxonomy functions, such as [get_terms()](http://codex.wordpress.org/Function_Reference/get_terms "get_terms()") and [wp_get_object_terms()](http://codex.wordpress.org/Function_Reference/wp_get_object_terms "wp_get_object_terms()"). *[Check out the CPT-onomy documentation](http://rachelcarden.com/cpt-onomies/documentation "CPT-onomy documentation") to see which core WordPress taxonomy functions work and when you'll need to access the plugin's CPT-onomy functions.*
 
 CPT-onomies includes a custom post type manager, allowing you to create custom post types and register CPT-onomies **without touching one line of code!**
 
@@ -126,11 +126,11 @@ If FAQ didn't cover your problem, refer to the following resources:
 = 1.3 =
 * Added multisite custom post type manager.
 * Added setting to assign meta box format, i.e. autocomplete, checklist or dropdown.
-* Added "Show Admin Column" setting to register_cpt_onomy().
-* Deprecated the ability to make the taxonomy columns sortable in order to align with new, default WP taxonomy column functionality.
-* Deprecated 'custom_post_type_onomies_add_cpt_onomy_admin_sortable_column' filter.
-* Added support for "Gravity Forms + Custom Post Types" plugin.
-* Added the ability to only include/assign specific terms by passing term IDs to filter. See documentation for more information.
+* Added "Show Admin Column" to the CPT-onomy settings.
+* Deprecated the ability to make the CPT-onomy admin columns sortable in order to align with new, default WP taxonomy admin column functionality.
+* Deprecated the 'custom_post_type_onomies_add_cpt_onomy_admin_sortable_column' filter.
+* Added support for the "Gravity Forms + Custom Post Types" plugin.
+* Added the ability to only include/assign specific terms by passing term IDs to a filter. See documentation for more information.
 * Added wp_set_post_terms() to the CPT-onomy class.
 
 = 1.2.1 =
@@ -197,11 +197,11 @@ If FAQ didn't cover your problem, refer to the following resources:
 = 1.3 =
 * Added multisite custom post type manager.
 * Added setting to assign meta box format, i.e. autocomplete, checklist or dropdown.
-* Added "Show Admin Column" setting to register_cpt_onomy().
-* Deprecated the ability to make the taxonomy columns sortable in order to align with new, default WP taxonomy column functionality.
-* Deprecated 'custom_post_type_onomies_add_cpt_onomy_admin_sortable_column' filter.
-* Added support for "Gravity Forms + Custom Post Types" plugin.
-* Added the ability to only include/assign specific terms by passing term IDs to filter. See documentation for more information.
+* Added "Show Admin Column" to the CPT-onomy settings.
+* Deprecated the ability to make the CPT-onomy admin columns sortable in order to align with new, default WP taxonomy admin column functionality.
+* Deprecated the 'custom_post_type_onomies_add_cpt_onomy_admin_sortable_column' filter.
+* Added support for the "Gravity Forms + Custom Post Types" plugin.
+* Added the ability to only include/assign specific terms by passing term IDs to a filter. See documentation for more information.
 * Added wp_set_post_terms() to the CPT-onomy class.
 
 = 1.2.1 =
