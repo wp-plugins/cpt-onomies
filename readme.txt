@@ -78,6 +78,8 @@ function my_website_admin_head() {
 
 = When assigning my CPT-onomy terms, I see a checklist but I would like to use the autocomplete box (or a select dropdown). =
 
+**As of version 1.3**, you can change the format for your meta boxes via the settings page! *However, the following filter still works so feel free to use as you please. It will overwrite the settings.*
+
 If you have a hierarchical CPT-onomy, the default selection format is a checklist. But if you would rather use the autocomplete box, or a select dropdown, CPT-onomies allows you to hook into the meta box (via a filter) and overwrite the default selection format.
 
 Here's an example of the filter. More information, check out the "Help" tab in the CPT-onomies settings or [visit the FAQ on my web site](http://rachelcarden.com/cpt-onomies/faq/ "visit the FAQ on my web site").
