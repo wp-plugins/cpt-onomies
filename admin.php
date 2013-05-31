@@ -1005,8 +1005,7 @@ class CPT_ONOMIES_ADMIN {
 				else {
 				
 					// this filter allows you to remove the column by returning false
-					// if 'show_ui' is false, do not add column. default is true/add the column.
-					if ( apply_filters( 'custom_post_type_onomies_add_cpt_onomy_admin_column', ( post_type_exists( $taxonomy ) ? get_post_type_object( $taxonomy )->show_ui : true ), $taxonomy, $post_type ) ) {
+					if ( apply_filters( 'custom_post_type_onomies_add_cpt_onomy_admin_column', ( isset( $tax->show_admin_column ) && ! $tax->show_admin_column ) ? false : true, $taxonomy, $post_type ) ) {
 					
 						// want to add before comments and date
 						$split = -1;
