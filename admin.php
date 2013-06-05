@@ -775,30 +775,33 @@ class CPT_ONOMIES_ADMIN {
 	 */
 	public function bulk_quick_edit_custom_box( $column_name, $post_type ) {
 		global $cpt_onomies_manager;
-		if ( strpos( $column_name, CPT_ONOMIES_UNDERSCORE ) !== false ) {
+		
+		// allows bulk and quick edit whether the column was added via WordPress register_taxonomy() or CPT-onomies.
+		// WP < 3.5 is added via CPT-onomies, WP >= 3.5 is added via register_taxonomy()'s 'show_admin_column'.
+		$taxonomy = NULL;
+		if ( strpos( $column_name, CPT_ONOMIES_UNDERSCORE ) !== false )
 			$taxonomy = strtolower( str_replace( CPT_ONOMIES_UNDERSCORE . '_', '', $column_name ) );
-			if ( taxonomy_exists( $taxonomy ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
-				$tax = get_taxonomy( $taxonomy );				
-				?>
-				
-				<fieldset class="inline-edit-col-center inline-edit-<?php echo $taxonomy; ?>"><div class="inline-edit-col">
-				
-                    <span class="title inline-edit-<?php echo $taxonomy; ?>-label"><?php echo esc_html( $tax->labels->name ) ?>
-                        <span class="catshow">[<?php _e( 'more', CPT_ONOMIES_TEXTDOMAIN ); ?>]</span>
-                        <span class="cathide" style="display:none;">[<?php _e( 'less', CPT_ONOMIES_TEXTDOMAIN ); ?>]</span>
-                    </span>
-                    <ul class="cat-checklist cpt-onomy-checklist cpt-onomy-<?php echo esc_attr( $taxonomy )?>">
-                        <?php wp_terms_checklist( NULL, array( 'taxonomy' => $taxonomy, 'walker' => new CPTonomy_Walker_Terms_Checklist() ) ); ?>
-                    </ul>
-                    
-                    <?php // these variables help with processing/saving the info ?>
-                    <input type="hidden" name="is_bulk_quick_edit" value="true" />
-                  	<input type="hidden" name="<?php echo 'assign_cpt_onomies_' . $taxonomy . '_rel'; ?>" value="true" />
-				
-				</div></fieldset>
-                              
-			<?php }
-		}				
+		else if ( strpos( $column_name, 'taxonomy-' ) !== false )
+			$taxonomy = strtolower( str_replace( 'taxonomy-', '', $column_name ) );
+			
+		if ( taxonomy_exists( $taxonomy ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
+			$tax = get_taxonomy( $taxonomy );				
+			?><fieldset class="inline-edit-col-center inline-edit-<?php echo $taxonomy; ?>"><div class="inline-edit-col">
+			
+                <span class="title inline-edit-<?php echo $taxonomy; ?>-label"><?php echo esc_html( $tax->labels->name ) ?>
+                    <span class="catshow">[<?php _e( 'more', CPT_ONOMIES_TEXTDOMAIN ); ?>]</span>
+                    <span class="cathide" style="display:none;">[<?php _e( 'less', CPT_ONOMIES_TEXTDOMAIN ); ?>]</span>
+                </span>
+                <ul class="cat-checklist cpt-onomy-checklist cpt-onomy-<?php echo esc_attr( $taxonomy )?>">
+                    <?php wp_terms_checklist( NULL, array( 'taxonomy' => $taxonomy, 'walker' => new CPTonomy_Walker_Terms_Checklist() ) ); ?>
+                </ul>
+                
+                <?php // these variables help with processing/saving the info ?>
+                <input type="hidden" name="is_bulk_quick_edit" value="true" />
+              	<input type="hidden" name="<?php echo 'assign_cpt_onomies_' . $taxonomy . '_rel'; ?>" value="true" />
+			
+			</div></fieldset><?php
+		}
 	}
 	
 	/**
