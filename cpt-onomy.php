@@ -1474,11 +1474,13 @@ class CPT_TAXONOMY {
 	 * @param array|int|string $terms The slug or id of the term, will replace all existing related terms in this taxonomy.
 	 * @param array|string $taxonomy The context in which to relate the term to the object.
 	 * @param bool $append If false will delete difference of terms.
+	 * @param bool $suppress_action If true, will keep action from firing. Helpful if using action to set more object terms
+	 *		and are, therefore, running the function again. Setting this true in your action will stop an infinite loop.
 	 * @return array|WP_Error Affected Term IDs
 	 * @filters 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids' - $taxonomy, $object_post_type, $object_id
 	 * @filters 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' - $taxonomy, $object_post_type, $object_id
 	*/
-	public function wp_set_object_terms( $object_id, $terms, $taxonomy, $append = false ) {
+	public function wp_set_object_terms( $object_id, $terms, $taxonomy, $append = false, $suppress_action = false ) {
 		global $wpdb, $cpt_onomies_manager;
 		
 		// this function only processes registered CPT-onomies
@@ -1592,8 +1594,15 @@ class CPT_TAXONOMY {
 			
 		}
 		
-		// allows the user to run code whenever object terms are set
-		do_action( 'cpt_onomy_wp_set_object_terms', $object_id, $term_ids, $taxonomy, $append );
+		/*
+		 * Allows the user to run code whenever object terms are set.
+		 * Setting $suppress_action to true, and keeping the action from firing, is helpful if
+		 * you're using this action to set more object terms and are, therefore, running the
+		 * function again. Setting $suppress_action to true in the $cpt_onomy->wp_set_object_terms()
+		 * declaration in your action will stop an infinite loop.
+		 */
+		if ( ! $suppress_action )
+			do_action( 'cpt_onomy_wp_set_object_terms', $object_id, $term_ids, $taxonomy, $append );
 	
 		return $term_ids;
 	}
