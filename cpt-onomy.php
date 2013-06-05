@@ -1543,12 +1543,12 @@ class CPT_TAXONOMY {
 				
 		foreach ( (array) $terms as $term ) {
 			
-			if ( !strlen( trim( $term ) ) )
+			if ( ! strlen( trim( $term ) ) )
 				continue;
 				
 			if ( is_numeric( $term ) ) $term = (int) $term;
 						
-			if ( !$term_info = $this->term_exists( $term, $taxonomy ) ) {
+			if ( ! $term_info = $this->term_exists( $term, $taxonomy ) ) {
 				// Skip if a non-existent term ID is passed.
 				if ( is_int( $term ) )
 					continue;
@@ -1577,7 +1577,7 @@ class CPT_TAXONOMY {
 		}
 			
 		// delete all pre-existing term relationships
-		if ( !$append ) {
+		if ( ! $append ) {
 		
 			// we don't have to retrieve 'all' of the term info here
 			// because we're only dealing with CPT-onomies and not mingling with taxonomies
@@ -1591,6 +1591,9 @@ class CPT_TAXONOMY {
 			}
 			
 		}
+		
+		// allows the user to run code whenever object terms are set
+		do_action( 'cpt_onomy_wp_set_object_terms', $object_id, $term_ids, $taxonomy, $append );
 	
 		return $term_ids;
 	}
