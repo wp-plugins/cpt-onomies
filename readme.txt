@@ -67,7 +67,7 @@ Another good question, with a very simple answer: the term ID. CPT-onomies retur
 
 = I'm not able to save my custom post type because the page keeps telling me "That post type name already exists." =
 
-This is a jQuery "bug" that only seems to plague a few. I've noticed that this validation standstill will occur if you have any text printed outside the <body> element on your page. If that's not the case, and the problem still lingers after you've upgraded to version 1.1, you can dequeue the validation script by placing the following code in your functions.php file:
+This is a jQuery "bug" that only seems to plague a few. I've noticed that this validation standstill will occur if you have any text printed outside the `<body>` element on your page. If that's not the case, and the problem still lingers after you've upgraded to version 1.1, you can dequeue the validation script by placing the following code in your functions.php file:
 
 `<?php
 add_action( 'admin_head', 'my_website_admin_head' );
@@ -125,7 +125,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 = 1.3 =
 * Added multisite custom post type manager.
-* Added setting to assign meta box format, i.e. autocomplete, checklist or dropdown.
+* Added setting to assign the meta box format, i.e. autocomplete, checklist or dropdown.
 * Added "Show Admin Column" to the CPT-onomy settings.
 * Deprecated the ability to make the CPT-onomy admin columns sortable in order to align with new, default WP taxonomy admin column functionality.
 * Deprecated the 'custom_post_type_onomies_add_cpt_onomy_admin_sortable_column' filter.
@@ -196,7 +196,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 = 1.3 =
 * Added multisite custom post type manager.
-* Added setting to assign meta box format, i.e. autocomplete, checklist or dropdown.
+* Added setting to assign the meta box format, i.e. autocomplete, checklist or dropdown.
 * Added "Show Admin Column" to the CPT-onomy settings.
 * Deprecated the ability to make the CPT-onomy admin columns sortable in order to align with new, default WP taxonomy admin column functionality.
 * Deprecated the 'custom_post_type_onomies_add_cpt_onomy_admin_sortable_column' filter.
