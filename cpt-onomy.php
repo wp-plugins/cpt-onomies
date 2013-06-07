@@ -1719,11 +1719,13 @@ class CPT_TAXONOMY {
 				$taxonomies = $cpt_taxonomies;
 			
 			// add "quotes"
-			foreach( $taxonomies as $index => $taxonomy ) $taxonomies[ $index ] = "'" . $taxonomy . "'";
+			foreach( $taxonomies as $index => $taxonomy ) {
+				$taxonomies[ $index ] = "'" . $taxonomy . "'";
+			}
 			$taxonomies = implode( ',', $taxonomies );
 			
 			// delete postmeta
-			$result = $wpdb->query( $wpdb->prepare( "DELETE " . $wpdb->postmeta . ".* FROM " . $wpdb->postmeta . " INNER JOIN " . $wpdb->posts . " ON " . $wpdb->posts . ".ID = " . $wpdb->postmeta . ".meta_value WHERE " . $wpdb->posts . ".post_type IN (" . $taxonomies . ") AND " . $wpdb->postmeta . ".post_id = %d AND " . $wpdb->postmeta . ".meta_key = %s", $object_id, CPT_ONOMIES_POSTMETA_KEY ) );
+			$result = $wpdb->query( $wpdb->prepare( "DELETE wpmeta.* FROM " . $wpdb->postmeta . " wpmeta INNER JOIN " . $wpdb->posts . " wpp ON wpp.ID = wpmeta.meta_value WHERE wpp.post_type IN (" . $taxonomies . ") AND wpmeta.post_id = %d AND wpmeta.meta_key = %s", $object_id, CPT_ONOMIES_POSTMETA_KEY ) );
 			
 			if ( $result >= 0 ) return true;
 			else return false;
