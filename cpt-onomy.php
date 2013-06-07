@@ -1714,11 +1714,16 @@ class CPT_TAXONOMY {
 	 * This function mimics the WordPress function wp_delete_object_term_relationships()
 	 * because we cannot hook into the function without receiving errors.
 	 *
+	 * As of 1.3.1, runs 'cpt_onomy_deleted_object_term_relationship' action to allow user
+	 * to run code when relationships are deleted. Action provides 4 arguments: the term id,
+	 * the taxonomy/CPT-onomy, the object id/post id and object post type.
+	 *
 	 * @since 1.0
 	 * @uses $wpdb, $cpt_onomies_manager
 	 * @param int $object_id The term Object Id that refers to the term
 	 * @param string|array $taxonomies List of Taxonomy Names or single Taxonomy name. If not set, deletes ALL relationships
 	 * @return boolean|WP_Error - true if relationships are deleted, otherwise false
+	 * @filters 'cpt_onomy_deleted_object_term_relationship' - $term_id, $taxonomy, $object_id, $object_post_type
 	 */
 	public function wp_delete_object_term_relationships( $object_id, $taxonomies = NULL ) {
 		global $wpdb, $cpt_onomies_manager;
@@ -1752,11 +1757,24 @@ class CPT_TAXONOMY {
 			}
 			$taxonomies = implode( ',', $taxonomies );
 			
-			// delete postmeta
-			$result = $wpdb->query( $wpdb->prepare( "DELETE wpmeta.* FROM " . $wpdb->postmeta . " wpmeta INNER JOIN " . $wpdb->posts . " wpp ON wpp.ID = wpmeta.meta_value WHERE wpp.post_type IN (" . $taxonomies . ") AND wpmeta.post_id = %d AND wpmeta.meta_key = %s", $object_id, CPT_ONOMIES_POSTMETA_KEY ) );
+			// get IDs of terms being deleted to use for 'cpt_onomy_deleted_object_term_relationship' action
+			if ( $term_ids_being_deleted = $wpdb->get_col( $wpdb->prepare( "SELECT wpmeta.meta_value FROM " . $wpdb->postmeta . " wpmeta INNER JOIN " . $wpdb->posts . " wpp ON wpp.ID = wpmeta.meta_value WHERE wpp.post_type IN (" . $taxonomies . ") AND wpmeta.post_id = %d AND wpmeta.meta_key = %s", $object_id, CPT_ONOMIES_POSTMETA_KEY ) ) ) {
 			
-			if ( $result >= 0 ) return true;
-			else return false;
+				// delete object relationships with specific taxonomies
+				if ( $wpdb->query( $wpdb->prepare( "DELETE wpmeta.* FROM " . $wpdb->postmeta . " wpmeta INNER JOIN " . $wpdb->posts . " wpp ON wpp.ID = wpmeta.meta_value WHERE wpp.post_type IN (" . $taxonomies . ") AND wpmeta.post_id = %d AND wpmeta.meta_key = %s", $object_id, CPT_ONOMIES_POSTMETA_KEY ) ) ) {
+				
+					// action allows user to run code when relationships are deleted
+					foreach( $term_ids_being_deleted as $deleted_term_id ) {
+						do_action( 'cpt_onomy_deleted_object_term_relationship', $deleted_term_id, get_post_type( $deleted_term_id ), $object_id, get_post_type( $object_id ) );
+					}		
+				
+					return true;
+					
+				}					
+					
+			}
+			
+			return false;
 			
 		}		
 	}
@@ -1773,7 +1791,7 @@ class CPT_TAXONOMY {
 	 * @param array|string $args Optional. Override default arguments.
  	 * @return array Generated tag cloud, only if no failures and 'array' is set for the 'format' argument.
 	 */
-	public function wp_tag_cloud( $args = '' ) {
+	public function wp_tag_cloud( $args = NULL ) {
 		global $cpt_onomy;
 		$defaults = array(
 			'smallest' => 8, 'largest' => 22, 'unit' => 'pt', 'number' => 45,
