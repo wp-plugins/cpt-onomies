@@ -1523,6 +1523,10 @@ class CPT_TAXONOMY {
 	 *
 	 * The relationship is created by adding the $term_id as post meta.
 	 *
+	 * As of 1.3.1, runs 'cpt_onomy_created_object_term_relationship' action to allow user
+	 * to run code when relationships are created. Action provides 4 arguments: the term id,
+	 * the taxonomy/CPT-onomy, the object id/post id and object post type.
+	 *
 	 * @since 1.0
 	 * @uses $wpdb, $cpt_onomies_manager
 	 * @param int $object_id The object to relate to.
@@ -1532,6 +1536,7 @@ class CPT_TAXONOMY {
 	 * @return array|WP_Error Affected Term IDs
 	 * @filters 'custom_post_type_onomies_assigning_cpt_onomy_terms_include_term_ids' - $taxonomy, $object_post_type, $object_id
 	 * @filters 'custom_post_type_onomies_assigning_cpt_onomy_terms_exclude_term_ids' - $taxonomy, $object_post_type, $object_id
+	 * @filters 'cpt_onomy_created_object_term_relationship' - $term_id, $taxonomy, $object_id, $object_post_type
 	*/
 	public function wp_set_object_terms( $object_id, $terms, $taxonomy, $append = false ) {
 		global $wpdb, $cpt_onomies_manager;
@@ -1667,21 +1672,40 @@ class CPT_TAXONOMY {
 	 *
 	 * If you want to delete ALL relationships, use $this->wp_delete_object_term_relationships().
 	 *
+	 * As of 1.3.1, runs 'cpt_onomy_deleted_object_term_relationship' action to allow user
+	 * to run code when relationships are deleted. Action provides 4 arguments: the term id,
+	 * the taxonomy/CPT-onomy, the object id/post id and object post type.
+	 *
 	 * @since 1.0
-	 * @uses $cpt_onomies_manager
+	 * @uses $wpdb, $cpt_onomies_manager
 	 * @param int $object_id - the ID of the object
 	 * @param int $term_id - if wanting to delete a specific relationship, provide the term ID
 	 * @return boolean|WP_Error - true if relationships are deleted, otherwise false
+	 * @filters 'cpt_onomy_deleted_object_term_relationship' - $term_id, $taxonomy, $object_id, $object_post_type
 	 */
 	public function wp_delete_object_term_relationship( $object_id, $term_id ) {
-		global $cpt_onomies_manager;
+		global $wpdb, $cpt_onomies_manager;
 		$object_id = (int) $object_id;
 		$term_id = (int) $term_id;
 		$taxonomy = get_post_type( $term_id );
 		
 		// make sure this is a CPT-onomy
-		if ( $object_id > 0 && $term_id > 0 && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) )
-			return delete_post_meta( $object_id, CPT_ONOMIES_POSTMETA_KEY, $term_id );
+		if ( $object_id && $term_id && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
+		
+			// make sure the relationship exists
+			if ( ! $wpdb->get_var( $wpdb->prepare( "SELECT meta_id FROM " . $wpdb->prefix . "postmeta WHERE post_id = %d AND meta_key = %s AND meta_value = %s", $object_id, CPT_ONOMIES_POSTMETA_KEY, $term_id ) ) )
+				return false;
+			
+			/**
+			 * Delete object/term relationship.
+			 * Call action that allows user to run code when relationships are deleted.
+			 */
+			if ( delete_post_meta( $object_id, CPT_ONOMIES_POSTMETA_KEY, $term_id ) ) {
+				do_action( 'cpt_onomy_deleted_object_term_relationship', $term_id, $taxonomy, $object_id, get_post_type( $object_id ) );
+				return true;
+			}
+						
+		}
 			
 		return false;
 	}
