@@ -1631,9 +1631,13 @@ class CPT_TAXONOMY {
 			// make sure the relationship doesn't already exist
 			if ( $wpdb->get_var( $wpdb->prepare( "SELECT meta_id FROM " . $wpdb->prefix . "postmeta WHERE post_id = %d AND meta_key = %s AND meta_value = %s", $object_id, CPT_ONOMIES_POSTMETA_KEY, $term_info->term_id ) ) )
 				continue;
-				
-			// create relationship
-			add_post_meta( $object_id, CPT_ONOMIES_POSTMETA_KEY, $term_info->term_id, false );
+			
+			/**
+			 * Create object/term relationship.
+			 * Call action that allows user to run code when relationships are set.
+			 */
+			if ( add_post_meta( $object_id, CPT_ONOMIES_POSTMETA_KEY, $term_info->term_id, false ) )
+				do_action( 'cpt_onomy_created_object_term_relationship', $term_info->term_id, $taxonomy, $object_id, $object_post_type );
 			
 		}
 			
