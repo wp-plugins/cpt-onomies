@@ -25,7 +25,6 @@ class CPT_ONOMIES_MANAGER {
 	 *
 	 * @since 1.0
 	 */
-	public function CPT_ONOMIES_MANAGER() { $this->__construct(); }
 	public function __construct() {
 		
 		// get network user settings (only if multisite AND plugin is network activated)
@@ -57,6 +56,7 @@ class CPT_ONOMIES_MANAGER {
 		add_action( 'init', array( &$this, 'register_custom_post_types_and_taxonomies' ), 100 );
 		
 	}
+	public function CPT_ONOMIES_MANAGER() { $this->__construct(); }
 	
 	/**
 	 * Adds the custom query variable 'cpt_onomy_archive' to WordPress's

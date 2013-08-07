@@ -16,7 +16,6 @@ class CPT_TAXONOMY {
 	 *
 	 * @since 1.0
 	 */
-	public function CPT_TAXONOMY() { $this->__construct(); }
 	public function __construct() {
 		// function filters
 		add_filter( 'get_terms', array( &$this, 'get_terms' ), 1, 3 );
@@ -24,6 +23,7 @@ class CPT_TAXONOMY {
 		// other filters
 		add_filter( 'get_terms_args', array( &$this, 'adjust_get_terms_args' ), 1, 2 );
 	}
+	public function CPT_TAXONOMY() { $this->__construct(); }
 	
 	/**
 	 * This function takes an object's information and creates a term object.

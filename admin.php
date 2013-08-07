@@ -25,7 +25,6 @@ class CPT_ONOMIES_ADMIN {
 	 *
 	 * @since 1.0
 	 */
-	public function CPT_ONOMIES_ADMIN() { $this->__construct(); }
 	public function __construct() {
 		if ( is_admin() ) {
 		
@@ -76,6 +75,7 @@ class CPT_ONOMIES_ADMIN {
 				
 		}	
 	}
+	public function CPT_ONOMIES_ADMIN() { $this->__construct(); }
 	
 	/**
 	 * The usual admin page for managing terms is edit-tags.php but we do not
