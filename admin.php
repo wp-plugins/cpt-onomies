@@ -784,7 +784,7 @@ class CPT_ONOMIES_ADMIN {
 		else if ( strpos( $column_name, 'taxonomy-' ) !== false )
 			$taxonomy = strtolower( str_replace( 'taxonomy-', '', $column_name ) );
 			
-		if ( taxonomy_exists( $taxonomy ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
+		if ( $taxonomy && taxonomy_exists( $taxonomy ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
 			$tax = get_taxonomy( $taxonomy );				
 			?><fieldset class="inline-edit-col-center inline-edit-<?php echo $taxonomy; ?>"><div class="inline-edit-col">
 			
@@ -1184,11 +1184,11 @@ class CPTonomy_Walker_Terms_Checklist extends Walker {
 		$output .= "$indent</ul>\n";
 	}
 	
-	function start_el( &$output, $category, $depth, $args, $id = 0 ) {
+	function start_el( &$output, $object, $depth = 0, $args = array(), $current_object_id = 0 ) {
 		extract( $args );
 		if ( !empty( $taxonomy ) ) {
-			$class = in_array( $category->term_id, $popular_cats ) ? ' class="popular-category"' : '';
-			$output .= "\n<li id='{$taxonomy}-{$category->term_id}'$class>" . '<label class="selectit"><input value="' . $category->term_id . '" type="checkbox" name="' . CPT_ONOMIES_POSTMETA_KEY . '[' . $taxonomy . '][]" id="in-'.$taxonomy.'-' . $category->term_id . '"' . checked( in_array( $category->term_id, $selected_cats ), true, false ) . disabled( empty( $args[ 'disabled' ] ), false, false ) . ' /> ' . esc_html( apply_filters( 'the_category', $category->name )) . '</label>';
+			$class = in_array( $object->term_id, $popular_cats ) ? ' class="popular-category"' : '';
+			$output .= "\n<li id='{$taxonomy}-{$object->term_id}'$class>" . '<label class="selectit"><input value="' . $object->term_id . '" type="checkbox" name="' . CPT_ONOMIES_POSTMETA_KEY . '[' . $taxonomy . '][]" id="in-'.$taxonomy.'-' . $object->term_id . '"' . checked( in_array( $object->term_id, $selected_cats ), true, false ) . disabled( empty( $args[ 'disabled' ] ), false, false ) . ' /> ' . esc_html( apply_filters( 'the_category', $object->name )) . '</label>';
 		}
 	}
 
