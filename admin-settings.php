@@ -26,7 +26,6 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 * @since 1.0
 	 * @uses $cpt_onomies_manager
 	 */
-	public function CPT_ONOMIES_ADMIN_SETTINGS() { $this->__construct(); }
 	public function __construct() {
 		if ( is_admin() ) {
 			global $cpt_onomies_manager;
@@ -85,6 +84,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			
 		}
 	}
+	public function CPT_ONOMIES_ADMIN_SETTINGS() { $this->__construct(); }
 	
 	/**
 	 * Adds a settings link to network and site plugins page.
@@ -119,16 +119,19 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 * This function allows the settings page to detect if we
 	 * are editing a custom post type, and whether that post type is
 	 * 'new' or an 'other' post type.
-	 * 
+	 *
 	 * We can't just check for post types that exist because 
 	 * we allow the user to 'deactivate' post types so we need to 
 	 * check the settings.
 	 *
-	 * @since 1.1
+	 * Used to be named 'detect_custom_post_type_new_edit_other'.
+	 * Renamed in 1.3.1
+	 *
+	 * @since 1.1, renamed in 1.3.1
 	 * @uses $cpt_onomies_manager
-	 * @return array of 'new', 'edit' and 'other' info
+	 * @return array of 'new', 'edit' and 'other' values
 	 */	
-	private function detect_custom_post_type_new_edit_other() {
+	private function detect_settings_page_variables() {
 		global $cpt_onomies_manager;
 		
 		// figuring out if it's new is pretty simple
@@ -136,34 +139,46 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 		
 		// if its not new, then check to see if the name exists in the settings		
 		if ( $edit = ( ! $new && isset( $_REQUEST[ 'edit' ] ) ) ? strtolower( $_REQUEST[ 'edit' ] ) : false ) {
-		
-			// for network settings
-			if ( $this->is_network_admin ) {
-				
-				// if it doesn't exist in the network settings, it doesn't exist
-				if ( ! ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) )
-					$edit = false;
-					
-			}
 			
-			// for site settings
-			else {
+			// check to see if CPT exists in settings
+			foreach( array( 'edit' ) as $cpt_key_to_check ) {
+				if ( ${$cpt_key_to_check} ) {
 			
-				if ( !( ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) )
-					|| ( isset( $_REQUEST[ 'other' ] ) && isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) )
-					|| ( ! ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( strtolower( $_REQUEST[ 'edit' ] ), $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) && post_type_exists( $_REQUEST[ 'edit' ] ) ) ) )
-					$edit = false;
+					// for network settings
+					if ( $this->is_network_admin ) {
+						
+						// if it doesn't exist in the network settings, it doesn't exist
+						if ( ! ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) )
+							${$cpt_key_to_check} = false;
+							
+					}
 					
+					// for site settings
+					else {
+					
+						if ( !( ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) )
+							|| ( isset( $_REQUEST[ 'other' ] ) && isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) )
+							|| ( ! ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) && post_type_exists( ${$cpt_key_to_check} ) ) ) )
+							${$cpt_key_to_check} = false;
+							
+					}
+					
+				}
 			}
 				
 		}
 		
 		// we need to know if the custom post type was created by our plugin, or someone else
-		$other = ( ! $this->is_network_admin && ! $new && $edit && (
-		( isset( $_REQUEST[ 'other' ] ) && ( post_type_exists( $edit ) || isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( $edit, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) )
-			||
-		( ! isset( $_REQUEST[ 'other' ] ) && ( ( ! ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( $edit, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) && isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( $edit, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) || ( ! ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( $edit, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( $edit, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) && post_type_exists( $edit ) ) ) ) ) )
-			? true : false;
+		if ( $other = ( ! $this->is_network_admin && ! $new && $edit ) ? true : false ) {
+		
+			$cpt_key_to_check = $edit;
+			
+			$other = ( isset( $_REQUEST[ 'other' ] ) && ( ! $cpt_onomies_manager->is_registered_cpt( $cpt_key_to_check ) || isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( $cpt_key_to_check, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) )
+					||
+				( ! isset( $_REQUEST[ 'other' ] ) && ( ( ! ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( $cpt_key_to_check, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) && isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( $cpt_key_to_check, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) || ( ! ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( $cpt_key_to_check, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( $cpt_key_to_check, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) && post_type_exists( $cpt_key_to_check ) ) ) )
+					? true : false;
+					
+		}
 			
 		return array( 'new' => $new, 'edit' => $edit, 'other' => $other );
 	}
@@ -1771,10 +1786,14 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 */
 	public function add_plugin_options_page_meta_boxes() {
 		global $cpt_onomies_manager;
-				
-		// detect if we're editing a CPT AND whether its a new CPT or an "other" CPT
-		// will create $new, $edit and $other		
-		extract( $this->detect_custom_post_type_new_edit_other() );
+		
+		/*
+		 * Detects page variables, i.e. if we're creating a new CPT,
+		 * or editing a CPT, and whether or not it's an 'other' CPT.
+		 *
+		 * Will create $new, $edit, and $other.
+		 */
+		extract( $this->detect_settings_page_variables() );
 		
 		// About this Plugin
 		add_meta_box( CPT_ONOMIES_DASH . '-about', __( 'About this Plugin', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'side', 'core', 'about' );
@@ -1787,15 +1806,13 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			add_meta_box( CPT_ONOMIES_DASH . '-save-custom-post-type', __( 'Save Your Changes', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'side', 'core', 'save_custom_post_type' );
 				
 			// Delete Custom Post Type, if created by plugin
-			if ( !$other )
+			if ( ! $other )
 				add_meta_box( CPT_ONOMIES_DASH . '-delete-custom-post-type', __( 'Delete this Custom Post Type', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'side', 'core', 'delete_custom_post_type' );
 				
 			// Edit Properties
 			add_meta_box( CPT_ONOMIES_DASH . '-edit-custom-post-type', __( 'Edit Your Custom Post Type\'s Properties', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'normal', 'core', 'edit_custom_post_type' );
 		
-		}
-		
-		else {
+		} else {
 		
 			// Add A New Custom Post Type
 			add_meta_box( CPT_ONOMIES_DASH . '-add-new-custom-post-type', __( 'Add A New Custom Post Type', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'side', 'core', 'add_new_custom_post_type' );
@@ -1805,13 +1822,12 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			
 			// Other Custom Post Types
 			if ( ! $this->is_network_admin )
-				add_meta_box( CPT_ONOMIES_DASH . '-other-custom-post-types', __( 'Other Custom Post Types', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'normal', 'core', 'other_custom_post_types' );	
+				add_meta_box( CPT_ONOMIES_DASH . '-other-custom-post-types', __( 'Other Custom Post Types', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'normal', 'core', 'other_custom_post_types' );
+			
+			// What The Icons Mean	
+			add_meta_box( CPT_ONOMIES_DASH . '-key', __( 'What The Icons Mean', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'side', 'core', 'key' );
 		
 		}
-		
-		// we only want this box on the main page
-		if ( !( $new || $edit ) )
-			add_meta_box( CPT_ONOMIES_DASH . '-key', __( 'What the Icons Mean', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'side', 'core', 'key' );
 		
 		// Spread the Love and Any Questions
 		add_meta_box( CPT_ONOMIES_DASH . '-promote', __( 'Spread the Love', CPT_ONOMIES_TEXTDOMAIN ), array( &$this, 'print_plugin_options_meta_box' ), $this->options_page, 'side', 'core', 'promote' );
@@ -1833,28 +1849,28 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 		global $cpt_onomies_manager;
 		if ( current_user_can( $this->manage_options_capability ) ) {
 			
-			// detect if we're editing a CPT AND whether its a new CPT or an "other" CPT
-			// will create $new, $edit and $other	
-			extract( $this->detect_custom_post_type_new_edit_other() );
-									
+			/*
+			 * Detects page variables, i.e. if we're creating a new CPT,
+			 * or editing a CPT, and whether or not it's an 'other' CPT.
+			 *
+			 * Will create $new, $edit, and $other.
+			 */
+			extract( $this->detect_settings_page_variables() );
+			
 			// create the tabs
 			$tabs = array();
-			if ( $new || $edit ) {
-				
-				$tabs = array(
-					'properties' => (object) array(
-						'title' => __( 'Custom Post Type Properties', CPT_ONOMIES_TEXTDOMAIN ),
-						'active' => true
-					)
+			if ( $new || $edit )
+				$tabs[ 'properties' ] = (object) array(
+					'title'		=> __( 'Custom Post Type Properties', CPT_ONOMIES_TEXTDOMAIN ),
+					'link'		=> esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => ( $new ? 'new' : $edit ), 'other' => ( $other ? '1' : NULL ) ), $this->admin_url ) ),
+					'active'	=> true
 				);
 				
-			}
-			
 			?><div id="custom-post-type-onomies" class="wrap">
 		
 				<?php screen_icon( 'options-general' ); ?>
 				
-		       	<h2><?php _e( CPT_ONOMIES_PLUGIN_NAME, CPT_ONOMIES_TEXTDOMAIN ); ?><?php if ( !$new ) { ?> <a href="<?php echo esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => 'new' ), $this->admin_url ) ); ?>" class="add-new-h2">Add New CPT</a><?php } ?></h2>
+		       	<h2><?php _e( CPT_ONOMIES_PLUGIN_NAME, CPT_ONOMIES_TEXTDOMAIN ); ?><?php if ( ! $new ) { ?> <a href="<?php echo esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => 'new' ), $this->admin_url ) ); ?>" class="add-new-h2">Add New CPT</a><?php } ?></h2>
 		       	
 		       	<?php
                 
@@ -1868,22 +1884,24 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 					$label = NULL;
 					if ( $new ) $label = __( 'Creating a New Custom Post Type', CPT_ONOMIES_TEXTDOMAIN );
 					else {
+					
+						$cpt_key_to_check = $edit;
 							
 						if ( $this->is_network_admin ) {
 						
-							if ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ][ $edit ] ) && isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ][ $edit ][ 'label' ] ) )
-								$label = __( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ][ $edit ][ 'label' ], CPT_ONOMIES_TEXTDOMAIN );
+							if ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ][ $cpt_key_to_check ] ) && isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ][ $cpt_key_to_check ][ 'label' ] ) )
+								$label = __( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ][ $cpt_key_to_check ][ 'label' ], CPT_ONOMIES_TEXTDOMAIN );
 								
 						} else {
 						
-							if ( $other && ( $post_type_object_label = get_post_type_object( $edit )->label ) )
+							if ( $other && ( $post_type_object_label = get_post_type_object( $cpt_key_to_check )->label ) )
 								$label = __( $post_type_object_label, CPT_ONOMIES_TEXTDOMAIN );
 								
-							else if ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ][ $edit ] ) && isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ][ $edit ][ 'label' ] ) )
-								$label = __( $cpt_onomies_manager->user_settings[ 'custom_post_types' ][ $edit ][ 'label' ], CPT_ONOMIES_TEXTDOMAIN );
+							else if ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ][ $cpt_key_to_check ] ) && isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ][ $cpt_key_to_check ][ 'label' ] ) )
+								$label = __( $cpt_onomies_manager->user_settings[ 'custom_post_types' ][ $cpt_key_to_check ][ 'label' ], CPT_ONOMIES_TEXTDOMAIN );
 								
 						}
-							
+						
 						if ( $label ) $label = __( 'Editing "' . $label . '"', CPT_ONOMIES_TEXTDOMAIN );
 							
 					}
@@ -1894,7 +1912,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 						
 						// don't include tab name in URL, for now, considering there's only one tab
 						foreach( $tabs as $tab_key => $this_tab ) {
-							?><a href="<?php echo esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => ( $new ) ? 'new' : $edit, 'other' => ( $other ? '1' : NULL ) ), $this->admin_url ) ); ?>" class="nav-tab<?php if ( $this_tab->active ) echo ' nav-tab-active'; ?>"><?php echo $this_tab->title; ?></a><?php
+							?><a href="<?php echo $this_tab->link; ?>" class="nav-tab<?php if ( $this_tab->active ) echo ' nav-tab-active'; ?>"><?php echo $this_tab->title; ?></a><?php
 						}					
 					
 						?><div class="etc">
@@ -1940,13 +1958,15 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 				
 				?><div id="poststuff" class="metabox-holder has-right-sidebar"><?php
 				
-					$form_id = CPT_ONOMIES_DASH;
-                	if ( $new || $edit ) $form_id .= '-edit-cpt';
+					// Output form, nonce, action, and option_page fields
+					$print_form = ( $new || $edit ) ? true : false;
                 	
-                	?><form id="<?php echo $form_id; ?>" method="post" action="<?php echo ( $this->is_network_admin ) ? 'settings.php' : 'options.php'; ?>"><?php
+                	if ( $print_form ) {
                 	
-                		// Output nonce, action, and option_page fields
-                		if ( $new || $edit ) {
+                		$form_id = CPT_ONOMIES_DASH;
+                		if ( $new || $edit ) $form_id .= '-edit-cpt';
+                	
+                		?><form id="<?php echo $form_id; ?>" method="post" action="<?php echo ( $this->is_network_admin ) ? 'settings.php' : 'options.php'; ?>"><?php
                 		
                 			// handle network settings
                 			if ( $this->is_network_admin )
@@ -1966,8 +1986,8 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
 							wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
 							
-						}
-						
+					}
+					
 						?><div id="post-body">
 							<div id="post-body-content">
 							
@@ -1976,25 +1996,27 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 								do_meta_boxes( $this->options_page, 'normal', array() );
 								do_meta_boxes( $this->options_page, 'advanced', array() );
 													
-								if ( $new || $edit )
+								if ( $print_form )
 									submit_button( __( 'Save Your Changes', CPT_ONOMIES_TEXTDOMAIN ), 'primary', 'save_changes', false, array( 'id' => CPT_ONOMIES_DASH . '-save-changes-bottom' ) );
 									
 								?>
 								
 							</div>
 						</div>
-                        
-                        <div id="side-info-column" class="inner-sidebar">
+	                    
+	                    <div id="side-info-column" class="inner-sidebar">
 							
 							<?php do_meta_boxes( $this->options_page, 'side', array() ); ?>
 						
-						</div>
-						
-					</form>
+						</div><?php
 					
-				</div> <!-- #poststuff -->
+					if ( $print_form ) {
+						?></form><?php
+					}
+					
+				?></div> <!-- #poststuff -->
                 
-	      	</div><?php
+	      	</div> <!-- #custom-post-type-onomies.wrap --><?php
             
 	    }
 	}
@@ -2372,9 +2394,13 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 				//! Edit CPT Meta Box
 				case 'edit_custom_post_type':
 				
-					// detect if we're editing a CPT AND whether its a new CPT or an "other" CPT
-					// will create $new, $edit and $other
-					extract( $this->detect_custom_post_type_new_edit_other() );
+					/*
+					 * Detects page variables, i.e. if we're creating a new CPT,
+					 * or editing a CPT, and whether or not it's an 'other' CPT.
+					 *
+					 * Will create $new, $edit, and $other.
+					 */
+					extract( $this->detect_settings_page_variables() );
 								
 					$CPT = array();
 					if ( $edit ) {
@@ -2420,10 +2446,13 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 						}
 					}
 					
-					// detects if we have any issues with the custom post type and/or CPT-onomy settings
-					// will create $inactive_cpt, $is_registered_cpt, $overwrote_network_cpt,
-					// $is_registered_cpt_onomy, $programmatic_cpt_onomy, $should_be_cpt_onomy,
-					// $attention_cpt and $attention_cpt_onomy
+					/*
+					 * Detects if we have any issues with the custom post type and/or CPT-onomy settings.
+					 * 
+					 * Will create $inactive_cpt, $is_registered_cpt, $overwrote_network_cpt,
+					 * $is_registered_cpt_onomy, $programmatic_cpt_onomy, $should_be_cpt_onomy,
+					 * $attention_cpt and $attention_cpt_onomy.
+					 */
 					extract( $this->detect_custom_post_type_message_variables( $edit, $CPT, $other ) );
 					
 					// create the header label
