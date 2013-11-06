@@ -148,7 +148,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 					if ( $this->is_network_admin ) {
 						
 						// if it doesn't exist in the network settings, it doesn't exist
-						if ( ! ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) )
+						if ( ! ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( ${$cpt_key_to_check}, $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) )
 							${$cpt_key_to_check} = false;
 							
 					}
@@ -156,9 +156,9 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 					// for site settings
 					else {
 					
-						if ( !( ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) )
-							|| ( isset( $_REQUEST[ 'other' ] ) && isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) )
-							|| ( ! ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( strtolower( ${$cpt_key_to_check} ), $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) && post_type_exists( ${$cpt_key_to_check} ) ) ) )
+						if ( !( ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( ${$cpt_key_to_check}, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) )
+							|| ( isset( $_REQUEST[ 'other' ] ) && isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( ${$cpt_key_to_check}, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) )
+							|| ( ! ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( ${$cpt_key_to_check}, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) && array_key_exists( ${$cpt_key_to_check}, $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) && ! ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( ${$cpt_key_to_check}, $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) && post_type_exists( ${$cpt_key_to_check} ) ) ) )
 							${$cpt_key_to_check} = false;
 							
 					}
