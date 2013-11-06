@@ -3,8 +3,8 @@ Contributors: bamadesigner
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted
 Tags: custom post type, custom, post, post type, types, tax, taxonomy, taxonomies, cpt-onomy, cpt-onomies, cptonomies, custom post type taxonomies, custom post type as taxonomy, custom post types as taxonomies, relationships, relate, multisite
 Requires at least: 3.1
-Tested up to: 3.5.1
-Stable tag: 1.3
+Tested up to: 3.7.1
+Stable tag: 1.3.1
 
 Use your custom post types as taxonomies. Create powerful relationships between your posts and, therefore, powerful content.
 
@@ -122,6 +122,18 @@ If FAQ didn't cover your problem, refer to the following resources:
 5. The admin allows you to sort and filter your posts by CPT-onomy terms.
 
 == Changelog ==
+
+= 1.3.1 =
+* Documentation has moved to wpdreamer.com.
+* Fixed a bug with WP < 3.5 'show_admin_column' setting not tied to actually showing the column.
+* Fixed Bulk and Quick Edit to work with WP >= 3.5 register_taxonomy() 'show_admin_column' columns.
+* Added 'cpt_onomy_created_object_term_relationship' action, allowing users to run code when relationships are created.
+* Added 'cpt_onomy_deleted_object_term_relationship' action, allowing users to run code when relationships are deleted.
+* Tweaked 'supports' setting to prevent default (title and editor) behavior if no 'supports' are selected. Must have WP 3.5 or greater.
+* Fixed the "Redefining already defined constructor" issue for PHP5.
+* Edited CPTonomy_Walker_Terms_Checklist::start_el() to match Walker::start_el() and align with strict standards.
+* Removed all instances of default function parameter values in Javascript.
+* Fixed issue with wp_set_object_terms() not working with CRON.
 
 = 1.3 =
 * Added multisite custom post type manager.
