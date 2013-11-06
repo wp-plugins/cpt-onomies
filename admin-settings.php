@@ -2748,7 +2748,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 									$is_default = true;
 									
 								$is_set = false;
-								if ( !$new ) {
+								if ( ! $new ) {
 									if ( isset( $property_parent_key ) && isset( $CPT->$property_parent_key ) ) {
 										$property_parent = $CPT->$property_parent_key;
 										if ( isset( $property_parent[ $property_key ] ) && is_array( $property_parent[ $property_key ] ) && in_array( $data_name, $property_parent[ $property_key ] ) )
@@ -2760,9 +2760,12 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 										$is_set = true;
 									else if ( isset( $CPT->$property_key ) && $data_name == $CPT->$property_key )
 										$is_set = true;
+									// if property is not set, then set to default
+									else if ( ! isset( $CPT->other ) && ! isset( $CPT->$property_key ) && $is_default )
+										$is_set = true;
 									// If "other", check to make sure this particular post type has NO settings in the database before using the defaults
 									// If "other" custom post type has no settings in the database, then its settings have not been "saved" and should therefore show the defaults
-									else if ( isset( $CPT->other ) && !isset( $CPT->$property_key ) && $is_default ) {
+									else if ( isset( $CPT->other ) && ! isset( $CPT->$property_key ) && $is_default ) {
 										if ( empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) || empty( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ][ $cpt_key ] ) )
 											$is_set = true;
 									}
