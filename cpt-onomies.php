@@ -6,7 +6,7 @@ Plugin URI: http://wordpress.org/plugins/cpt-onomies/
 Description: A CPT-onomy is a taxonomy built from a custom post type, using the post titles as the taxonomy terms. Create custom post types using the CPT-onomies custom post type manager or use post types created by themes or other plugins.
 Version: 1.3.1
 Author: Rachel Carden
-Author URI: http://www.rachelcarden.com
+Author URI: http://wpdreamer.com
 */
 
 /*
