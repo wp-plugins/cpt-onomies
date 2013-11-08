@@ -123,6 +123,10 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 == Changelog ==
 
+= 1.3.2 =
+
+* Fixed a bug with admin drop down filters not tied to 'show_admin_column' setting.
+
 = 1.3.1 =
 * Documentation has moved to wpdreamer.com.
 * Fixed a bug with WP < 3.5 'show_admin_column' setting not tied to actually showing the column.
@@ -205,6 +209,10 @@ If FAQ didn't cover your problem, refer to the following resources:
 * Plugin launch!
 
 == Upgrade Notice ==
+
+= 1.3.2 =
+
+* Fixed a bug with admin drop down filters not tied to 'show_admin_column' setting.
 
 = 1.3.1 =
 * Documentation has moved to wpdreamer.com.
