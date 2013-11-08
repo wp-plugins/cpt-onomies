@@ -7,6 +7,7 @@ Description: A CPT-onomy is a taxonomy built from a custom post type, using the
 Version: 1.3.1
 Author: Rachel Carden
 Author URI: http://wpdreamer.com
+Text Domain: cpt-onomies
 */
 
 /*
