@@ -670,8 +670,8 @@ class CPT_ONOMIES_MANAGER {
 	}
 	
 	/**
-	 * Detects if a custom post is overwriting a network-registered post type
-	 * registered by this plugin.
+	 * Detects if a custom post type is overwriting a
+	 * network-registered post type registered by this plugin.
 	 * 
 	 * @since 1.3
 	 * @uses $blog_id
@@ -680,10 +680,20 @@ class CPT_ONOMIES_MANAGER {
 	 */
 	public function overwrote_network_cpt( $cpt_key ) {
 		global $blog_id;
-		if ( isset( $this->user_settings[ 'network_custom_post_types' ] ) && isset( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ] )
-			&& ( ( ! isset( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) || ( isset( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) && empty( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) ) )
-				|| ( isset( $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) && in_array( $blog_id, $this->user_settings[ 'network_custom_post_types' ][ $cpt_key ][ 'site_registration' ] ) ) ) && $this->is_registered_cpt( $cpt_key ) && ! $this->is_registered_network_cpt( $cpt_key ) )
-			return true;		
+		if ( isset( $this->user_settings[ 'network_custom_post_types' ] ) ) {
+		
+			$network_cpts = $this->user_settings[ 'network_custom_post_types' ];
+		
+			if ( isset( $network_cpts[ $cpt_key ] )
+				&& ( ( ! isset( $network_cpts[ $cpt_key ][ 'site_registration' ] ) || ( isset( $network_cpts[ $cpt_key ][ 'site_registration' ] ) && empty( $network_cpts[ $cpt_key ][ 'site_registration' ] ) ) )
+					|| ( isset( $network_cpts[ $cpt_key ][ 'site_registration' ] ) && in_array( $blog_id, $network_cpts[ $cpt_key ][ 'site_registration' ] ) ) ) ) {
+					
+				if ( $this->is_registered_cpt( $cpt_key ) && ! $this->is_registered_network_cpt( $cpt_key ) )
+					return true;
+				
+			}
+			
+		}
 		return false;
 	}
 	
