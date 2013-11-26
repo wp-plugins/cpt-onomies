@@ -125,6 +125,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 = 1.3.2 =
 
+* Added 'Show In Admin Bar' setting to custom post type registration.
 * Fixed a bug with admin drop down filters not tied to 'show_admin_column' setting.
 
 = 1.3.1 =
@@ -212,6 +213,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 = 1.3.2 =
 
+* Added 'Show In Admin Bar' setting to custom post type registration.
 * Fixed a bug with admin drop down filters not tied to 'show_admin_column' setting.
 
 = 1.3.1 =

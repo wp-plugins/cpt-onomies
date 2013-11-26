@@ -1093,6 +1093,19 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 									)
 							)
 						),
+						'show_in_admin_bar' => (object) array(
+							'label' => __( 'Show in Admin Bar', CPT_ONOMIES_TEXTDOMAIN ),
+							'type' => 'radio',
+							'description' => __( 'This setting defines whether or not to make this post type available in the WordPress admin bar.', CPT_ONOMIES_TEXTDOMAIN ) . ' <strong>' . __( 'If not set, defaults to the value of the "Show In Admin Menu" property.', CPT_ONOMIES_TEXTDOMAIN ) . '</strong>',
+							'data' => array(
+								'true' => (object) array(
+									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
+									),
+								'false' => (object) array(
+									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
+									)
+							)
+						),
 						'query_var' => (object) array(
 							'label' => __( 'Query Var', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'text',

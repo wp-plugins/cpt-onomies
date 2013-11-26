@@ -921,7 +921,7 @@ class CPT_ONOMIES_MANAGER {
 		$args[ 'labels' ] = $labels;
 		
 		// WP default = false, plugin default = true
-		$args[ 'public' ] = ( isset( $cpt[ 'public' ] ) && !$cpt[ 'public' ] ) ? false : true;
+		$args[ 'public' ] = ( isset( $cpt[ 'public' ] ) && ! $cpt[ 'public' ] ) ? false : true;
 		
 		// boolean (optional) default = false
 		// this must be defined for use with register_taxonomy()
@@ -951,22 +951,31 @@ class CPT_ONOMIES_MANAGER {
 		
 		// boolean (optional) default = public
 		if ( isset( $cpt[ 'show_ui' ] ) )
-			$args[ 'show_ui' ] = ( !$cpt[ 'show_ui' ] ) ? false : true;
+			$args[ 'show_ui' ] = ( ! $cpt[ 'show_ui' ] ) ? false : true;
+		
 		// boolean (optional) default = public
 		if ( isset( $cpt[ 'show_in_nav_menus' ] ) )
-			$args[ 'show_in_nav_menus' ] = ( !$cpt[ 'show_in_nav_menus' ] ) ? false : true;
+			$args[ 'show_in_nav_menus' ] = ( ! $cpt[ 'show_in_nav_menus' ] ) ? false : true;
+		
+		// boolean (optional) default = show_in_menu
+		if ( isset( $cpt[ 'show_in_admin_bar' ] ) )
+			$args[ 'show_in_admin_bar' ] = ( ! $cpt[ 'show_in_admin_bar' ] ) ? false : true;
+		
 		// boolean (optional) default = public
 		if ( isset( $cpt[ 'publicly_queryable' ] ) )
-			$args[ 'publicly_queryable' ] = ( !$cpt[ 'publicly_queryable' ] ) ? false : true;
+			$args[ 'publicly_queryable' ] = ( ! $cpt[ 'publicly_queryable' ] ) ? false : true;
+		
 		// boolean (optional) default = opposite of public
 		if ( isset( $cpt[ 'exclude_from_search' ] ) )
 			$args[ 'exclude_from_search' ] = ( $cpt[ 'exclude_from_search' ] ) ? true : false;
+		
 		// boolean (optional) default = false
 		if ( isset( $cpt[ 'map_meta_cap' ] ) )
 			$args[ 'map_meta_cap' ] = ( $cpt[ 'map_meta_cap' ] ) ? true : false;
+		
 		// boolean (optional) default = true
 		if ( isset( $cpt[ 'can_export' ] ) )
-			$args[ 'can_export' ] = ( !$cpt[ 'can_export' ] ) ? false : true;
+			$args[ 'can_export' ] = ( ! $cpt[ 'can_export' ] ) ? false : true;
 										
 		// integer (optional) default = NULL
 		if ( isset( $cpt[ 'menu_position' ] ) && ! empty( $cpt[ 'menu_position' ] ) && is_numeric( $cpt[ 'menu_position' ] ) )
@@ -1028,7 +1037,7 @@ class CPT_ONOMIES_MANAGER {
 		
 		// boolean or array (optional) default = true and use post type as slug 
 		if ( isset( $cpt[ 'rewrite' ] ) && ! empty( $cpt[ 'rewrite' ] ) ) {
-			if ( isset( $cpt[ 'rewrite' ][ 'enable_rewrite' ] ) && !$cpt[ 'rewrite' ][ 'enable_rewrite' ] )
+			if ( isset( $cpt[ 'rewrite' ][ 'enable_rewrite' ] ) && ! $cpt[ 'rewrite' ][ 'enable_rewrite' ] )
 				$args[ 'rewrite' ] = false;
 			else {
 				// remove "enable rewrite" and include the rest
