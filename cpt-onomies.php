@@ -55,7 +55,7 @@ require_once( CPT_ONOMIES_DIR . '/extend/gravity-forms-custom-post-types.php' );
 // for translations
 add_action( 'plugins_loaded', 'custom_post_type_onomies_load_textdomain' );
 function custom_post_type_onomies_load_textdomain() {
-	load_plugin_textdomain( CPT_ONOMIES_TEXTDOMAIN, false, trailingslashit( CPT_ONOMIES_URL . 'languages' ) );
+	load_plugin_textdomain( CPT_ONOMIES_TEXTDOMAIN, false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 }
 
 // for the newbies
