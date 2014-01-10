@@ -868,14 +868,21 @@ class CPT_ONOMIES_MANAGER {
 			$cpt_onomy_args[ 'cpt_onomy_archive_slug' ] = $cpt_onomy_archive_slug;
 								
 			// replace the variables ($post_type and $term)
-			$cpt_onomy_archive_slug = str_replace( array( '$post_type', '$term_slug', '$term_id' ), array( $taxonomy, '([^\s]*)', '([^\s]*)' ), $cpt_onomy_archive_slug );
+			$cpt_onomy_archive_slug = str_replace( array( '$post_type', '$term_slug', '$term_id' ), array( $taxonomy, '([^/]+)', '([^/]+)' ), $cpt_onomy_archive_slug );
 								
 			// get rid of any slashes at the beginning AND end
 			$cpt_onomy_archive_slug = preg_replace( '/^([\/]+)/', '', $cpt_onomy_archive_slug );
 			$cpt_onomy_archive_slug = preg_replace( '/([\/]+)$/', '', $cpt_onomy_archive_slug );
 			
-			// add rewrite rule
-			add_rewrite_rule( '^' . $cpt_onomy_archive_slug . '/?', 'index.php?'.$taxonomy . '=$matches[1]&cpt_onomy_archive=1', 'top' );
+			// add feeds rewrite
+			add_rewrite_rule( $cpt_onomy_archive_slug . '/feed/(feed|rdf|rss|rss2|atom)/?$', 'index.php?'.$taxonomy . '=$matches[1]&feed=$matches[2]&cpt_onomy_archive=1', 'top' );
+			add_rewrite_rule( $cpt_onomy_archive_slug . '/(feed|rdf|rss|rss2|atom)/?$', 'index.php?'.$taxonomy . '=$matches[1]&feed=$matches[2]&cpt_onomy_archive=1', 'top' );
+			
+			// adding pagination rewrite
+			add_rewrite_rule( $cpt_onomy_archive_slug . '/page/?([0-9]{1,})/?$', 'index.php?'.$taxonomy . '=$matches[1]&paged=$matches[2]&cpt_onomy_archive=1', 'top' );
+			
+			// add base URL rewrite
+			add_rewrite_rule( $cpt_onomy_archive_slug . '/?$', 'index.php?'.$taxonomy . '=$matches[1]&cpt_onomy_archive=1', 'top' );			
 					
 		}
 							 				
