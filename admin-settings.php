@@ -1,6 +1,6 @@
 <?php
 
-/* Instantiate the class. */
+// Instantiate the class
 global $cpt_onomies_admin_settings;
 $cpt_onomies_admin_settings = new CPT_ONOMIES_ADMIN_SETTINGS();
 
@@ -27,9 +27,10 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 * @uses $cpt_onomies_manager
 	 */
 	public function __construct() {
+		global $cpt_onomies_manager;
+		
 		if ( is_admin() ) {
-			global $cpt_onomies_manager;
-			
+		
 			// lets us know if we're dealing with a multisite and on the network admin page
 			// also, defines admin url and capability for users to be able to edit options
 			if ( is_multisite() && is_network_admin() ) {
@@ -62,6 +63,10 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			// register/update site settings
 			add_action( 'admin_init', array( &$this, 'register_user_settings' ) );
 			
+			// runs code whenever our settings/options are edited/updated
+			add_action( 'updated_option', array( &$this, 'updated_option' ), 1, 3 );
+			add_action( 'update_site_option', array( &$this, 'updated_option' ), 1, 3 );
+			
 			// add multisite plugin options page
 			add_action( 'network_admin_menu', array( &$this, 'add_network_plugin_options_page' ) );
 			
@@ -83,6 +88,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			add_action( 'wp_ajax_custom_post_type_onomy_update_edit_custom_post_type_dismiss', array( &$this, 'ajax_update_plugin_options_edit_custom_post_type_closed_dismiss' ) );
 			
 		}
+		
 	}
 	public function CPT_ONOMIES_ADMIN_SETTINGS() { $this->__construct(); }
 	
@@ -113,6 +119,32 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	public function register_user_settings() {
 		register_setting( CPT_ONOMIES_OPTIONS_PAGE . '-custom-post-types', CPT_ONOMIES_UNDERSCORE . '_custom_post_types', array( &$this, 'update_plugin_options_custom_post_types' ) );
 		register_setting( CPT_ONOMIES_OPTIONS_PAGE . '-other-custom-post-types', CPT_ONOMIES_UNDERSCORE . '_other_custom_post_types', array( &$this, 'validate_update_plugin_options_other_custom_post_types' ) );
+	}
+	
+	/**
+	 * This function is invoked by the actions 'updated_option'
+	 * and 'update_site_option'. Both of which are only invoked
+	 * if the option value was actually edited/changed.
+	 *
+	 * The function checks to make sure the option belongs to
+	 * us and then, if so, flushes our rewrite rules. This helps
+	 * take care of pesky rewrite rules not changing when
+	 * permalinks or other rewrite settings are tweaked.
+	 *
+	 * @since 1.3.2
+	 * @param string $option - the name of the option being updated
+	 * @param string $old_value - the previous value before being updated
+	 * @param string $value - the new value that is being saved
+	 */	
+	public function updated_option( $option, $old_value, $value ) {
+	
+		// if the option belongs to us, then flush the rewrite rules
+		if ( preg_match( '/^' . str_replace( array( '_' ), array( '\_' ), CPT_ONOMIES_UNDERSCORE ) . '\_/i', $option ) ) {
+		
+			flush_rewrite_rules( false );
+			
+		}
+			
 	}
 	
 	/**
