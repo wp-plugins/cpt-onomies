@@ -1,6 +1,6 @@
 <?php
 
-/* Instantiate the class. */
+// Instantiate the class
 global $cpt_onomies_manager;
 $cpt_onomies_manager = new CPT_ONOMIES_MANAGER();
 
@@ -307,7 +307,24 @@ class CPT_ONOMIES_MANAGER {
 			$clauses[ 'where' ] .= " AND 0=1";
 		}
 		else {
-			if ( isset( $query->tax_query ) ) {	
+		
+			// if ordering by a CPT-onomy
+			if ( ( $taxonomy = isset( $query->query[ 'orderby' ] ) && ! empty( $query->query[ 'orderby' ] ) ? $query->query[ 'orderby' ] : NULL )
+				&& ( $post_type = isset( $query->query[ 'post_type' ] ) && ! empty( $query->query[ 'post_type' ] ) && post_type_exists( $query->query[ 'post_type' ] ) ? $query->query[ 'post_type' ] : NULL )
+				&& $this->is_registered_cpt_onomy( $taxonomy, $post_type ) ) {
+				
+				$clauses[ 'join' ] .= " LEFT OUTER JOIN {$wpdb->postmeta} cpt_onomy_order_pm ON cpt_onomy_order_pm.post_id = {$wpdb->posts}.ID
+					AND cpt_onomy_order_pm.meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "'
+					LEFT OUTER JOIN {$wpdb->posts} cpt_onomy_order_posts ON cpt_onomy_order_posts.ID = cpt_onomy_order_pm.meta_value
+					AND cpt_onomy_order_posts.post_type = '{$taxonomy}'";
+					
+				$clauses[ 'groupby' ] = "{$wpdb->posts}.ID";
+				$clauses[ 'orderby' ] = ' GROUP_CONCAT( cpt_onomy_order_posts.post_title ORDER BY cpt_onomy_order_posts.post_title ASC )' . ( ( isset( $query->query[ 'order' ] ) && strcasecmp( $query->query[ 'order' ], 'desc' ) == 0 ) ? ' DESC' : ' ASC' ) . ( !empty( $clauses[ 'orderby' ] ) ? ', ' : ' ' ) . $clauses[ 'orderby' ];
+				
+			}
+			
+			// if running a tax query
+			else if ( isset( $query->tax_query ) ) {	
 				
 				$is_registered_cpt_onomy = false;
 				$taxonomies = array( 'join' => '', 'where' => array() );
@@ -732,19 +749,31 @@ class CPT_ONOMIES_MANAGER {
 	}
 	
 	/**
-	 * This functions checks to see if a taxonomy is a taxonomy
-	 * registered by this plugin. When this plugin registers a taxonomy,
+	 * This functions checks to see if a taxonomy is a CPT-onomy
+	 * registered by this plugin. When this plugin registers a CPT-onomy,
 	 * it adds the argument 'cpt_onomy' for testing purposes.
+	 *
+	 * As of version 1.3.2, the function also allows you to test
+	 * if the CPT-onomy is registered to a specific post type.
 	 * 
 	 * @since 1.0
 	 * @param string $tax - the key, or alias, for the taxonomy you are checking
-	 * @return boolean - whether this taxonomy is a taxonomy registered by this plugin
+	 * @param string $post_type - if set, checks to see is CPT-onomy AND is registered to set post type
+	 * @return boolean - whether this taxonomy is a CPT-onomy registered by this plugin (and, if post type set, registered to a specific post type)
 	 */
-	public function is_registered_cpt_onomy( $taxonomy ) {
-		if ( !empty( $taxonomy ) && taxonomy_exists( $taxonomy ) ) {
+	public function is_registered_cpt_onomy( $taxonomy, $post_type = NULL ) {
+		if ( ! empty( $taxonomy ) && taxonomy_exists( $taxonomy ) ) {
 			$tax = get_taxonomy( $taxonomy );
-			if ( isset( $tax->cpt_onomy ) && $tax->cpt_onomy == true )
+			
+			/**
+			 * If post type is set, then checks to see if it's a
+			 * CPT-onomy AND is registered to a specific post type.
+			 * Otherwise, simply checks if it's a CPT-onomy.
+			 */
+			if ( ( empty( $post_type ) || ( ! empty( $post_type ) && post_type_exists( $post_type ) && in_array( $taxonomy, get_object_taxonomies( $post_type, 'names' ) ) ) )
+				&& isset( $tax->cpt_onomy ) && $tax->cpt_onomy == true )
 				return true;
+				
 		}
 		return false;
 	}

@@ -1,6 +1,6 @@
 <?php
 
-/* Instantiate the class. */
+// Instantiate the class
 global $cpt_onomies_admin;
 $cpt_onomies_admin = new CPT_ONOMIES_ADMIN();
 
@@ -68,6 +68,9 @@ class CPT_ONOMIES_ADMIN {
 			// < 3.5 - backwards compatibility for a little while - adds column
 			add_filter( 'manage_pages_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 100, 1 );
 			add_filter( 'manage_posts_columns', array( &$this, 'add_cpt_onomy_admin_column' ), 100, 2 );
+			
+			// define sortable columns
+			add_action( 'load-edit.php', array( &$this, 'add_cpt_onomy_admin_sortable_columns_filter' ) );
 			
 			// edit custom admin columns for version < 3.5 - backwards compatibility for a little while
 			add_action( 'manage_pages_custom_column', array( &$this, 'edit_cpt_onomy_admin_column' ), 10, 2 );
@@ -911,11 +914,11 @@ class CPT_ONOMIES_ADMIN {
 		list( $columns, $hidden ) = $wp_list_table->get_column_info();
 		foreach ( $columns as $column_name => $column_display_name ) {
 		
-			/*
-			* The filter drop down is added if you have the column added
-			* but you still have the capability to remove the dropdown
-			* via filter, if desired.
-			*/
+			/**
+			 * The filter drop down is added if you have the column added
+			 * but you still have the capability to remove the dropdown
+			 * via filter, if desired.
+			 */
 			
 			// get taxonomy name
 			$taxonomy = NULL;
@@ -981,16 +984,11 @@ class CPT_ONOMIES_ADMIN {
 	 * bringing about default WordPress functionality for admin "Edit Posts"
 	 * taxonomy columns so CPT-onomies will now hook into this functionality.
 	 *
-	 * However, this  setting was not introduced until 3.5 so I will keep this
+	 * However, this setting was not introduced until 3.5 so I will keep this
 	 * functionality, for a little while, for backwards compatibility. If version
 	 * is less than 3.5, this function will add the column. No matter the method,
 	 * the 'custom_post_type_onomies_add_cpt_onomy_admin_column' filter will
 	 * allow the user the ability to remove the column by CPT-onomy or post type.
-	 *
-	 * Version 1.3 also deprecated column sortability to align with new
-	 * default WordPress taxonomy column functionality. I will keep CPT-onomy
-	 * functions for simply adding a column, for a little while, for backwards
-	 * compatibility but am going ahead and removing sortability.
 	 *
 	 * If a CPT-onomy is attached to a post type, the plugin adds a column
 	 * to the post type's edit screen which lists each post's assigned terms.
@@ -1090,6 +1088,78 @@ class CPT_ONOMIES_ADMIN {
 			}
 		}
 		return $columns;
+	}
+	
+	/**
+	 * Adds the filter for adding/managing sortable
+	 * CPT-onomy admin columns.
+	 *
+	 * I deprecated the ability to make the CPT-onomy admin
+	 * columns sortable in version 1.3 to align with new,
+	 * default WP taxonomy admin column functionality.
+	 * Re-instated the sortable columns in version 1.3.2
+	 * due to its popularity.
+	 *
+	 * This function is invoked by the action 'load-edit.php'.
+	 *
+	 * @reinstated in 1.3.2, first introduced in 1.0.3, deprecated in 1.3
+	 * @uses $current_screen
+	 */
+	public function add_cpt_onomy_admin_sortable_columns_filter() {
+		global $current_screen;
+		if ( $current_screen && isset( $current_screen->id ) )
+			add_filter( "manage_{$current_screen->id}_sortable_columns", array( &$this, 'add_cpt_onomy_admin_sortable_columns' ) );
+	}
+	
+	/**
+	 * Tells Wordpress to make our CPT-onomy admin columns sortable.
+	 * 
+	 * You can disable the columns from being sortable by returning false to the
+	 * 'custom_post_type_onomies_add_cpt_onomy_admin_sortable_column' filter, which
+	 * passes two parameters: the $taxonomy and the $post_type.
+	 *
+	 * If you want to remove the column altogether, set "Show Admin Column"
+	 * to false in your CPT-onomy settings, or return false to the
+	 * 'custom_post_type_onomies_add_cpt_onomy_admin_column' filter, which
+	 * passes the same two parameters: $taxonomy and $post_type.
+	 *
+	 * This function is invoked by the filter "manage_{$current_screen->id}_sortable_columns".
+	 *
+	 * @reinstated in 1.3.2, first introduced in 1.0.3, deprecated in 1.3
+	 * @uses $cpt_onomies_manager, $current_screen
+	 * @param array $sortable_columns - the sortable columns info already created by WordPress
+	 * @return array - the sortable columns info after it has been filtered
+	 * @filters 'custom_post_type_onomies_add_cpt_onomy_admin_sortable_column' - $taxonomy, $post_type
+	 */
+	public function add_cpt_onomy_admin_sortable_columns( $sortable_columns ) {
+		global $cpt_onomies_manager, $current_screen;
+		if ( $post_type = isset( $current_screen->post_type ) ? $current_screen->post_type : NULL ) {
+			foreach( get_object_taxonomies( $post_type, 'objects' ) as $taxonomy => $tax ) {
+			
+				// make sure its a registered CPT-onomy
+				// get the taxonomy's query variable
+				if ( $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy )
+					&& ( $query_var = isset( $tax->query_var ) ? $tax->query_var : NULL ) ) {
+					
+					// this filter allows you to remove the column by returning false
+					// all CPT-onomy admin columns are default-ly added as sortable
+					if ( apply_filters( 'custom_post_type_onomies_add_cpt_onomy_admin_sortable_column', true, $taxonomy, $post_type ) ) {
+					
+						// if version >= 3.5
+						if ( get_bloginfo( 'version' ) >= 3.5 )
+							$sortable_columns[ 'taxonomy-' . $taxonomy ] = $query_var;
+						
+						// backwards compatibility
+						else if ( strpos( $column_name, CPT_ONOMIES_UNDERSCORE ) !== false )
+							$sortable_columns[ CPT_ONOMIES_UNDERSCORE . '_' . $taxonomy ] = $query_var;
+						
+					}
+					
+				}
+			
+			}			
+		}
+		return $sortable_columns;
 	}
 		
 	/**
