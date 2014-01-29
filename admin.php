@@ -135,6 +135,7 @@ class CPT_ONOMIES_ADMIN {
 				$cpt_onomies_admin_post_translation = array(
 					'term_does_not_exist' => sprintf( __( 'The term you are trying to add does not exist. %s terms, a.k.a posts, must already exist to be available for selection.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ),
 					'add_a_term' => __( 'Add a term', CPT_ONOMIES_TEXTDOMAIN ),
+					'add_the_term' => __( 'Add the term', CPT_ONOMIES_TEXTDOMAIN ),
 					'no_self_relationship' => __( 'Kind of silly to create a relationship between a post and itself, eh?', CPT_ONOMIES_TEXTDOMAIN ),
 					'relationship_already_exists' => __( 'This relationship already exists.', CPT_ONOMIES_TEXTDOMAIN ),
 					'close' => __( 'Close', CPT_ONOMIES_TEXTDOMAIN ),
@@ -582,7 +583,7 @@ class CPT_ONOMIES_ADMIN {
 			switch( $format ) {
 			
 				case 'autocomplete':
-												
+					
 					?><div id="taxonomy-<?php echo $taxonomy; ?>" class="cpt_onomies_tags_div">
 						<div class="jaxtag">
 							<div class="nojs-tags hide-if-js">
@@ -600,7 +601,7 @@ class CPT_ONOMIES_ADMIN {
 								</div>
 							<?php endif; ?>
 						</div>
-						<div class="cpt_onomies_tag_checklist<?php if ( !current_user_can( $tax->cap->assign_terms ) ) { echo ' alone'; } ?>"></div>
+						<div class="cpt_onomies_tag_checklist<?php if ( ! current_user_can( $tax->cap->assign_terms ) ) { echo ' alone'; } ?>"></div>
 					</div>
 					<?php if ( current_user_can( $tax->cap->assign_terms ) ) : ?>
 						<p class="hide-if-no-js"><a href="#titlediv" class="cpt_onomies_tag_cloud" id="link-<?php echo $taxonomy; ?>"><?php _e( $tax->labels->choose_from_most_used, CPT_ONOMIES_TEXTDOMAIN ); ?></a></p>

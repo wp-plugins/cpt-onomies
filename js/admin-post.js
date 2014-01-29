@@ -249,7 +249,7 @@ jQuery.noConflict()(function(){
 	        else {
 	        	
 	        	// set error message
-	        	$cpt_onomies_add_tag_error_message = cpt_onomies_admin_post_L10n.term_does_not_exist + ' <a href="post-new.php?post_type=' + $taxonomy + '" target="_blank">' + cpt_onomies_admin_post_L10n.add_a_term + '</a>';
+	        	$cpt_onomies_add_tag_error_message = cpt_onomies_admin_post_L10n.term_does_not_exist + ' <a href="post-new.php?post_type=' + $taxonomy + '&post_title=' + $term.replace( /\s/i, '+' ) + '" target="_blank">' + cpt_onomies_admin_post_L10n.add_the_term + '</a>';
 	        	
 	        }
 	        

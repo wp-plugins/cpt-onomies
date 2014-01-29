@@ -3,8 +3,7 @@ select.category.cpt_onomies {
 	}
 	
 .cpt_onomies_tags_div input.cpt_onomies_new_tag {
-	margin-right: 5px;
-	width: 16em;
+	width: 71%;
 }
 
 .cpt_onomies_tags_div .cpt_onomies_add_tag_error_message {
