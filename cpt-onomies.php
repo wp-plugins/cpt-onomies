@@ -9,7 +9,7 @@
  * Author URI: http://wpdreamer.com
  * Text Domain: cpt-onomies
  */
-
+ 
 /**
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,10 +57,25 @@ function custom_post_type_onomies_load_textdomain() {
 	load_plugin_textdomain( CPT_ONOMIES_TEXTDOMAIN, false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 }
 
-// for the newbies
+// runs when you activate the plugin
 register_activation_hook( __FILE__, 'custom_post_type_onomies_activation_hook' );
 function custom_post_type_onomies_activation_hook( $network_wide ) {
+	
+	// rewrite rules can be a pain in the ass
+	// so let's flush them out and start fresh
 	flush_rewrite_rules( false );
+	
+}
+
+// runs when you upgrade anything
+add_action( 'upgrader_process_complete', 'custom_post_type_onomies_upgrader_process_complete', 1, 2 );
+function custom_post_type_onomies_upgrader_process_complete( $upgrader, $upgrade_info ) {
+		
+	// for some reason I find myself having to flush my
+	// rewrite rules whenever I upgrade WordPress so just
+	// helping everyone out by taking care of this automatically
+	flush_rewrite_rules( false );
+	
 }
 
 ?>
