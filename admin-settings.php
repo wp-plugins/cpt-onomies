@@ -63,10 +63,6 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			// register/update site settings
 			add_action( 'admin_init', array( &$this, 'register_user_settings' ) );
 			
-			// runs code whenever our settings/options are edited/updated
-			add_action( 'updated_option', array( &$this, 'updated_option' ), 1, 3 );
-			add_action( 'update_site_option', array( &$this, 'updated_option' ), 1, 3 );
-			
 			// add multisite plugin options page
 			add_action( 'network_admin_menu', array( &$this, 'add_network_plugin_options_page' ) );
 			
@@ -118,33 +114,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 */
 	public function register_user_settings() {
 		register_setting( CPT_ONOMIES_OPTIONS_PAGE . '-custom-post-types', CPT_ONOMIES_UNDERSCORE . '_custom_post_types', array( &$this, 'update_plugin_options_custom_post_types' ) );
-		register_setting( CPT_ONOMIES_OPTIONS_PAGE . '-other-custom-post-types', CPT_ONOMIES_UNDERSCORE . '_other_custom_post_types', array( &$this, 'validate_update_plugin_options_other_custom_post_types' ) );
-	}
-	
-	/**
-	 * This function is invoked by the actions 'updated_option'
-	 * and 'update_site_option'. Both of which are only invoked
-	 * if the option value was actually edited/changed.
-	 *
-	 * The function checks to make sure the option belongs to
-	 * us and then, if so, flushes our rewrite rules. This helps
-	 * take care of pesky rewrite rules not changing when
-	 * permalinks or other rewrite settings are tweaked.
-	 *
-	 * @since 1.3.2
-	 * @param string $option - the name of the option being updated
-	 * @param string $old_value - the previous value before being updated
-	 * @param string $value - the new value that is being saved
-	 */	
-	public function updated_option( $option, $old_value, $value ) {
-	
-		// if the option belongs to us, then flush the rewrite rules
-		if ( preg_match( '/^' . str_replace( array( '_' ), array( '\_' ), CPT_ONOMIES_UNDERSCORE ) . '\_/i', $option ) ) {
-		
-			flush_rewrite_rules( false );
-			
-		}
-			
+		register_setting( CPT_ONOMIES_OPTIONS_PAGE . '-other-custom-post-types', CPT_ONOMIES_UNDERSCORE . '_other_custom_post_types', array( &$this, 'update_validate_plugin_options_other_custom_post_types' ) );
 	}
 	
 	/**
@@ -410,6 +380,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 */	
 	public function update_network_plugin_options_custom_post_types() {
 		global $cpt_onomies_manager;
+		
 		if ( current_user_can( $this->manage_options_capability )
 			&& check_admin_referer( 'siteoptions' )
 			&& isset( $_POST[ CPT_ONOMIES_UNDERSCORE . '_custom_post_types' ] )
@@ -424,6 +395,11 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			// update settings
 			update_site_option( CPT_ONOMIES_UNDERSCORE . '_custom_post_types', $custom_post_types );
 			
+			// flushing the rewrite rules helps take care of pesky
+			// rewrite rules not changing when permalinks or other
+			// rewrite settings are tweaked.
+			flush_rewrite_rules( false );
+			
 			// if no errors, then show general message
 			if ( ! count( get_settings_errors() ) )
 				add_settings_error( 'general', 'settings_updated', __( 'Settings saved.' ), 'updated' );
@@ -435,7 +411,8 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			wp_redirect( add_query_arg( array( 'settings-updated' => 'true' ), $_REQUEST[ '_wp_http_referer' ] ) );
 			exit();
 			
-		}	
+		}
+		
 	}
 		
 	/**
@@ -453,17 +430,26 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 */
 	public function update_plugin_options_custom_post_types( $custom_post_types ) {
 		global $cpt_onomies_manager;
+		
 		// make sure we're saving "edit" options page
 		if ( current_user_can( $this->manage_options_capability ) && isset( $_POST[ 'option_page' ] ) && $_POST[ 'option_page' ] == CPT_ONOMIES_OPTIONS_PAGE . '-custom-post-types' && isset( $_POST[ 'action' ] ) && $_POST[ 'action' ] == 'update' && !empty( $custom_post_types ) ) {
 		
 			// get saved settings
 			$saved_post_types = ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) ? $cpt_onomies_manager->user_settings[ 'custom_post_types' ] : array();
 			
-			// validate and return settings to be updated by settings API
-			return $this->validate_plugin_options_custom_post_types( $custom_post_types, $saved_post_types );
+			// validate settings
+			$custom_post_types = $this->validate_plugin_options_custom_post_types( $custom_post_types, $saved_post_types );
+			
+			// flushing the rewrite rules helps take care of pesky
+			// rewrite rules not changing when permalinks or other
+			// rewrite settings are tweaked.
+			flush_rewrite_rules( false );
 			
 		}
+		
+		// return settings to be updated by settings API
 		return $custom_post_types;
+		
 	}
 		
 	/**
@@ -647,12 +633,14 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 * @param array $other_custom_post_types - the other custom post type setting that is being updated
 	 * @return array - validated custom post type information
 	 */
-	public function validate_update_plugin_options_other_custom_post_types( $other_custom_post_types ) {
+	public function update_validate_plugin_options_other_custom_post_types( $other_custom_post_types ) {
 		global $cpt_onomies_manager;		
+		
 		// make sure we're saving edit page
 		// we need these parameters because this function is called whenever update_option is called for our 'other_custom_post_types' option so we only want these tests run when the edit screen is saved
 		if ( current_user_can( $this->manage_options_capability ) && isset( $_POST[ 'option_page' ] ) && $_POST[ 'option_page' ] == CPT_ONOMIES_OPTIONS_PAGE . '-other-custom-post-types' && isset( $_POST[ 'action' ] ) && $_POST[ 'action' ] == 'update' ) {
 			
+			// get saved settings
 			$saved_other_post_types = ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) ? $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] : array();
 					
 			// save information
@@ -672,10 +660,17 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			// sort custom post types (alphabetically) by post type
 			ksort( $saved_other_post_types );
 			
+			// flushing the rewrite rules helps take care of pesky
+			// rewrite rules not changing when permalinks or other
+			// rewrite settings are tweaked.
+			flush_rewrite_rules( false );
+			
 			return $saved_other_post_types;
 			
 		}
+		
 		return $other_custom_post_types;
+	
 	}
 			
 	/**
