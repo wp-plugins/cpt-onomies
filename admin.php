@@ -119,19 +119,19 @@ class CPT_ONOMIES_ADMIN {
 		global $current_screen;
 			
 		// several pages in the admin need this script
-		wp_register_script( 'jquery-form-validation', CPT_ONOMIES_URL . 'js/jquery.validate.min.js', array( 'jquery' ), '', true );
+		wp_register_script( 'jquery-form-validation', plugins_url( 'js/jquery.validate.min.js', __FILE__ ), array( 'jquery' ), NULL, true );
 		
 		// enqueue scripts depending on page
 		switch( $page ) {
 		
 			case 'edit.php':
-				wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-edit', CPT_ONOMIES_URL . 'js/admin-edit.js', array( 'jquery', 'inline-edit-post' ), '', true );
+				wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-edit', plugins_url( 'js/admin-edit.js', __FILE__ ), array( 'jquery', 'inline-edit-post' ), NULL, true );
 				break;
 				
 			case 'post.php':
 			case 'post-new.php':
-				wp_enqueue_style( CPT_ONOMIES_DASH . '-admin-post', CPT_ONOMIES_URL . 'css/admin-post.css' );
-				wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-post', CPT_ONOMIES_URL . 'js/admin-post.js', array( 'jquery', 'post', 'jquery-ui-autocomplete' ), '', true );
+				wp_enqueue_style( CPT_ONOMIES_DASH . '-admin-post', plugins_url( 'css/admin-post.css', __FILE__ ), false, NULL );
+				wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-post', plugins_url( 'js/admin-post.js', __FILE__ ), array( 'jquery', 'post', 'jquery-ui-autocomplete' ), NULL, true );
 				
 				// our localized info
 				$cpt_onomies_admin_post_data = array();
@@ -727,7 +727,7 @@ class CPT_ONOMIES_ADMIN {
 			if ( isset( $_POST[ 'assign_cpt_onomies_' . $taxonomy . '_rel' ] ) && $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
 			
 				// check permissions
-				if ( !current_user_can( $tax->cap->assign_terms ) )
+				if ( ! current_user_can( $tax->cap->assign_terms ) )
 					continue;
 										
 				// set object terms				
