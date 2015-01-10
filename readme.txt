@@ -125,8 +125,11 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 = 1.3.2 =
 
+* Fixed a few WordPress 4.1 bugs.
 * Added 'Show In Admin Bar' setting to custom post type registration.
 * Fixed a bug with admin drop down filters not tied to 'show_admin_column' setting.
+* Removed CPT_ONOMIES_URL constant and replaced with plugins_url().
+* Updated jQuery Validate script to version 1.13.1.
 
 = 1.3.1 =
 * Documentation has moved to wpdreamer.com.

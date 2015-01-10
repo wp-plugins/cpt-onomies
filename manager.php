@@ -331,14 +331,19 @@ class CPT_ONOMIES_MANAGER {
 				$new_where = array();
 				$c = $t = 1;
 				foreach ( $query->tax_query->queries as $this_query ) {
+					
+					// Get the taxonomy
+					$taxonomy = isset( $this_query[ 'taxonomy' ] ) ? $this_query[ 'taxonomy' ] : NULL;
 				
-					$taxonomy = $this_query[ 'taxonomy' ];
-				
-					if ( ! taxonomy_exists( $taxonomy )  )
+					// Make sure the taxonomy exists
+					if ( ! $taxonomy || ! taxonomy_exists( $taxonomy ) )
 						continue;
-						
-					if ( ! ( $is_registered_cpt_onomy = $this->is_registered_cpt_onomy( $taxonomy ) ) )
-						continue;
+					
+					// @TODO This used to skip for non-CPT-onomies but that caused a bug
+					// Now we let them through. Does this need to be fixed?
+					//if ( ! ( $is_registered_cpt_onomy = $this->is_registered_cpt_onomy( $taxonomy ) ) )
+					//	continue;
+					$is_registered_cpt_onomy = $this->is_registered_cpt_onomy( $taxonomy );
 			
 					$this_query[ 'terms' ] = array_unique( (array) $this_query[ 'terms' ] );
 						
@@ -547,7 +552,7 @@ class CPT_ONOMIES_MANAGER {
 					$clauses[ 'where' ] = preg_replace( '/wp\_posts\.post\_name\s=\s\'([^\']*)\'\sAND\s/i', '', $clauses[ 'where' ] );
 					
 					// remove 0 = 1
-					$clauses[ 'where' ] = preg_replace( '/0\s\=\s1\sAND\s/i', '', $clauses[ 'where' ] );
+					$clauses[ 'where' ] = preg_replace( '/\([\s]*0\s\=\s1[\s]*\)\sAND\s/i', '', $clauses[ 'where' ] );
 												
 					$clauses[ 'where' ] .= " AND ( ";
 						foreach ( $new_where as $where_index => $add_where ) {

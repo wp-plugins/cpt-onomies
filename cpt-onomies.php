@@ -28,7 +28,6 @@
 define( 'CPT_ONOMIES_VERSION', '1.3.1' );
 define( 'CPT_ONOMIES_WORDPRESS_MIN', '3.1' );
 define( 'CPT_ONOMIES_DIR', dirname( __FILE__ ) );
-define( 'CPT_ONOMIES_URL', plugin_dir_url( __FILE__ ) );
 define( 'CPT_ONOMIES_PLUGIN_NAME', 'CPT-onomies: Using Custom Post Types as Taxonomies' );
 define( 'CPT_ONOMIES_PLUGIN_SHORT_NAME', 'CPT-onomies' );
 define( 'CPT_ONOMIES_PLUGIN_DIRECTORY_URL', 'http://wordpress.org/extend/plugins/cpt-onomies/' );
@@ -77,5 +76,3 @@ function custom_post_type_onomies_upgrader_process_complete( $upgrader, $upgrade
 	flush_rewrite_rules( false );
 	
 }
-
-?>

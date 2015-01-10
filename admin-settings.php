@@ -1403,7 +1403,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 * @since 1.0
 	 */	
 	public function add_plugin_options_styles() {
-		wp_enqueue_style( CPT_ONOMIES_DASH . '-admin-options', CPT_ONOMIES_URL . 'css/admin-options.css', array( 'thickbox' ) );
+		wp_enqueue_style( CPT_ONOMIES_DASH . '-admin-options', plugins_url( 'css/admin-options.css', __FILE__ ), array( 'thickbox' ) );
 	}
 	
 	/**
@@ -1415,8 +1415,8 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 */	
 	public function add_plugin_options_scripts() {
 		// plugin scripts
-		wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-options', CPT_ONOMIES_URL . 'js/admin-options.js', array( 'jquery', 'thickbox' ), '', true );
-		wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-options-validate', CPT_ONOMIES_URL . 'js/admin-options-validate.js', array( 'jquery', 'jquery-form-validation' ), '', true );
+		wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-options', plugins_url( 'js/admin-options.js', __FILE__ ), array( 'jquery', 'thickbox' ), '', true );
+		wp_enqueue_script( CPT_ONOMIES_DASH . '-admin-options-validate', plugins_url( 'js/admin-options-validate.js', __FILE__ ), array( 'jquery', 'jquery-form-validation' ), '', true );
 		// need this script for the metaboxes to work correctly
 		wp_enqueue_script( 'post' );
 		wp_enqueue_script( 'postbox' );
@@ -2091,15 +2091,15 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 					
 				//! Key Meta Box
 				case 'key':
-					?><p class="inactive"><img src="<?php echo CPT_ONOMIES_URL; ?>images/inactive.png" /><span><?php printf( __( 'This %s is inactive.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT' ); ?></span></p>
-                    <p class="attention"><img src="<?php echo CPT_ONOMIES_URL; ?>images/attention.png" /><span><?php printf( __( 'This %s is not registered.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT' ); ?></span></p>
-                    <p class="working"><img src="<?php echo CPT_ONOMIES_URL; ?>images/working.png" /><span><?php printf( __( 'This %s is registered and working.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT' ); ?></span></p><?php
+					?><p class="inactive"><img src="<?php echo plugins_url( 'images/inactive.png', __FILE__ ); ?>" /><span><?php printf( __( 'This %s is inactive.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT' ); ?></span></p>
+                    <p class="attention"><img src="<?php echo plugins_url( 'images/attention.png', __FILE__ ); ?>" /><span><?php printf( __( 'This %s is not registered.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT' ); ?></span></p>
+                    <p class="working"><img src="<?php echo plugins_url( 'images/working.png', __FILE__ ); ?>" /><span><?php printf( __( 'This %s is registered and working.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT' ); ?></span></p><?php
 					break;
 					
 				//! Promote Meta Box
 				case 'promote':
-					?><p class="rating"><a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>" title="<?php esc_attr_e( 'Give the plugin a good rating', CPT_ONOMIES_TEXTDOMAIN ); ?>" target="_blank"><img src="<?php echo CPT_ONOMIES_URL; ?>images/rating_star.png" /><span><?php _e( 'Give the plugin a good rating', CPT_ONOMIES_TEXTDOMAIN ); ?></span></a></p>
-	                <p class="twitter"><a href="https://twitter.com/bamadesigner" title="<?php printf( esc_attr__( '%s on Twitter', CPT_ONOMIES_TEXTDOMAIN ), 'bamadesigner' ); ?>" target="_blank"><img src="<?php echo CPT_ONOMIES_URL; ?>images/twitter_bird.png" /><span><?php _e( 'Follow me on Twitter', CPT_ONOMIES_TEXTDOMAIN ); ?></span></a></p>
+					?><p class="plugin-rating"><a href="<?php echo CPT_ONOMIES_PLUGIN_DIRECTORY_URL; ?>" title="<?php esc_attr_e( 'Give the plugin a good rating', CPT_ONOMIES_TEXTDOMAIN ); ?>" target="_blank"><img src="<?php echo plugins_url( 'images/rating_star.png', __FILE__ ); ?>" /><span><?php _e( 'Give the plugin a good rating', CPT_ONOMIES_TEXTDOMAIN ); ?></span></a></p>
+	                <p class="twitter"><a href="https://twitter.com/bamadesigner" title="<?php printf( esc_attr__( '%s on Twitter', CPT_ONOMIES_TEXTDOMAIN ), 'bamadesigner' ); ?>" target="_blank"><img src="<?php echo plugins_url( 'images/twitter_bird.png', __FILE__ ); ?>" /><span><?php _e( 'Follow me on Twitter', CPT_ONOMIES_TEXTDOMAIN ); ?></span></a></p>
                     <p class="donate"><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=bamadesigner%40gmail%2ecom&lc=US&item_name=Rachel%20Carden%20%28CPT%2donomies%29&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" title="<?php esc_attr_e( 'Donate a few bucks to the plugin', CPT_ONOMIES_TEXTDOMAIN ); ?>" target="_blank"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" alt="<?php esc_attr_e( 'Donate', CPT_ONOMIES_TEXTDOMAIN ); ?>" /><span><?php _e( 'a few bucks', CPT_ONOMIES_TEXTDOMAIN ); ?></span></a></p><?php
 					break;
 					
