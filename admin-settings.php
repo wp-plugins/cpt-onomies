@@ -440,9 +440,10 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	public function update_plugin_options_custom_post_types( $custom_post_types ) {
 		global $cpt_onomies_manager;
 		
-		// Make sure we're saving "edit" options page
-		if ( current_user_can( $this->manage_options_capability ) && isset( $_POST[ 'option_page' ] ) && $_POST[ 'option_page' ] == CPT_ONOMIES_OPTIONS_PAGE . '-custom-post-types' && isset( $_POST[ 'action' ] ) && $_POST[ 'action' ] == 'update' && ! empty( $custom_post_types ) ) {
-		
+		// Make sure we're saving data from the options page
+		if ( current_user_can( $this->manage_options_capability )
+			&& wp_verify_nonce( $_POST[ '_wpnonce' ], CPT_ONOMIES_OPTIONS_PAGE . '-custom-post-types-options' ) ) {
+				
 			// Get saved settings
 			$saved_post_types = ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) ? $cpt_onomies_manager->user_settings[ 'custom_post_types' ] : array();
 			
@@ -647,10 +648,10 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	public function update_validate_plugin_options_other_custom_post_types( $other_custom_post_types ) {
 		global $cpt_onomies_manager;
 		
-		// make sure we're saving edit page
-		// we need these parameters because this function is called whenever update_option is called for our 'other_custom_post_types' option so we only want these tests run when the edit screen is saved
-		if ( current_user_can( $this->manage_options_capability ) && isset( $_POST[ 'option_page' ] ) && $_POST[ 'option_page' ] == CPT_ONOMIES_OPTIONS_PAGE . '-other-custom-post-types' && isset( $_POST[ 'action' ] ) && $_POST[ 'action' ] == 'update' ) {
-			
+		// Make sure this is only run when we're saving data from the options page
+		if ( current_user_can( $this->manage_options_capability )
+			&& wp_verify_nonce( $_POST[ '_wpnonce' ], CPT_ONOMIES_OPTIONS_PAGE . '-other-custom-post-types-options' ) ) {
+				
 			// get saved settings
 			$saved_other_post_types = ( isset( $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] ) ) ? $cpt_onomies_manager->user_settings[ 'other_custom_post_types' ] : array();
 					
@@ -906,6 +907,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 				),
 				'site_registration' => array(), // will add info later if actually the network admin
 				'cpt_as_taxonomy' => (object) array(
+					'other' => true, // which means this section will show up for "other" CPTs
 					'label' => sprintf( __( 'Register this Custom Post Type as a %s', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ),
 					'type'	=> 'group',
 					'data'	=> array(
@@ -2618,19 +2620,19 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 						// Get the properties
 						$cpt_properties = $this->get_plugin_options_page_cpt_properties( $edit && ! empty( $edit ) ? $edit : NULL );
 						
-						foreach( $cpt_properties as $section => $properties ) {
+						foreach( $cpt_properties as $section => $section_properties ) {
 							
-							// They can only edit 'cpt_as_taxonomy'
-							if ( ! $other || ( $other && $section == 'cpt_as_taxonomy' ) ) {
+							// Only show "other" sections on "other" tables
+							if ( ! $other || ( $other && isset( $section_properties->other ) && $section_properties->other ) ) {
 								
 								?><table id="custom-post-type-onomies-edit-table" class="<?php echo $section; echo in_array( $section, $show_edit_tables ) ? ' show' : NULL; ?>" cellpadding="0" cellspacing="0" border="0">
 									<tbody>
-		                            	<?php if ( isset( $properties->type ) && $properties->type == 'group' && isset( $properties->data ) ) { ?>
+		                            	<?php if ( isset( $section_properties->type ) && $section_properties->type == 'group' && isset( $section_properties->data ) ) { ?>
 		                                	<tr>
-		                                    	<td class="label"><?php echo $properties->label; ?></td>
-		                                        <td class="group<?php if ( isset( $properties->advanced ) && $properties->advanced ) echo ' advanced'; ?>">
+		                                    	<td class="label"><?php echo $section_properties->label; ?></td>
+		                                        <td class="group<?php if ( isset( $section_properties->advanced ) && $section_properties->advanced ) echo ' advanced'; ?>">
 		                                        	<table cellpadding="0" cellspacing="0" border="0">
-														<?php foreach( $properties->data as $property_key => $property ) { ?>
+														<?php foreach( $section_properties->data as $property_key => $property ) { ?>
 															<tr>
 																<td class="label"><?php echo $property->label; ?></td>
 																<td class="field"><?php $this->print_plugin_options_edit_custom_post_type_field( $edit, $CPT, $property, $property_key ); ?></td>
@@ -2641,7 +2643,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 		                                  	</tr>
 		                            	<?php }
 										else {
-											foreach( $properties as $property_key => $property ) {
+											foreach( $section_properties as $property_key => $property ) {
 												?><tr>
 													<td class="label"><?php echo $property->label; ?></td>
 													<td class="field<?php if ( isset( $property->advanced ) && $property->advanced ) echo ' advanced'; ?>"><?php $this->print_plugin_options_edit_custom_post_type_field( $edit, $CPT, $property, $property_key ); ?></td>
