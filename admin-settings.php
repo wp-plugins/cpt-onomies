@@ -1901,23 +1901,30 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 					
 				}
 				
-				?><div id="poststuff" class="metabox-holder has-right-sidebar"><?php
+				?><div id="poststuff"><?php
 				
 					// Output form, nonce, action, and option_page fields
 					$print_form = ( $new || $edit ) ? true : false;
                 	
+                	// Are we printing a form?
                 	if ( $print_form ) {
                 	
+                		// Create the form ID
                 		$form_id = CPT_ONOMIES_DASH;
-                		if ( $new || $edit ) $form_id .= '-edit-cpt';
+                		
+                		// If we're creating a new CPT or editing a CPT, then add on to the ID
+                		if ( $new || $edit ) {
+	                		$form_id .= '-edit-cpt';
+	                	}
                 	
+						// Print the form
                 		?><form id="<?php echo $form_id; ?>" method="post" action="<?php echo ( $this->is_network_admin ) ? 'settings.php' : 'options.php'; ?>"><?php
                 		
-                			// handle network settings
+                			// Handle network settings
                 			if ( $this->is_network_admin )
                 				wp_nonce_field( 'siteoptions' );
                 				
-                			// handle regular settings
+                			// Handle regular settings
                 			else {
                 			
                 				if ( $other )
@@ -1927,34 +1934,46 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
                 					
                 			}
                 			
-                			// need those for both
+                			// Need those for both
 							wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
 							wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
 							
 					}
 					
-						?><div id="post-body">
-							<div id="post-body-content">
-							
-								<?php
+						// Print the body of the page
+						?><div id="post-body" class="metabox-holder columns-<?php echo 1 == get_current_screen()->get_columns() ? '1' : '2'; ?>">
+							<div id="post-body-content"><?php
 								
-								do_meta_boxes( $this->options_page, 'normal', array() );
-								do_meta_boxes( $this->options_page, 'advanced', array() );
-													
-								if ( $print_form )
-									submit_button( __( 'Save Your Changes', CPT_ONOMIES_TEXTDOMAIN ), 'primary', 'save_changes', false, array( 'id' => CPT_ONOMIES_DASH . '-save-changes-bottom' ) );
+								// This container holds the side meta boxes
+								?><div id="postbox-container-1" class="postbox-container"><?php
 									
-								?>
+									// Print side meta boxes
+									do_meta_boxes( $this->options_page, 'side', array() );
+									
+								?></div><?php
+									
+								// This container holds the normal and advanced meta boxes
+								?><div id="postbox-container-2" class="postbox-container"><?php
 								
-							</div>
-						</div>
-	                    
-	                    <div id="side-info-column" class="inner-sidebar">
-							
-							<?php do_meta_boxes( $this->options_page, 'side', array() ); ?>
-						
-						</div><?php
+									// Print normal meta boxes
+									do_meta_boxes( $this->options_page, 'normal', array() );
+									
+									// Print advanced meta boxes
+									do_meta_boxes( $this->options_page, 'advanced', array() );
+									
+									// Are we printing a form? Then we need the submit button
+									if ( $print_form ) {
+										
+										submit_button( __( 'Save Your Changes', CPT_ONOMIES_TEXTDOMAIN ), 'primary', 'save_changes', false, array( 'id' => CPT_ONOMIES_DASH . '-save-changes-bottom' ) );
+										
+									}
+									
+								?></div>
+				
+							</div> <!-- #post-body-content -->
+						</div> <!-- #post-body --><?php
 					
+					// Are we printing a form? Then we need to close it	
 					if ( $print_form ) {
 						?></form><?php
 					}
