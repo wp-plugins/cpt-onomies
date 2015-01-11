@@ -860,6 +860,16 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 					unset( $cpt_supports_data[ $support ] );
 			}
 			
+			// default true/false data
+			$true_false_data = array(
+				'true' => (object) array(
+					'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
+				),
+				'false' => (object) array(
+					'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
+				)
+			);
+			
 			// create properties
 			$cpt_properties = (object) array(
 				'basic' => array(
@@ -915,28 +925,14 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							'type' => 'radio',
 							'description' => sprintf( __( 'Whether or not to add/show the %s column on the admin edit screen for associated post types.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy\'s' ),
 							'default' => 1,
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-								),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-								)
-							)
+							'data' => $true_false_data
 						),
 						'has_cpt_onomy_archive' => (object) array(
 							'label' => __( 'Has Archive Page', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'radio',
 							'description' => sprintf( __( 'This setting allows you to enable archive pages for this %s. If enabled, you can customize the archive page slug below.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ),
 							'default' => 1,
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-								),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-								)
-							)
+							'data' => $true_false_data
 						),
 						'cpt_onomy_archive_slug' => (object) array(
 							'label' => __( 'Archive Page Slug', CPT_ONOMIES_TEXTDOMAIN ), 
@@ -1033,28 +1029,14 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							'type' => 'radio',
 							'description' => __( 'This setting defines whether this post type is visible in the admin and front-end of your site. This property is a catchall and trickles down to define other properties ("Show UI", "Publicly Queryable", and "Exclude From Search") unless they are set individually. For complete customization, be sure to check the value of these other properties.', CPT_ONOMIES_TEXTDOMAIN ),
 							'default' => 1,
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-									),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-									)
-							)
+							'data' => $true_false_data
 						),
 						'hierarchical' => (object) array(
 							'label' => __( 'Hierarchical', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'radio',
 							'description' => __( 'This setting defines whether this post type is hierarchical, which allows a parent to be specified. In order to define a post\'s parent, the post type must support "Page Attributes".', CPT_ONOMIES_TEXTDOMAIN ),
 							'default' => 0,
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-								),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-								)
-							)
+							'data' => $true_false_data
 						),
 						'supports' => (object) array(
 							'label' => __( 'Supports', CPT_ONOMIES_TEXTDOMAIN ),
@@ -1082,14 +1064,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							'label' => __( 'Show UI', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'radio',
 							'description' => __( 'This setting defines whether to show the administration screens for managing this post type.', CPT_ONOMIES_TEXTDOMAIN ) . ' <strong>' . __( 'If not set, defaults to the value of the "Public" property.', CPT_ONOMIES_TEXTDOMAIN ) . '</strong>',
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-									),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-									)
-							)
+							'data' => $true_false_data
 						),
 						'show_in_menu' => (object) array(
 							'label' => __( 'Show in Admin Menu', CPT_ONOMIES_TEXTDOMAIN ),
@@ -1111,27 +1086,13 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							'label' => __( 'Show in Nav Menus', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'radio',
 							'description' => __( 'This setting enables posts of this type to appear for selection in the navigation menus.', CPT_ONOMIES_TEXTDOMAIN ) . ' <strong>' . __( 'If not set, defaults to the value of the "Public" property.', CPT_ONOMIES_TEXTDOMAIN ) . '</strong>',
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-									),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-									)
-							)
+							'data' => $true_false_data
 						),
 						'show_in_admin_bar' => (object) array(
 							'label' => __( 'Show in Admin Bar', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'radio',
 							'description' => __( 'This setting defines whether or not to make this post type available in the WordPress admin bar.', CPT_ONOMIES_TEXTDOMAIN ) . ' <strong>' . __( 'If not set, defaults to the value of the "Show In Admin Menu" property.', CPT_ONOMIES_TEXTDOMAIN ) . '</strong>',
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-									),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-									)
-							)
+							'data' => $true_false_data
 						),
 						'query_var' => (object) array(
 							'label' => __( 'Query Var', CPT_ONOMIES_TEXTDOMAIN ),
@@ -1142,27 +1103,13 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							'label' => __( 'Publicly Queryable', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'radio',
 							'description' => __( 'This setting defines whether queries for this post type can be performed on the front-end of your site.', CPT_ONOMIES_TEXTDOMAIN ) . ' <strong>' . __( 'If not set, defaults to the value of the "Public" property.', CPT_ONOMIES_TEXTDOMAIN ) . '</strong>',
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-									),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-									)
-							)
+							'data' => $true_false_data
 						),
 						'exclude_from_search' => (object) array(
 							'label' => __( 'Exclude From Search', CPT_ONOMIES_TEXTDOMAIN ),
 							'type' => 'radio',
 							'description' => __( 'This setting allows you to exclude posts with this post type from search results on your site.', CPT_ONOMIES_TEXTDOMAIN ) . ' <strong>' . __( 'If not set, defaults to the OPPOSITE value of the "Public" property.', CPT_ONOMIES_TEXTDOMAIN ) . '</strong>',
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-									),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-									)
-							)
+							'data' => $true_false_data
 						),
 						'register_meta_box_cb' => (object) array(
 							'label' => __( 'Register Meta Box Callback', CPT_ONOMIES_TEXTDOMAIN ),
@@ -1178,14 +1125,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 									'type' => 'radio',
 									'description' => sprintf( __( 'This setting allows you to activate custom permalinks for this post type. If %1$s, WordPress will create permalinks and use the post type (or "Query Var", if set) as the slug. If %2$s, this post type will have no custom permalink structure.', CPT_ONOMIES_TEXTDOMAIN ), '<strong>true</strong>', '<strong>false</strong>' ),
 									'default' => 1,
-									'data' => array(
-										'true' => (object) array(
-											'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-										),
-										'false' => (object) array(
-											'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-										)
-									)
+									'data' => $true_false_data
 								),
 								'slug' => (object) array(
 									'label' => __( 'Slug', CPT_ONOMIES_TEXTDOMAIN ),
@@ -1197,41 +1137,20 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 									'type' => 'radio',
 									'description' => sprintf( __( 'This setting defines whether to allow permalinks to be prepended with the permalink front base. Example: If your permalink structure is /blog/, then your links will be: %1$s = \'/blog/news/\', %2$s = \'/news/\'.', CPT_ONOMIES_TEXTDOMAIN ), '<strong>true</strong>', '<strong>false</strong>' ),
 									'default' => 1,
-									'data' => array(
-										'true' => (object) array(
-											'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-										),
-										'false' => (object) array(
-											'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-										)
-									)
+									'data' => $true_false_data
 								),
 								'feeds' => (object) array(
 									'label' => __( 'Feeds', CPT_ONOMIES_TEXTDOMAIN ),
 									'type' => 'radio',
 									'description' => __( 'This setting defines whether this post type will have a feed for its posts.', CPT_ONOMIES_TEXTDOMAIN ) . ' <strong>' . __( '"Has Archive Page" needs to be set to true for the feeds to work.', CPT_ONOMIES_TEXTDOMAIN ) . '</strong> ' . __( 'If not set, defaults to the value of the "Has Archive Page" property.', CPT_ONOMIES_TEXTDOMAIN ),
-									'data' => array(
-										'true' => (object) array(
-											'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-										),
-										'false' => (object) array(
-											'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-										)
-									)
+									'data' => $true_false_data
 								),
 								'pages' => (object) array(
 									'label' => __( 'Pages', CPT_ONOMIES_TEXTDOMAIN ),
 									'type' => 'radio',
 									'description' => __( 'This setting defines whether this post type\'s archive pages should be paginated.', CPT_ONOMIES_TEXTDOMAIN ) . ' <strong>' . __( '"Has Archive Page" needs to be set to true for the archive pages to work.', CPT_ONOMIES_TEXTDOMAIN ) . '</strong>',
 									'default' => 1,
-									'data' => array(
-										'true' => (object) array(
-											'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-										),
-										'false' => (object) array(
-											'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-										)
-									)
+									'data' => $true_false_data
 								)
 							)
 						),
@@ -1240,14 +1159,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							'type' => 'radio',
 							'description' => __( 'This setting defines whether to use the internal default meta capability handling.', CPT_ONOMIES_TEXTDOMAIN ),
 							'default' => 1,
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-								),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-								)
-							)						
+							'data' => $true_false_data						
 						),
 						'capability_type' => (object) array(
 							'label' => __( 'Capability Type', CPT_ONOMIES_TEXTDOMAIN ),
@@ -1335,14 +1247,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							'type' => 'radio',
 							'description' => __( 'This setting defines whether users can export posts with this post type.', CPT_ONOMIES_TEXTDOMAIN ),
 							'default' => 1,
-							'data' => array(
-								'true' => (object) array(
-									'label' => __( 'True', CPT_ONOMIES_TEXTDOMAIN )
-									),
-								'false' => (object) array(
-									'label' => __( 'False', CPT_ONOMIES_TEXTDOMAIN )
-									)
-							)
+							'data' => $true_false_data
 						),
 						'permalink_epmask' => (object) array(
 							'label' => __( 'Permalink Endpoint Bitmasks', CPT_ONOMIES_TEXTDOMAIN ),
