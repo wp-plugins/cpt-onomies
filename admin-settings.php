@@ -258,7 +258,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			?><p><?php echo sprintf( __( 'You are running a WordPress multisite but there seems to have been a problem retrieving your site information. If the problem persists, %1$svisit your "Sites" page%2$s for more information.', CPT_ONOMIES_TEXTDOMAIN ), '<a href="' . esc_url( network_admin_url( 'sites.php' ) ) . '">', '</a>' ); ?></p><?php
 		}
 		else {
-			?><table id="thickbox_network_sites" cellpadding="0" cellspacing="0" border="0">
+			?><table id="thickbox-network-sites" cellpadding="0" cellspacing="0" border="0">
 				<thead>
 					<tr>
 						<th class="blog_id">Blog ID</th>
