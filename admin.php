@@ -500,15 +500,22 @@ class CPT_ONOMIES_ADMIN {
 	 */
 	public function add_cpt_onomy_meta_boxes( $post_type, $post ) {
 		global $cpt_onomies_manager;
+		
+		// Loop through all the taxonomies tied to this post type
 		foreach( get_object_taxonomies( $post_type, 'objects' ) as $taxonomy => $tax ) {
-			// make sure its a registered CPT-onomy
+			
+			// Make sure its a registered CPT-onomy
 			if ( $cpt_onomies_manager->is_registered_cpt_onomy( $taxonomy ) ) {
 			
-				// this filter allows you to remove the meta box by returning false
-				// if 'show_ui' is false, do not add meta box
+				// This filter allows you to remove the meta box by returning false
+				// If 'show_ui' is false, do not add meta box
 				if ( apply_filters( 'custom_post_type_onomies_add_cpt_onomy_admin_meta_box', ( post_type_exists( $taxonomy ) ? get_post_type_object( $taxonomy )->show_ui : true ), $taxonomy, $post_type ) ) {
-				
-					add_meta_box( CPT_ONOMIES_DASH.'-'.$taxonomy, apply_filters( 'custom_post_type_onomies_meta_box_title', __( $tax->label, CPT_ONOMIES_TEXTDOMAIN ), $taxonomy, $post_type ), array( &$this, 'print_cpt_onomy_meta_box' ), $post_type, 'side', 'core', array( 'taxonomy' => $taxonomy ) );
+					
+					// What's the meta box title? - default is taxonomy label
+					$meta_box_title = isset( $tax->meta_box_title ) && ! empty( $tax->meta_box_title ) ? $tax->meta_box_title : $tax->label;
+					
+					// Add the meta box					
+					add_meta_box( CPT_ONOMIES_DASH.'-'.$taxonomy, apply_filters( 'custom_post_type_onomies_meta_box_title', __( $meta_box_title, CPT_ONOMIES_TEXTDOMAIN ), $taxonomy, $post_type ), array( &$this, 'print_cpt_onomy_meta_box' ), $post_type, 'side', 'core', array( 'taxonomy' => $taxonomy ) );
 					
 				}
 				
