@@ -1361,5 +1361,3 @@ class CPT_ONOMIES_MANAGER {
 		
 	}	
 }
-
-?>

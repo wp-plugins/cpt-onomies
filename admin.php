@@ -1317,5 +1317,3 @@ class CPTonomy_Walker_Terms_Checklist extends Walker {
 		$output .= "</li>\n";
 	}
 }
-		
-?>

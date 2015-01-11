@@ -2053,5 +2053,3 @@ function cpt_onomies_sort_cpt_onomy_term_by_slug( $a, $b ) {
        	return 0;
 	return ( strtolower( $a->slug ) < strtolower( $b->slug ) ) ? -1 : 1;
 }
-
-?>

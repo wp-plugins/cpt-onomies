@@ -132,5 +132,3 @@ class WP_Widget_CPTonomy_Tag_Cloud extends WP_Widget {
 	}
 	
 }
-
-?>
