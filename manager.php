@@ -244,7 +244,7 @@ class CPT_ONOMIES_MANAGER {
 				if ( ! is_array( $custom_post_type ) ) $custom_post_type = array( $custom_post_type );
 				foreach( $custom_post_type as $post_type_index => $post_type ) {
 					$post_type_exists = post_type_exists( $post_type );
-					if ( !$post_type_exists || ( $post_type_exists && get_post_type_object( $post_type )->exclude_from_search ) )
+					if ( ! $post_type_exists || ( $post_type_exists && get_post_type_object( $post_type )->exclude_from_search ) )
 						unset( $custom_post_type[ $post_type_index ] );
 				}
 				// if just one custom post type, then convert to string

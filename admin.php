@@ -371,9 +371,9 @@ class CPT_ONOMIES_ADMIN {
 			$term_exists = false;
 			if ( $term_id > 0 )
 				$term_exists = $cpt_onomy->term_exists( $term_id, $taxonomy );
-			if ( !$term_exists && $term )
+			if ( ! $term_exists && $term )
 				$term_exists = $cpt_onomy->term_exists( $term, $taxonomy );
-			if ( !$term_exists )
+			if ( ! $term_exists )
 				echo json_encode( array() );
 			elseif ( is_numeric( $term_exists ) )
 				echo json_encode( (object) array( 'term_id' => $term_exists ) );
@@ -959,7 +959,7 @@ class CPT_ONOMIES_ADMIN {
 					$selected = ( isset( $_REQUEST[ $taxonomy ] ) ) ? $_REQUEST[ $taxonomy ] : NULL;
 					
 					// if slug, then get term id					
-					if ( !is_numeric( $selected ) ) {
+					if ( ! is_numeric( $selected ) ) {
 						$term = $cpt_onomy->get_term_by( 'slug', $selected, $taxonomy );
 						if ( $term ) $selected = $term->term_id;
 					}
@@ -1234,7 +1234,7 @@ class CPTonomy_Walker_Terms_Checklist extends Walker {
 	function display_element( $element, &$children_elements, $max_depth, $depth=0, $args, &$output ) {
 		global $cpt_onomies_admin, $post_type, $post;
 		
-		if ( !$element )
+		if ( ! $element )
 			return;
 
 		$id_field = $this->db_fields[ 'id' ];

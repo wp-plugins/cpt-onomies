@@ -114,11 +114,11 @@ jQuery.noConflict()(function(){
 		
 		// define the help tab
 		var $panel = jQuery( '#contextual-help-wrap' );
-		if ( !$panel.length )
+		if ( ! $panel.length )
 			return;
 
 		// open help tab
-		if ( !$panel.is( ':visible' ) ) {
+		if ( ! $panel.is( ':visible' ) ) {
 			
 			// scroll to top of page
 			jQuery( 'html,body' ).scrollTop( 0 );
