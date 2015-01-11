@@ -5,6 +5,19 @@ global $cpt_onomies_manager;
 $cpt_onomies_manager = new CPT_ONOMIES_MANAGER();
 
 /**
+ * Bring this function outside the class
+ * for easier use.
+ *
+ * Just invokes root class inside function.
+ *
+ * @since 1.3.2
+ */
+function register_cpt_onomy( $taxonomy, $object_type, $args = array() ) {
+	global $cpt_onomies_manager;
+	$cpt_onomies_manager->register_cpt_onomy( $taxonomy, $object_type, $args );
+}
+
+/**
  * Holds the functions needed for managing the custom post types and taxonomies.
  *
  * @since 1.0
