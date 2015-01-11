@@ -140,7 +140,6 @@ If FAQ didn't cover your problem, refer to the following resources:
 * Added ability to order posts queries by a CPT-onomy.
 * Changed enqueueing of scripts and styles to use plugins_url() and made sure no versions were used.
 * Fixed bug that was causing memory problems for those with a lot of posts.
-* Fixed a bug with admin drop down filters not tied to 'show_admin_column' setting.
 * Added/fixed rewrite rules for pagination and feeds.
 
 = 1.3.1 =
@@ -241,7 +240,6 @@ If FAQ didn't cover your problem, refer to the following resources:
 * Added ability to order posts queries by a CPT-onomy.
 * Changed enqueueing of scripts and styles to use plugins_url() and made sure no versions were used.
 * Fixed bug that was causing memory problems for those with a lot of posts.
-* Fixed a bug with admin drop down filters not tied to 'show_admin_column' setting.
 * Added/fixed rewrite rules for pagination and feeds.
 
 = 1.3.1 =
