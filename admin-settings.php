@@ -720,8 +720,8 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			// gather post type data to use in 'attach_post_type' property
 			$attach_to_post_type_data = array();
 			
-			// do not include 'attachment', aka media, nav menu items or revisions
-			$do_not_add_to_post_type_data = array( 'attachment', 'nav_menu_item', 'revision' );
+			// do not include nav menu items or revisions
+			$do_not_add_to_post_type_data = array( 'nav_menu_item', 'revision' );
 			
 			// in network admin, only showing network CPTs registered by CPT-onomies 
 			// AND remaining builtin post types (posts and pages)
