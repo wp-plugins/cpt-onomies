@@ -128,6 +128,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 = 1.3.2 =
 * Fixed a few WordPress 4.1 bugs.
 * Brought register_cpt_onomy() outside the manager class for ease of use.
+* You can now attach CPT-onomies to media.
 * Added hook to flush rewrite rules whenever settings are changed and an upgrade is run.
 * Added 'Show In Admin Bar' setting to custom post type registration.
 * Added 'Meta Box Title' property to CPT-onomy settings, to allow you to customize the title of your CPT-onomy meta boxes.
@@ -228,6 +229,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 = 1.3.2 =
 * Fixed a few WordPress 4.1 bugs.
 * Brought register_cpt_onomy() outside the manager class for ease of use.
+* You can now attach CPT-onomies to media.
 * Added hook to flush rewrite rules whenever settings are changed and an upgrade is run.
 * Added 'Show In Admin Bar' setting to custom post type registration.
 * Added 'Meta Box Title' property to CPT-onomy settings, to allow you to customize the title of your CPT-onomy meta boxes.
