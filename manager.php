@@ -330,19 +330,27 @@ class CPT_ONOMIES_MANAGER {
 			$clauses[ 'where' ] .= " AND 0=1";
 			return $clauses;
 		}
-			
+		
 		// If ordering by a CPT-onomy
-		if ( ( $taxonomy = isset( $query->query[ 'orderby' ] ) && ! empty( $query->query[ 'orderby' ] ) ? $query->query[ 'orderby' ] : NULL )
-			&& ( $post_type = isset( $query->query[ 'post_type' ] ) && ! empty( $query->query[ 'post_type' ] ) && post_type_exists( $query->query[ 'post_type' ] ) ? $query->query[ 'post_type' ] : NULL )
-			&& $this->is_registered_cpt_onomy( $taxonomy, $post_type ) ) {
-			
-			$clauses[ 'join' ] .= " LEFT OUTER JOIN {$wpdb->postmeta} cpt_onomy_order_pm ON cpt_onomy_order_pm.post_id = {$wpdb->posts}.ID
-				AND cpt_onomy_order_pm.meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "'
-				LEFT OUTER JOIN {$wpdb->posts} cpt_onomy_order_posts ON cpt_onomy_order_posts.ID = cpt_onomy_order_pm.meta_value
-				AND cpt_onomy_order_posts.post_type = '{$taxonomy}'";
+		if ( ( $taxonomy = $query->get( 'orderby' ) )
+			&& ( $post_type = $query->get( 'post_type' ) ) ) {
 				
-			$clauses[ 'groupby' ] = "{$wpdb->posts}.ID";
-			$clauses[ 'orderby' ] = ' GROUP_CONCAT( cpt_onomy_order_posts.post_title ORDER BY cpt_onomy_order_posts.post_title ASC )' . ( ( isset( $query->query[ 'order' ] ) && strcasecmp( $query->query[ 'order' ], 'desc' ) == 0 ) ? ' DESC' : ' ASC' ) . ( ! empty( $clauses[ 'orderby' ] ) ? ', ' : ' ' ) . $clauses[ 'orderby' ];
+			// If multiple post types, then go for it
+			// Otherwise, check that the post type is registered
+			if ( is_array( $post_type ) ||
+				( is_string( $post_type )
+				&& post_type_exists( $post_type )
+				&& $this->is_registered_cpt_onomy( $taxonomy, $post_type ) ) ) {
+				
+				$clauses[ 'join' ] .= " LEFT OUTER JOIN {$wpdb->postmeta} cpt_onomy_order_pm ON cpt_onomy_order_pm.post_id = {$wpdb->posts}.ID
+					AND cpt_onomy_order_pm.meta_key = '" . CPT_ONOMIES_POSTMETA_KEY . "'
+					LEFT OUTER JOIN {$wpdb->posts} cpt_onomy_order_posts ON cpt_onomy_order_posts.ID = cpt_onomy_order_pm.meta_value
+					AND cpt_onomy_order_posts.post_type = '{$taxonomy}'";
+					
+				$clauses[ 'groupby' ] = "{$wpdb->posts}.ID";
+				$clauses[ 'orderby' ] = ' GROUP_CONCAT( cpt_onomy_order_posts.post_title ORDER BY cpt_onomy_order_posts.post_title ASC )' . ( ( isset( $query->query[ 'order' ] ) && strcasecmp( $query->query[ 'order' ], 'desc' ) == 0 ) ? ' DESC' : ' ASC' ) . ( ! empty( $clauses[ 'orderby' ] ) ? ', ' : ' ' ) . $clauses[ 'orderby' ];
+				
+			}
 			
 		}
 		
