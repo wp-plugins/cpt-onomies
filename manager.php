@@ -361,7 +361,8 @@ class CPT_ONOMIES_MANAGER {
 			$taxonomies = array( 'join' => '', 'where' => array() );
 			$new_where = array();
 			$c = $t = 1;
-			foreach ( $query->tax_query->queries as $this_query ) {
+				
+			foreach ( $query->tax_query->queries as $this_query_key => $this_query ) {
 				
 				// Get the taxonomy
 				$taxonomy = isset( $this_query[ 'taxonomy' ] ) ? $this_query[ 'taxonomy' ] : NULL;
@@ -430,7 +431,7 @@ class CPT_ONOMIES_MANAGER {
 					return;
 									
 				$this_query[ 'terms' ] = $terms;
-						
+					
 				if ( is_taxonomy_hierarchical( $taxonomy ) && $this_query[ 'include_children' ] ) {
 					
 					$children = array();
@@ -455,7 +456,7 @@ class CPT_ONOMIES_MANAGER {
 				$primary_id_column = 'ID';
 				
 				sort( $terms );
-	
+				
 				if ( 'IN' == $operator ) {
 					
 					if ( empty( $terms ) )
@@ -586,22 +587,30 @@ class CPT_ONOMIES_MANAGER {
 				// Build replace string
 				$preg_replace_str = NULL;
 				
+				// Get tax queries count
+				$tax_queries_count = count( $query->tax_query->queries );
+				
+				// Don't count the relation setting
+				if ( array_key_exists( 'relation', $query->tax_query->queries ) )
+					$tax_queries_count--;
+				
 				// We have to set it up for each tax query
-				for ( $p = 0; $p < count( $query->tax_query->queries ); $p++ ) {
+				for ( $p = 0; $p < $tax_queries_count; $p++ ) {
 					
+					// Add relation separator
 					if ( $p > 0 )
-						$preg_replace_str .= '[\s]*AND';
+						$preg_replace_str .= '[\s]+' . $query->tax_query->relation;
 						
-					$preg_replace_str .= '[\s]*0[\s]*\=[\s]*1';
+					$preg_replace_str .= '[\s]+0[\s]+\=[\s]+1';
 					
 				}
 				
 				// Wrap them all in an AND
-				$preg_replace_str = 'AND[\s]*\(' . $preg_replace_str . '[\s]*\)';
+				$preg_replace_str = 'AND[\s]+\(' . $preg_replace_str . '[\s]+\)';
 				
 				// Replace the 0 = 1 in the 'where' clause
 				$clauses[ 'where' ] = preg_replace( '/' . $preg_replace_str . '/i', '', $clauses[ 'where' ] );
-											
+				
 				$clauses[ 'where' ] .= " AND ( ";
 					foreach ( $new_where as $where_index => $add_where ) {
 						if ( $where_index > 0 )
