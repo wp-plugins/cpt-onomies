@@ -362,7 +362,7 @@ class CPT_ONOMIES_MANAGER {
 			$new_where = array();
 			$c = $t = 1;
 			foreach ( $query->tax_query->queries as $this_query ) {
-			
+				
 				// Get the taxonomy
 				$taxonomy = isset( $this_query[ 'taxonomy' ] ) ? $this_query[ 'taxonomy' ] : NULL;
 			
@@ -388,7 +388,7 @@ class CPT_ONOMIES_MANAGER {
 						break;
 					}
 				}
-			
+				
 				// CPT-onomies
 				if ( $is_registered_cpt_onomy ) {
 					switch ( $this_query[ 'field' ] ) {
@@ -582,8 +582,25 @@ class CPT_ONOMIES_MANAGER {
 				// remove the post_name (WP adds this if the post type is hierarhical. I'm not sure why)
 				$clauses[ 'where' ] = preg_replace( '/wp\_posts\.post\_name\s=\s\'([^\']*)\'\sAND\s/i', '', $clauses[ 'where' ] );
 				
-				// remove 0 = 1
-				$clauses[ 'where' ] = preg_replace( '/\([\s]*0\s\=\s1[\s]*\)\sAND\s/i', '', $clauses[ 'where' ] );
+				// Remove 0 = 1
+				// Build replace string
+				$preg_replace_str = NULL;
+				
+				// We have to set it up for each tax query
+				for ( $p = 0; $p < count( $query->tax_query->queries ); $p++ ) {
+					
+					if ( $p > 0 )
+						$preg_replace_str .= '[\s]*AND';
+						
+					$preg_replace_str .= '[\s]*0[\s]*\=[\s]*1';
+					
+				}
+				
+				// Wrap them all in an AND
+				$preg_replace_str = 'AND[\s]*\(' . $preg_replace_str . '[\s]*\)';
+				
+				// Replace the 0 = 1 in the 'where' clause
+				$clauses[ 'where' ] = preg_replace( '/' . $preg_replace_str . '/i', '', $clauses[ 'where' ] );
 											
 				$clauses[ 'where' ] .= " AND ( ";
 					foreach ( $new_where as $where_index => $add_where ) {
