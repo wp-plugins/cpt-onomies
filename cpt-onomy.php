@@ -344,7 +344,7 @@ class CPT_TAXONOMY {
 		
 		// First, see if we can get from the cache
 		if ( empty( $term_ids ) &&
-			( $terms_count_from_cache = wp_cache_get( $taxonomy, 'cpt_onomies_count' ) )
+			( $terms_count_from_cache = wp_cache_get( $taxonomy, 'cpt_onomies_terms_count' ) )
 			&& $terms_count_from_cache !== false
 			&& is_array( $terms_count_from_cache ) ) {
 				
@@ -395,13 +395,13 @@ class CPT_TAXONOMY {
 				
 				// If no specific term IDs, set the cache
 				if ( empty( $term_ids ) )
-					wp_cache_set( $taxonomy, $terms_count, 'cpt_onomies_count' );
+					wp_cache_set( $taxonomy, $terms_count, 'cpt_onomies_terms_count' );
 				
 			}
 			
 		}
 		
-		return $terms_count;	
+		return $terms_count;
 		
 	}
 	
@@ -1269,74 +1269,11 @@ class CPT_TAXONOMY {
 				
 				// We don't want to show the current "term" if on the edit post screen in the admin
 				$current = ( is_admin() && $current_screen && $current_screen->base == 'post' && $current_screen->parent_base == 'edit' && $current_screen->post_type == $taxonomy && isset( $post->ID ) ) ? $post->ID : NULL;
-					
-				// Get count for all posts
-				// We need the IDs so we can get the count in one query
-				// We can't filter the get_posts() query to get the count
-				// because we have to supress filters to make sure nothing
-				// else interferes
-				$cpt_posts_ids = array();
-				
-				foreach( $cpt_posts as $cpt_post ) {
-					if ( isset( $cpt_post->ID ) ) {
-						$cpt_posts_ids[] = $cpt_post->ID;
-					}
-				}
-				
-				// Get the post types attached to this taxonomy
-				$cpt_onomy_eligible_post_types = ( $tax = get_taxonomy( $taxonomy ) ) && isset( $tax->object_type ) ? $tax->object_type : NULL;
 				
 				// Store the count for the CPT-onomy's terms
-				$cpt_posts_count = array();
+				$cpt_posts_count = $this->get_terms_count( $taxonomy );
 				
-				// Get CPT-onomies count for this taxonomy
-				if ( ! empty( $cpt_posts_ids ) && ! empty( $cpt_onomy_eligible_post_types ) ) {
-					
-					// See if we can get from cache
-					if ( ( $cpt_posts_count_from_cache = wp_cache_get( $taxonomy, 'cpt_onomies_count' ) )
-						&& $cpt_posts_count_from_cache !== false
-						&& is_array( $cpt_posts_count_from_cache ) ) {
-							
-						// Set the count from the cache
-						$cpt_posts_count = $cpt_posts_count_from_cache;
-					
-					// Otherwise, update CPT-onomies count from the database
-					} else { 
-						
-						// Get term count from the database
-						$cpt_posts_count_from_db = $wpdb->get_results( $wpdb->prepare( "SELECT meta.meta_value AS ID, COUNT(meta.meta_value) AS count
-	
-							FROM {$wpdb->postmeta} meta 
-							
-								INNER JOIN {$wpdb->posts} objects
-									ON objects.ID = meta.post_id
-									AND objects.post_type IN ( '" . implode( "','", $cpt_onomy_eligible_post_types ) . "' )
-									AND objects.post_status = 'publish' 
-							
-							WHERE meta.meta_key = %s AND meta.meta_value IN ( '" . implode( "','", $cpt_posts_ids ) . "' )
-							
-							GROUP BY meta.meta_value", CPT_ONOMIES_POSTMETA_KEY ) );
-							
-						// If we have a posts count, we need to rearrange the array
-						if ( $cpt_posts_count_from_db ) {
-							
-							// Loop through each count
-							foreach( $cpt_posts_count_from_db as $cpt_posts_count_index => $cpt_posts_count_item ) {
-								
-								// Store count with ID
-								$cpt_posts_count[ $cpt_posts_count_item->ID ] = isset( $cpt_posts_count_item->count ) && $cpt_posts_count_item->count > 0 ? $cpt_posts_count_item->count : 0;
-								
-							}
-							
-							// Set the cache
-							wp_cache_set( $taxonomy, $cpt_posts_count, 'cpt_onomies_count' );
-													
-						}
-						
-					}
-					
-				}
-				
+				// Loop through the posts and setup the terms
 				foreach ( $cpt_posts as $this_post ) {
 					
 					// Dont show current "term"
