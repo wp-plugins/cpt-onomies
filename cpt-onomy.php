@@ -341,12 +341,21 @@ class CPT_TAXONOMY {
 		// Make sure term IDs is an array
 		if ( ! empty( $term_ids ) && ! is_array( $term_ids ) )
 			$term_ids = explode( ',', $term_ids );
-		
+			
 		// First, see if we can get from the cache
-		if ( empty( $term_ids ) &&
-			( $terms_count_from_cache = wp_cache_get( $taxonomy, 'cpt_onomies_terms_count' ) )
+		if ( ( $terms_count_from_cache = wp_cache_get( $taxonomy, 'cpt_onomies_terms_count' ) )
 			&& $terms_count_from_cache !== false
 			&& is_array( $terms_count_from_cache ) ) {
+				
+			if ( ! empty( $term_ids ) ) {
+				
+				// Only return specific term IDs
+				foreach( $terms_count_from_cache as $term_id => $term_id_count ) {
+					if ( ! in_array( $term_id, $term_ids ) )
+						unset( $terms_count_from_cache[ $term_id ] );
+				}
+				
+			}
 				
 			// Set the count from the cache
 			return $terms_count_from_cache;
