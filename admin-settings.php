@@ -202,7 +202,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 *		'attention_cpt' and 'attention_cpt_onomy'
 	 */
 	private function detect_custom_post_type_message_variables( $post_type, $CPT, $other ) {
-		global $cpt_onomies_manager, $blog_id;
+		global $cpt_onomies_manager, $blog_id, $wpdb;
 		
 		$inactive_cpt = isset( $CPT->deactivate ) ? true : false;
 										
@@ -220,6 +220,19 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 										
 		$attention_cpt_onomy = ( ! $this->is_network_admin && ! $inactive_cpt && $should_be_cpt_onomy && ( $attention_cpt || ! $is_registered_cpt_onomy ) ) ? true : false;
 		
+		// If attention doesn't already need to be paid to the CPT-onomy, check to see if it has any plain taxonomy terms assigned to it
+		// i.e. there used to be a taxononmy with this name that needs to have some terms removed
+		if ( ! $attention_cpt_onomy ) {
+			
+			// Get old terms count
+			$old_terms_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$post_type}'" );
+			
+			// If we have old terms, then this CPT-onomy needs attention
+			if ( $old_terms_count > 0 )
+				$attention_cpt_onomy = true;
+			
+		}
+		
 		return array(
 			'inactive_cpt' => $inactive_cpt,
 			'is_registered_cpt' => $is_registered_cpt,
@@ -230,6 +243,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			'attention_cpt' => $attention_cpt,
 			'attention_cpt_onomy' => $attention_cpt_onomy
 		);
+		
 	}
 	
 	/**
@@ -2059,7 +2073,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 * @param array $metabox - information about the metabox
 	 */
 	public function print_plugin_options_meta_box( $post, $metabox ) {
-		global $cpt_onomies_manager, $user_ID;
+		global $cpt_onomies_manager, $user_ID, $wpdb;
 		
 		if ( current_user_can( $this->manage_options_capability ) ) {
 			
@@ -2191,16 +2205,16 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 										if ( ! empty( $post_type ) && ( ! isset( $CPT->name ) || empty( $CPT->name ) ) ) $CPT->name = $post_type;
 										else if ( empty( $post_type ) && isset( $CPT->name ) && ! empty( $CPT->name ) ) $post_type = $CPT->name;
 										
-										// make sure post type and label exist
+										// Make sure post type and label exist
 										if ( ! empty( $post_type ) && ! ( ! isset( $CPT->label ) || empty( $CPT->label ) ) ) {
 					
-											// detect if we're editing a CPT AND whether its a new CPT or an "other" CPT
+											// Detect if we're editing a CPT AND whether its a new CPT or an "other" CPT
 											// will create $inactive_cpt, $is_registered_cpt, $is_registered_cpt_onomy,
 											// $programmatic_cpt_onomy, $should_be_cpt_onomy, $attention_cpt
 											// and $attention_cpt_onomy
 											extract( $this->detect_custom_post_type_message_variables( $post_type, $CPT, $other ) );
 											
-											// check to see if attached post types exist
+											// Check to see if attached post types exist
 											$attach_to_post_type_not_exist = array();
 											if ( ! empty( $CPT->attach_to_post_type ) ) {
 												foreach( $CPT->attach_to_post_type as $attached ) {
@@ -2212,24 +2226,32 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 											$message = NULL;
 											if ( $attention_cpt ) {
 												
-												// builtin conflict
-												if ( array_key_exists( $post_type, $builtin ) )
+												// Builtin conflict
+												if ( array_key_exists( $post_type, $builtin ) ) {
+													
 													$message = esc_attr__( 'The custom post type, \'' . $CPT->label . '\', is not registered because the built-in WordPress post type, \'' . $builtin[ $post_type ]->label . '\' is already registered under the name \'' . $post_type . '\'. Sorry, but WordPress wins on this one. You\'ll have to change the post type name if you want to get \'' . $CPT->label . '\' up and running.', CPT_ONOMIES_TEXTDOMAIN );
 												
 												// "other" conflict
-												else
+												} else {
+													
 													$message = esc_attr__( 'The custom post type, \'' . $CPT->label . '\', is not registered because another custom post type with the same name already exists. This other custom post type is probably setup in your theme or another plugin. Check out the \'Manage Your Other Custom Post Types\' section to see what else has been registered.', CPT_ONOMIES_TEXTDOMAIN );
+													
+												}
 											
 											} else if ( ! $is_registered_cpt_onomy && $should_be_cpt_onomy ) {
 											
-												if ( taxonomy_exists( $post_type ) )
+												if ( taxonomy_exists( $post_type ) ) {
+													
 													$message = sprintf( esc_attr__( 'This custom post type\'s %1$s is not registered because another taxonomy with the same name already exists. If you would like this %2$s to work, please remove the conflicting taxonomy.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', 'CPT-onomy' );
-												else
+													
+												} else {
+													
 													$message = sprintf( esc_attr__( 'This custom post type\'s %1$s is not registered because the post type(s) it is attached to is not active/registered. If you would like this %2$s to work, please activate/register said post type(s).', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', 'CPT-onomy' );
 													
-											}
+												}
+													
 											// this means this CPT-onomy is registered but not for ALL of its assigned custom post types
-											else if ( $is_registered_cpt_onomy && $attach_to_post_type_not_exist && count( $attach_to_post_type_not_exist ) != count( $CPT->attach_to_post_type ) ) {
+											} else if ( $is_registered_cpt_onomy && $attach_to_post_type_not_exist && count( $attach_to_post_type_not_exist ) != count( $CPT->attach_to_post_type ) ) {
 											
 												if ( count( $attach_to_post_type_not_exist ) > 1 ) {
 													$attach_to_post_type_not_exist_string = NULL;
@@ -2242,9 +2264,11 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 													}
 													$message = sprintf( esc_attr__( 'This custom post type\'s %1$s is not attached to the %2$s custom post types because they are not active/registered. If you would like this %3$s to work, please activate/register said post type(s).', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', $attach_to_post_type_not_exist_string, 'CPT-onomy' );
 													
-												}
-												else
+												} else {
+													
 													$message = sprintf( esc_attr__( 'This custom post type\'s %1$s is not attached to the \'%2$s\' custom post type because it is not active/registered. If you would like this %3$s to work, please activate/register said post type(s).', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', $attach_to_post_type_not_exist[0], 'CPT-onomy' );
+													
+												}
 														
 											}
 												
@@ -2252,16 +2276,16 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 												<td class="status">&nbsp;</td>
 												<td class="label"><?php
 													
-													// edit url
+													// Edit url
 													$edit_url = esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => $post_type, 'other' => ( $other ? '1' : NULL ) ), $this->admin_url ) );
 													
-													// activate url
+													// Activate url
 													$activate_url = esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'activate' => $post_type, '_wpnonce' => wp_create_nonce( 'activate-cpt-' . $post_type ) ), $this->admin_url ), 'activate-cpt-' . $post_type );
 													
-													// delete url
+													// Delete url
 													$delete_url = esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'delete' => $post_type, '_wpnonce' => wp_create_nonce( 'delete-cpt-' . $post_type ) ), $this->admin_url ), 'delete-cpt-' . $post_type );
 													
-													// view url
+													// View url
 													$view_url = ! $this->is_network_admin ? esc_url( add_query_arg( array( 'post_type' => $post_type ), admin_url( 'edit.php' ) ) ) : NULL;
 													
 													?><span class="label"><a href="<?php echo $edit_url; ?>"><?php _e( $CPT->label, CPT_ONOMIES_TEXTDOMAIN ); ?></a></span>
@@ -2296,29 +2320,56 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 														
 														if ( ! $is_registered_cpt_onomy && $should_be_cpt_onomy ) {
 														
-															if ( $inactive_cpt )
+															if ( $inactive_cpt ) {
+																
 																echo sprintf( __( 'No, because this %s is inactive.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT' ) . '<br /><a href="' . $activate_url . '" title="' . esc_attr__( 'Activate this custom post type', CPT_ONOMIES_TEXTDOMAIN ) . '">' . __( 'Activate this CPT', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
-															else if ( $attention_cpt ) echo sprintf( __( 'No, because this %s is not registered.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT' ) . '<br /><a class="show_cpt_message" href="' . $edit_url . '" title="' . esc_attr__( 'Find out why this custom post type is not registered', CPT_ONOMIES_TEXTDOMAIN ) . '" alt="' . $message . '">' . __( 'Find out why', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
-															else {
 															
-																if ( taxonomy_exists( $post_type ) )
+															} else if ( $attention_cpt ) {
+																
+																echo sprintf( __( 'No, because this %s is not registered.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT' ) . '<br /><a class="show_cpt_message" href="' . $edit_url . '" title="' . esc_attr__( 'Find out why this custom post type is not registered', CPT_ONOMIES_TEXTDOMAIN ) . '" alt="' . $message . '">' . __( 'Find out why', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
+															
+															} else {
+															
+																if ( taxonomy_exists( $post_type ) ) {
+																	
 																	echo sprintf( __( 'This %s is not registered due to a taxonomy conflict.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '<br /><a class="show_cpt_message" href="' . $edit_url . '" title="' . sprintf( esc_attr__( 'Find out why this %s is not registered', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '" alt="' . $message . '">' . __( 'Find out why', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
-																else
+																} else {
+																	
 																	echo sprintf( __( 'This %s is not registered due to a post type conflict.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '<br /><a class="show_cpt_message" href="' . $edit_url . '" title="' . sprintf( esc_attr__( 'Find out why this %s is not registered', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '" alt="' . $message . '">' . __( 'Find out why', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
+																	
+																}
 																	
 															}
 															
-														}
-														// this means this CPT-onomy is registered but not for ALL of its assigned custom post types
-														else if ( $is_registered_cpt_onomy && $attach_to_post_type_not_exist && count( $attach_to_post_type_not_exist ) != count( $CPT->attach_to_post_type ) )
-																	echo sprintf( __( 'Yes, but there is a post type conflict.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '<br /><a class="show_cpt_message" href="' . $edit_url . '" title="' . sprintf( esc_attr__( 'Find out why this %s is not registered', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '" alt="' . $message . '">' . __( 'Find out why', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
-														else if ( $is_registered_cpt_onomy && $programmatic_cpt_onomy ) {
+														// This means this CPT-onomy is registered but not for ALL of its assigned custom post types
+														} else if ( $is_registered_cpt_onomy && $attach_to_post_type_not_exist && count( $attach_to_post_type_not_exist ) != count( $CPT->attach_to_post_type ) ) {
+															
+															echo sprintf( __( 'Yes, but there is a post type conflict.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '<br /><a class="show_cpt_message" href="' . $edit_url . '" title="' . sprintf( esc_attr__( 'Find out why this %s is not registered', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '" alt="' . $message . '">' . __( 'Find out why', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
+															
+														} else if ( $is_registered_cpt_onomy && $programmatic_cpt_onomy ) {
+															
 															_e( 'Yes', CPT_ONOMIES_TEXTDOMAIN );
 															echo '<br /><em><span class="gray not-bold">' . sprintf( __( 'This %1$s is %2$sprogrammatically registered%3$s.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', '<a href="http://wpdreamer.com/plugins/cpt-onomies/documentation/register_cpt_onomy/" target="_blank">', '</a>' ) . '</span></em>';
+															
+														} else if ( $is_registered_cpt_onomy ) {
+															
+															// This means there might be a conflict with old taxonomy terms
+															if ( $attention_cpt_onomy
+																&& ( $old_terms_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$post_type}'" ) ) && $old_terms_count > 0 ) {
+																
+																echo __( 'Yes, but there might be a conflict with old taxonomy terms.', CPT_ONOMIES_TEXTDOMAIN ) . '<br /><a href="' . $edit_url . '" title="Edit the settings to learn more">' . __( 'Learn more', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
+																	
+															} else {
+																
+																_e( 'Yes', CPT_ONOMIES_TEXTDOMAIN );
+																
+															}
+															
+														} else {
+															
+															_e( 'No', CPT_ONOMIES_TEXTDOMAIN );
+															
 														}
-														else if ( $is_registered_cpt_onomy )
-															_e( 'Yes', CPT_ONOMIES_TEXTDOMAIN );
-														else _e( 'No', CPT_ONOMIES_TEXTDOMAIN );
 														
 													?></td><?php
 													
@@ -2564,12 +2615,12 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 									
 									$builtin = get_post_types( array( '_builtin' => true ), 'objects' );
 									
-									// builtin conflict
+									// Builtin conflict
 									if ( array_key_exists( $edit, $builtin ) ) {
 										
 										?><p><?php echo sprintf( __( 'This custom post type is not registered because the built-in WordPress post type, \'%1$s\' is already registered under the name \'%2$s\'. Sorry, but WordPress wins on this one. You\'ll have to change the post type name if you want to get \'%3$s\' up and running.', CPT_ONOMIES_TEXTDOMAIN ), $builtin[ $edit ]->label, $edit, $CPT->label ); ?></p><?php
 											
-									// other conflict
+									// Other conflict
 									} else {
 										
 										?><p><?php echo sprintf( __( 'This custom post type is not registered because another custom post type with the same name already exists. This other custom post type is probably setup in your theme or another plugin. %1$sCheck out the \'Manage Your Other Custom Post Types\'%2$s to see what else has been registered.', CPT_ONOMIES_TEXTDOMAIN ), '<a href="' . esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE ), $this->admin_url ) ) . '#custom-post-type-onomies-other-custom-post-types-mb">', '</a>' ); ?></p><?php
@@ -2610,6 +2661,10 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 											
 									}
 											
+								} else if ( $attention_cpt_onomy && ( $old_terms_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$edit}'" ) ) && $old_terms_count > 0 ) {
+								
+									?><p><?php _e( 'Did this CPT-onomy used to be registered as a taxonomy? I found some old taxonomy terms stored in your database that could conflict with CPT-onomies. CPT-onomies are not stored in the database in the same manner as taxonomies so when both taxonomy and CPT-onomy terms exist, term queries get confused and can sometimes return incorrect results. I recommend de-activating your CPT-onomy, removing the old taxonomy terms, and re-activating your CPT-onomy.', CPT_ONOMIES_TEXTDOMAIN ); ?></p><?php
+								
 								} else if ( $is_registered_cpt_onomy && $programmatic_cpt_onomy ) {
 									
 									?><p><?php echo sprintf( __( 'This custom post type is being programmatically registered as a %1$s, which overrides any settings defined below. %2$sCheck out the %3$s documentation%4$s to learn more.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', '<a href="http://wpdreamer.com/plugins/cpt-onomies/documentation/register_cpt_onomy/" target="_blank">', 'CPT-onomy', '</a>' ); ?></p><?php

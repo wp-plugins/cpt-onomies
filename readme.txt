@@ -134,6 +134,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 * Added 'custom_post_type_onomies_cpt_onomy_admin_column_title' filter which allows users to change the CPT-onomy admin column title.
 * Added 'name_admin_bar' custom post type label setting.
 * Added 'delete_with_user' custom post type setting.
+* Added warning messages for when CPT-onomy terms might be conflicting with older taxonomy terms.
 
 = 1.3.3 = 
 * Fixed bug that was causing issues for multiple tax queries.
@@ -250,6 +251,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 * Added 'custom_post_type_onomies_cpt_onomy_admin_column_title' filter which allows users to change the CPT-onomy admin column title.
 * Added 'name_admin_bar' custom post type label setting.
 * Added 'delete_with_user' custom post type setting.
+* Added warning messages for when CPT-onomy terms might be conflicting with older taxonomy terms.
 
 = 1.3.3 = 
 * Fixed bug that was causing issues for multiple tax queries.
