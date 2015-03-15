@@ -2345,12 +2345,8 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 														} else if ( $is_registered_cpt_onomy && $attach_to_post_type_not_exist && count( $attach_to_post_type_not_exist ) != count( $CPT->attach_to_post_type ) ) {
 															
 															echo sprintf( __( 'Yes, but there is a post type conflict.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '<br /><a class="show_cpt_message" href="' . $edit_url . '" title="' . sprintf( esc_attr__( 'Find out why this %s is not registered', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy' ) . '" alt="' . $message . '">' . __( 'Find out why', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
-															
-														} else if ( $is_registered_cpt_onomy && $programmatic_cpt_onomy ) {
-															
-															_e( 'Yes', CPT_ONOMIES_TEXTDOMAIN );
-															echo '<br /><em><span class="gray not-bold">' . sprintf( __( 'This %1$s is %2$sprogrammatically registered%3$s.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', '<a href="http://wpdreamer.com/plugins/cpt-onomies/documentation/register_cpt_onomy/" target="_blank">', '</a>' ) . '</span></em>';
-															
+														
+														// If the CPT-onomy is registered...
 														} else if ( $is_registered_cpt_onomy ) {
 															
 															// This means there might be a conflict with old taxonomy terms
@@ -2358,7 +2354,14 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 																&& ( $old_terms_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$post_type}'" ) ) && $old_terms_count > 0 ) {
 																
 																echo __( 'Yes, but there might be a conflict with old taxonomy terms.', CPT_ONOMIES_TEXTDOMAIN ) . '<br /><a href="' . $edit_url . '" title="Edit the settings to learn more">' . __( 'Learn more', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
-																	
+															
+															// This means the CPT-onomy was registered outside the plugin		
+															} else if ( $programmatic_cpt_onomy ) {
+															
+																_e( 'Yes', CPT_ONOMIES_TEXTDOMAIN );
+																echo '<br /><em><span class="gray not-bold">' . sprintf( __( 'This %1$s is %2$sprogrammatically registered%3$s.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', '<a href="http://wpdreamer.com/plugins/cpt-onomies/documentation/register_cpt_onomy/" target="_blank">', '</a>' ) . '</span></em>';
+															
+															// This means it's registered and all is well
 															} else {
 																
 																_e( 'Yes', CPT_ONOMIES_TEXTDOMAIN );
