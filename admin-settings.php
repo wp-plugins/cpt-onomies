@@ -119,6 +119,63 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	}
 	
 	/**
+	 * Returns the count of any still existing taxonomy terms
+	 * under the same name as a current CPT-onomy.
+	 *
+	 * @since 1.3.4
+	 * @uses $wpdb
+	 * @param string - the CPT-onomy's name, aka post type
+	 * @return int|false - number of conflicting terms assigned to a CPT-onomy's matching taxonomy or false, if none exist
+	 */
+	private function get_conflicting_taxonomy_terms_count( $post_type ) {
+		global $wpdb;
+		if ( ! $this->is_network_admin
+			&& ( $terms_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$post_type}'" ) )
+			&& $terms_count > 0 ) {
+				
+			return $terms_count;
+			
+		}
+		return false;
+	}
+	
+	/**
+	 * Deletes any still existing taxonomy terms
+	 * under the same name as a current CPT-onomy.
+	 *
+	 * @since 1.3.4
+	 * @uses $wpdb
+	 * @param string - the CPT-onomy's name, aka post type
+	 * @return int|false - the number of terms that were deleted, or false if no terms were deleted
+	 */
+	private function delete_conflicting_taxonomy_terms( $post_type ) {
+		global $wpdb;
+		
+		// First, we need terms info for this particular taxonomy
+		if ( $terms_info = $wpdb->get_results( "SELECT term_id, term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$post_type}'" ) ) {
+		
+			foreach( $terms_info as $term ) {
+				
+				// Delete the term
+				$wpdb->delete( $wpdb->terms, array( 'term_id' => $term->term_id ), array( '%d' ) );
+				
+				// Delete the term taxonomy info
+				$wpdb->delete( $wpdb->term_taxonomy, array( 'term_taxonomy_id' => $term->term_taxonomy_id ), array( '%d' ) );
+				
+				// Delete any term relationships
+				$wpdb->delete( $wpdb->term_relationships, array( 'term_taxonomy_id' => $term->term_taxonomy_id ), array( '%d' ) );
+				
+			}
+			
+			return count( $terms_info );
+			
+		}
+		
+		return false;
+		
+	}
+	
+	/**
 	 * This function allows the settings page to detect if we
 	 * are editing a custom post type, and whether that post type is
 	 * 'new' or an 'other' post type.
@@ -202,7 +259,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 *		'attention_cpt' and 'attention_cpt_onomy'
 	 */
 	private function detect_custom_post_type_message_variables( $post_type, $CPT, $other ) {
-		global $cpt_onomies_manager, $blog_id, $wpdb;
+		global $cpt_onomies_manager, $blog_id;
 		
 		$inactive_cpt = isset( $CPT->deactivate ) ? true : false;
 										
@@ -222,14 +279,13 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 		
 		// If attention doesn't already need to be paid to the CPT-onomy, check to see if it has any plain taxonomy terms assigned to it
 		// i.e. there used to be a taxononmy with this name that needs to have some terms removed
-		if ( ! $attention_cpt_onomy ) {
+		// If we have conflicting terms, then this CPT-onomy needs attention.
+		if ( ! $this->is_network_admin
+			&& ! $attention_cpt_onomy
+			&& ( $conflicting_terms_count = $this->get_conflicting_taxonomy_terms_count( $post_type ) )
+			&& $conflicting_terms_count > 0 ) {
 			
-			// Get old terms count
-			$old_terms_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$post_type}'" );
-			
-			// If we have old terms, then this CPT-onomy needs attention
-			if ( $old_terms_count > 0 )
-				$attention_cpt_onomy = true;
+			$attention_cpt_onomy = true;
 			
 		}
 		
@@ -608,9 +664,12 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							
 						}
 						
-						// No conflicts. save info under name new
-						else
+						// No conflicts. Save info under name new
+						else {
+							
 							$store_name = $new_name;
+							
+						}
 						
 					}
 					
@@ -1668,16 +1727,20 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 */
 	public function manage_plugin_options_actions() {
 		global $cpt_onomies_manager;
+		
 		if ( current_user_can( $this->manage_options_capability ) && isset( $_REQUEST[ 'page' ] ) && $_REQUEST[ 'page' ] == CPT_ONOMIES_OPTIONS_PAGE && isset( $_REQUEST[ '_wpnonce' ] ) ) {
 			
 			// Activate
 			if ( isset( $_REQUEST[ 'activate' ] ) ) {
+				
 				$CPT = $_REQUEST[ 'activate' ];
+				
 				// Verify nonce
 				if ( wp_verify_nonce( $_REQUEST[ '_wpnonce' ], 'activate-cpt-' . $CPT ) ) {
 				
 					// Change the activation settings
 					if ( $this->is_network_admin ) {
+						
 						if ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( $CPT, $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) {
 							
 							// Remove the setting
@@ -1690,9 +1753,9 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							wp_redirect( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'cptactivated' => $CPT ), $this->admin_url ) );
 							exit();
 							
-						}					
-					}
-					else if ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( $CPT, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) {
+						}
+											
+					} else if ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( $CPT, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) {
 							
 						// Remove the setting
 						unset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ][ $CPT ][ 'deactivate' ] );
@@ -1704,22 +1767,26 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 						wp_redirect( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'cptactivated' => $CPT ), $this->admin_url ) );
 						exit();
 						
-					}			
-				}
-				else {
+					}
+								
+				} else {
+					
 					// Add error message
 					wp_die( sprintf( __( 'Looks like there was an error and the custom post type was not activated. %1$sGo back to %2$s%3$s and try again.', CPT_ONOMIES_TEXTDOMAIN ), '<a href="' . add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE ), $this->admin_url ) . '">', 'CPT-onomies', '</a>' ) );
+					
 				}
-			}
-			
-			// Delete
-			else if ( isset( $_REQUEST[ 'delete' ] ) ) {
+				
+			// Delete the CPT
+			} else if ( isset( $_REQUEST[ 'delete' ] ) ) {
+				
 				$CPT = $_REQUEST[ 'delete' ];
+				
 				// Verify nonce
 				if ( wp_verify_nonce( $_REQUEST[ '_wpnonce' ], 'delete-cpt-' . $CPT ) ) {
 					
 					// Delete CPT from settings
 					if ( $this->is_network_admin ) {
+						
 						if ( isset( $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) && array_key_exists( $CPT, $cpt_onomies_manager->user_settings[ 'network_custom_post_types' ] ) ) {
 						
 							// Remove from settings
@@ -1733,9 +1800,8 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 							exit();
 							
 						}
-					}
-					
-					else if ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( $CPT, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) {
+						
+					} else if ( isset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) && array_key_exists( $CPT, $cpt_onomies_manager->user_settings[ 'custom_post_types' ] ) ) {
 						
 						// Remove from settings
 						unset( $cpt_onomies_manager->user_settings[ 'custom_post_types' ][ $CPT ] );
@@ -1749,17 +1815,45 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 						
 					}
 						
-				}
-				else {
+				} else {
 				
 					// Add error message
 					wp_die( sprintf( __( 'Looks like there was an error and the custom post type was not deleted. %1$sGo back to %2$s%3$s and try again.', CPT_ONOMIES_TEXTDOMAIN ), '<a href="' . add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE ), $this->admin_url ) . '">', 'CPT-onomies', '</a>' ) );
 					
 				}
+			
+			// Delete "conflicting" taxonomy terms
+			} else if ( isset( $_REQUEST[ 'delete_conflicting_terms' ] ) ) {
 				
+				// Which taxonomy's terms are we deleting?
+				$taxonomy = $_REQUEST[ 'delete_conflicting_terms' ];
+				
+				// Were we successful?
+				$delete_success = false;
+				
+				// Verify nonce
+				if ( wp_verify_nonce( $_REQUEST[ '_wpnonce' ], 'delete-conflicting-terms-' . $taxonomy ) ) {
+					
+					// Delete any conflicting terms
+					$delete_success = $this->delete_conflicting_taxonomy_terms( $taxonomy );
+					
+				}
+				
+				// Build the redirect URL
+				$redirect_url = add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => $taxonomy, 'other' => ( isset( $_REQUEST[ 'other' ] ) && $_REQUEST[ 'other' ] ? '1' : NULL ) ), $this->admin_url );
+							
+				if ( $delete_success )
+					$redirect_url = add_query_arg( array( 'deleted_conflicting_terms' => '1' ), $redirect_url );
+				else
+					$redirect_url = add_query_arg( array( 'delete_conflicting_terms_error' => '1' ), $redirect_url );
+				
+				wp_redirect( $redirect_url );
+				exit;
+					
 			}
 			
 		}
+		
 	}
 	
 	/**
@@ -1960,6 +2054,9 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 				// Setup message to display
 				$message = NULL;
 				
+				// What's the message class? - updated by default
+				$message_class = 'updated';
+				
 				// Add deleted message
 				if ( isset( $_REQUEST[ 'cptdeleted' ] ) ) {
 					
@@ -1983,13 +2080,30 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 						$message = sprintf( __( 'The custom post type \'%s\' is now active.', CPT_ONOMIES_TEXTDOMAIN ), $label );
 					else
 						$message = __( 'The custom post type is now active.', CPT_ONOMIES_TEXTDOMAIN );
+				
+				// Add "delete conflicting terms" error message	
+				} else if ( isset( $_REQUEST[ 'delete_conflicting_terms_error' ] ) ) {
+					
+					// Build the refresh URL
+					$refresh_url = add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => $edit, 'other' => ( $other ? '1' : NULL ) ), $this->admin_url );
+					
+					// Build the message
+					$message = sprintf( __( 'There seems to have been an error deleting the conflicting taxonomy terms. Please %1$srefresh the page%2$s and try again. If the problem persists, %3$sthe %4$s documentation%5$s might help.', CPT_ONOMIES_TEXTDOMAIN ), '<a href="' . $refresh_url . '">', '</a>', '<a href="http://wpdreamer.com/plugins/cpt-onomies/documentation/incorrect-query-results/#remove-conflicting-taxonomy-terms" target="_blank">', 'CPT-onomies', '</a>' );
+					
+					// This is an error message
+					$message_class = 'error';
+					
+				// Add "deleted conflicting terms" message	
+				} else if ( isset( $_REQUEST[ 'deleted_conflicting_terms' ] ) ) {
+					
+					$message = __( 'The conflicting taxonomy terms have been deleted!', CPT_ONOMIES_TEXTDOMAIN );
 					
 				}
 				
 				// Display message
 				if ( $message ) {
 				
-					?><div id="message" class="updated">
+					?><div id="message" class="<?php echo $message_class; ?>">
 						<p><?php echo $message; ?></p>
 					</div><?php
 					
@@ -2091,7 +2205,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 	 * @param array $metabox - information about the metabox
 	 */
 	public function print_plugin_options_meta_box( $post, $metabox ) {
-		global $cpt_onomies_manager, $user_ID, $wpdb;
+		global $cpt_onomies_manager, $user_ID;
 		
 		if ( current_user_can( $this->manage_options_capability ) ) {
 			
@@ -2367,11 +2481,12 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 														// If the CPT-onomy is registered...
 														} else if ( $is_registered_cpt_onomy ) {
 															
-															// This means there might be a conflict with old taxonomy terms
-															if ( $attention_cpt_onomy
-																&& ( $old_terms_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$post_type}'" ) ) && $old_terms_count > 0 ) {
-																
-																echo __( 'Yes, but there might be a conflict with old taxonomy terms.', CPT_ONOMIES_TEXTDOMAIN ) . '<br /><a href="' . $edit_url . '" title="Edit the settings to learn more">' . __( 'Learn more', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
+															// This means there might be a conflict with conflicting taxonomy terms
+															if ( ! $this->is_network_admin
+																&& $attention_cpt_onomy
+																&& ( $conflicting_terms_count = $this->get_conflicting_taxonomy_terms_count( $post_type ) ) ) {
+																	
+																echo __( 'Yes, but there might be a terms conflict.', CPT_ONOMIES_TEXTDOMAIN ) . '<br /><a href="' . $edit_url . '" title="Edit the settings to learn more">' . __( 'Learn more', CPT_ONOMIES_TEXTDOMAIN ) . '</a>';
 															
 															// This means the CPT-onomy was registered outside the plugin		
 															} else if ( $programmatic_cpt_onomy ) {
@@ -2679,10 +2794,16 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 										?><p><?php echo sprintf( __( 'This custom post type\'s %1$s is not attached to the \'%2$s\' custom post type because it is not active/registered. If you would like this %3$s to work, please activate/register said post type.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', $attach_to_post_type_not_exist[0], 'CPT-onomy' ); ?></p><?php
 											
 									}
-											
-								} else if ( $attention_cpt_onomy && ( $old_terms_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$edit}'" ) ) && $old_terms_count > 0 ) {
 								
-									?><p><?php echo sprintf( __( 'Did this %1$s used to be registered as a taxonomy? I found some taxonomy terms stored in your database that could conflict with your %2$s terms. %3$s are not stored in the database in the same manner as taxonomies so when taxonomy and %4$s terms exist (under the same name), term queries can get confused and sometimes return incorrect results. I recommend de-activating your %5$s, removing the old taxonomy terms, and re-activating your %6$s.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', 'CPT-onomy', 'CPT-onomies', 'CPT-onomy', 'CPT-onomy', 'CPT-onomy' ); ?></p><?php
+								// This means we have conflicting taxonomy terms for our CPT-onomy		
+								} else if ( ! $this->is_network_admin
+									&& $attention_cpt_onomy
+									&& ( $conflicting_terms_count = $this->get_conflicting_taxonomy_terms_count( $edit ) ) ) {
+										
+									// "Delete conflicting terms" url
+									$delete_conflicting_terms_url = esc_url( add_query_arg( array( 'page' => CPT_ONOMIES_OPTIONS_PAGE, 'edit' => $edit, 'other' => ( $other ? '1' : NULL ), 'delete_conflicting_terms' => $edit, '_wpnonce' => wp_create_nonce( 'delete-conflicting-terms-' . $edit ) ), $this->admin_url ), 'delete-conflicting-terms-' . $edit );
+								
+									?><p><?php echo sprintf( __( 'Did this %1$s used to be registered as a taxonomy? I found some taxonomy terms stored in your database that could conflict with your %2$s terms. %3$s are not stored in the database in the same manner as taxonomies so when taxonomy and %4$s terms exist under the same name, term queries can get confused and sometimes return incorrect results.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', 'CPT-onomy', 'CPT-onomies', 'CPT-onomy' ); ?></p><p><a class="action button" href="<?php echo $delete_conflicting_terms_url; ?>" title="<?php echo sprintf( __( 'Delete the conflicting taxonomy terms for the \'%1$s\' %2$s', CPT_ONOMIES_TEXTDOMAIN ), $edit, 'CPT-onomy' ); ?>"><?php _e( 'Delete the conflicting taxonomy terms', CPT_ONOMIES_TEXTDOMAIN ); ?></a> <a href="http://wpdreamer.com/plugins/cpt-onomies/documentation/incorrect-query-results/#remove-conflicting-taxonomy-terms" target="_blank"><?php _e( 'Learn how to preserve your conflicting terms', CPT_ONOMIES_TEXTDOMAIN ); ?></a></p><?php
 								
 								} else if ( $is_registered_cpt_onomy && $programmatic_cpt_onomy ) {
 									
