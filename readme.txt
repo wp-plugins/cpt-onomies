@@ -127,7 +127,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 = 1.3.4 =
 * Changed default CPT-onomy labels to match the custom post type labels.
-* Added 'custom_post_type_onomies_register_cpt_onomy_labels' filter which allows users to change the CPT-onomy labels.
+* Added 'custom_post_type_onomies_cpt_onomy_labels' filter which allows users to change the CPT-onomy labels.
 * Fixed issue when using an array as your query orderby.
 * Fixed issue with CPT-onomies not showing all of the correct results.
 * Fixed issue with "other" custom post type settings not displaying their values.
@@ -248,7 +248,7 @@ If FAQ didn't cover your problem, refer to the following resources:
 
 = 1.3.4 =
 * Changed default CPT-onomy labels to match the custom post type labels.
-* Added 'custom_post_type_onomies_register_cpt_onomy_labels' filter which allows users to change the CPT-onomy labels.
+* Added 'custom_post_type_onomies_cpt_onomy_labels' filter which allows users to change the CPT-onomy labels.
 * Fixed issue when using an array as your query orderby.
 * Fixed issue with CPT-onomies not showing all of the correct results.
 * Fixed issue with "other" custom post type settings not displaying their values.

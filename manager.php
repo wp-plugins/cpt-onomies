@@ -998,7 +998,7 @@ class CPT_ONOMIES_MANAGER {
 		);
 		
 		// Filter the labels
-		$cpt_onomy_labels = apply_filters( 'custom_post_type_onomies_register_cpt_onomy_labels', $cpt_onomy_labels, $taxonomy, $custom_post_type );
+		$cpt_onomy_labels = apply_filters( 'custom_post_type_onomies_cpt_onomy_labels', $cpt_onomy_labels, $taxonomy, $custom_post_type );
 		
 		// Define the CPT-onomy defaults
 	 	$cpt_onomy_defaults = array(
