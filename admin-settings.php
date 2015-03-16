@@ -2666,7 +2666,7 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 											
 								} else if ( $attention_cpt_onomy && ( $old_terms_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy = '{$edit}'" ) ) && $old_terms_count > 0 ) {
 								
-									?><p><?php _e( 'Did this CPT-onomy used to be registered as a taxonomy? I found some old taxonomy terms stored in your database that could conflict with CPT-onomies. CPT-onomies are not stored in the database in the same manner as taxonomies so when both taxonomy and CPT-onomy terms exist, term queries get confused and can sometimes return incorrect results. I recommend de-activating your CPT-onomy, removing the old taxonomy terms, and re-activating your CPT-onomy.', CPT_ONOMIES_TEXTDOMAIN ); ?></p><?php
+									?><p><?php echo sprintf( __( 'Did this %1$s used to be registered as a taxonomy? I found some taxonomy terms stored in your database that could conflict with your %2$s terms. %3$s are not stored in the database in the same manner as taxonomies so when taxonomy and %4$s terms exist (under the same name), term queries can get confused and sometimes return incorrect results. I recommend de-activating your %5$s, removing the old taxonomy terms, and re-activating your %6$s.', CPT_ONOMIES_TEXTDOMAIN ), 'CPT-onomy', 'CPT-onomy', 'CPT-onomies', 'CPT-onomy', 'CPT-onomy', 'CPT-onomy' ); ?></p><?php
 								
 								} else if ( $is_registered_cpt_onomy && $programmatic_cpt_onomy ) {
 									
