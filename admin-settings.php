@@ -160,7 +160,13 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 				$wpdb->delete( $wpdb->terms, array( 'term_id' => $term->term_id ), array( '%d' ) );
 				
 				// Delete the term taxonomy info
-				$wpdb->delete( $wpdb->term_taxonomy, array( 'term_taxonomy_id' => $term->term_taxonomy_id ), array( '%d' ) );
+				$wpdb->delete( $wpdb->term_taxonomy, array(
+						'term_taxonomy_id' => $term->term_taxonomy_id,
+						'taxonomy' => $post_type,
+					), array(
+						'%d',
+						'%s'
+					) );
 				
 				// Delete any term relationships
 				$wpdb->delete( $wpdb->term_relationships, array( 'term_taxonomy_id' => $term->term_taxonomy_id ), array( '%d' ) );
