@@ -410,8 +410,8 @@ class CPT_ONOMIES_MANAGER {
 		}
 		
 		// If running a tax query
-		if ( isset( $query->tax_query ) ) {	
-			
+		if ( isset( $query->tax_query ) ) {
+
 			$is_registered_cpt_onomy = false;
 			$taxonomies = array( 'join' => '', 'where' => array() );
 			$new_where = array();
@@ -669,7 +669,7 @@ class CPT_ONOMIES_MANAGER {
 				$clauses[ 'where' ] = preg_replace( '/' . $preg_replace_str . '/i', '', $clauses[ 'where' ] );
 				
 				// Find singular 0 = 1 to replace
-				$clauses[ 'where' ] = preg_replace( '/0[\s]+\=[\s]+1[\s]+AND/i', '', $clauses[ 'where' ] );
+				$clauses[ 'where' ] = preg_replace( '/AND[\s]+0[\s]+\=[\s]+1/i', '', $clauses[ 'where' ] );
 				
 				$clauses[ 'where' ] .= " AND ( ";
 					foreach ( $new_where as $where_index => $add_where ) {
