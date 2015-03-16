@@ -47,6 +47,31 @@ jQuery.noConflict()(function(){
 		
 	});
 	
+	// Show "delete conflicting terms" confirmation
+	jQuery( '.delete-conflicting-tax-terms.button' ).on( 'click', function( $event ) {
+		
+		// Build the message
+		var $message = null;
+		
+		if ( cpt_onomies_admin_options_L10n.delete_conflicting_terms_message1 != '' )
+			$message = cpt_onomies_admin_options_L10n.delete_conflicting_terms_message1;
+		else
+			$message = 'Are you sure you want to delete the conflicting taxonomy terms?';
+		
+		if ( cpt_onomies_admin_options_L10n.delete_conflicting_terms_message2 != '' )
+			$message += '\n\n' + cpt_onomies_admin_options_L10n.delete_conflicting_terms_message2;
+		else
+			$message += '\n\nThere is NO undo and once you click "OK", all of the terms will be deleted and cannot be restored.';
+			
+		// Ask the user to confirm
+		var $confirm = confirm( $message );
+		
+		// If they confirmed, stop the event from happening
+		if ( $confirm != true )
+			$event.preventDefault();
+		
+	});
+		
 	// Show delete confirmation
 	jQuery( '.delete_cpt_onomy_custom_post_type' ).live( 'click', function( $event ) {
 		
