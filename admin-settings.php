@@ -303,10 +303,6 @@ class CPT_ONOMIES_ADMIN_SETTINGS {
 			&& ! $attention_cpt_onomy
 			&& ( $conflicting_terms_count = $this->get_conflicting_taxonomy_terms_count( $post_type ) )
 			&& $conflicting_terms_count > 0 ) {
-				
-				echo "<pre>";
-print_r( $conflicting_terms_count );
-echo "</pre>";
 			
 			$attention_cpt_onomy = true;
 			
